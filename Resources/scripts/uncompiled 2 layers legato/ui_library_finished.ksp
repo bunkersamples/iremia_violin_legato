@@ -1,0 +1,280 @@
+{ ---------------------------------------------------------------------
+Title: UI Library
+File: ui_library.ksp
+Author:
+First Written: 
+Current Version: 1.0
+Last Modified:
+----------------------------------------------------------------------}
+
+{/**
+* Adds CC numbers to a menu as menu items
+*
+* @param    menu        Control name of the menu to add items to, including mnu_ prefix
+* @param    default     Menu item number to be set as default
+* @param    min         Minimum CC number to represent 0 - 127
+* @param    max         Maximum CC number to represent 0 - 127
+*/}
+function ui.cc_menu_items(menu, default, min, max)
+
+    declare i
+
+    for i := min to max
+        add_menu_item(menu,'CC: ' & i, i){Add cc items to menu}
+    end for
+
+    menu := default
+
+end function
+
+{/**
+* Creates a ui control callback for the given control, and one action to perform when the callback is triggered
+*
+* @param    control     The GUI control to apply the action to
+* @param    action      The action to link to the control
+*/}
+macro ui.control_action(#control#, #action#)
+    on ui_control(#control#)
+        #action#
+    end on
+end macro
+
+{/**
+* Control action callbacks for control knobs to dynamically position GUI controls.
+*
+* @param    control_id      The name of the GUI control to dynamically position.
+/*}
+macro ui.control_knobs_action(control)
+
+    on ui_control(knb_control_x)
+        control -> POS_X := knb_control_x
+    end on
+
+    on ui_control(knb_control_y)
+        control -> POS_Y := knb_control_y
+    end on
+
+end macro
+
+{/**
+* Places two knobs at the given XY position that are used in conjunction with the control_knobs_action function to dynamically position
+* a GUI control and provide visual feedback of the control's position.
+*
+* @param    x       The X position of the x control knob, the y knob will be positioned +100 of this value.
+* @param    y       The Y position of the x and y knobs.
+*/}
+macro ui.control_knobs(x, y)
+
+    declare ui_knob knb_control_x(0, 800, 1)
+        knb_control_x -> POS_X := x
+        knb_control_x -> POS_Y := y
+        knb_control_x -> UNIT := KNOB_UNIT_NONE
+        knb_control_x -> TEXT := 'X'
+
+    declare ui_knob knb_control_y(0, 800, 1)
+        knb_control_y -> POS_X := x+100
+        knb_control_y -> POS_Y := y
+        knb_control_y -> UNIT := KNOB_UNIT_NONE
+        knb_control_y -> TEXT := 'Y'
+
+end macro
+
+{/**
+* Label
+*
+* @param    name        Control name - will be auto prefixed
+* @param    image       Control's background image
+* @param    x           The X position of the control
+* @param    y           The Y position of the control
+* @param    width       Control's width - default is 100px
+* @param    height      Control's height - default is 20px
+* @param    text        Control's text
+* @param    font        Control's text font - a Kontakt font number
+* @param    alignment   Controls text alignment
+* @param    background  If set to FALSE then the control's background will be hidden - this hides the label's image if one is set
+*/}
+macro ui.label(#name#, #image#, x, y, width, height, #text#, font, alignment, background)
+
+    {Create label and set parameters}
+    declare ui_label lbl_#name#(1, 1)
+    lbl_#name# -> PICTURE := #image#
+    lbl_#name# -> POS_X := x
+    lbl_#name# -> POS_Y := y
+    lbl_#name# -> WIDTH := 100 {default width}
+    lbl_#name# -> HEIGHT := 20 {default height}
+    lbl_#name# -> TEXT := #text#
+    lbl_#name# -> FONT_TYPE := font
+    lbl_#name# -> TEXT_ALIGNMENT := alignment
+
+    if width > -1
+        lbl_#name# -> WIDTH := width
+    end if
+
+    if height > -1
+        lbl_#name# -> HEIGHT := height
+    end if
+
+    if background < 1
+        lbl_#name# -> HIDE := HIDE_PART_BG
+    end if
+
+end macro
+
+{/**
+* Menu
+*
+* @param    name        Control name - will be auto prefixed
+* @param    image       Control image
+* @param    x           The X position of the control
+* @param    y           The Y position of the control
+* @param    width       Width of the control or NULL.
+* @param    font        Control's text font - a Kontakt font number
+* @param    alignment   Controls text alignment
+*/}
+macro ui.menu(#name#, #image#, x, y, width, font, alignment)
+
+    declare ui_menu mnu_#name#
+    mnu_#name# -> PICTURE := #image#
+    mnu_#name# -> POS_X := x
+    mnu_#name# -> POS_Y := y
+    mnu_#name# -> FONT_TYPE := font
+    mnu_#name# -> TEXT_ALIGNMENT := alignment
+
+    if width > -1
+        mnu_#name# -> WIDTH := width
+    end if
+
+    make_persistent(mnu_#name#)
+    read_persistent_var(mnu_#name#)
+end macro
+
+{/**
+* Slider
+*
+* @param    name        Control name - will be auto prefixed
+* @param    image       Control image
+* @param    x           The X position of the control
+* @param    y           The Y position of the control
+* @param    default     Control's default value
+* @param    min         Control's minimum value
+* @param    max         Control's maximum value
+* @param    vertical    TRUE = vertical control, FALSE = horizontal control.
+*/}
+macro ui.slider(#name#, #image#, x, y, default, min, max, vertical)
+
+    declare ui_slider sli_#name#(min,max)
+        sli_#name# -> PICTURE := #image#
+        sli_#name# -> POS_X := x
+        sli_#name# -> POS_Y := y
+        sli_#name# -> DEFAULT := default
+        sli_#name# := default
+
+    if vertical = 1 {Change the slider mouse orientation}
+        sli_#name# -> MOUSE_BEHAVIOUR := -1000
+    end if
+
+    make_persistent(sli_#name#)
+    read_persistent_var(sli_#name#)
+end macro
+
+{/**
+* Switch
+*
+* @param    name        Control name - will be auto prefixed
+* @param    image       Control image
+* @param    x           The X position of the control
+* @param    y           The Y position of the control
+* @param    width       Control's width
+* @param    height      Control's height
+* @param    text        Control's text
+* @param    default     Control's default value - ON/OFF, TRUE/FALSE, 0/1 etc.
+*/}
+macro ui.switch(#name#, #image#, x, y, width, height, #text#, default)
+
+    declare ui_switch swi_#name#
+    swi_#name# -> TEXT := #text#
+    swi_#name# -> POS_X := x
+    swi_#name# -> POS_Y := y
+    swi_#name# -> PICTURE := #image#
+    swi_#name# -> DEFAULT := default
+    swi_#name# := default
+
+    if width > -1
+        swi_#name# -> WIDTH := width
+    end if
+
+    if height > -1
+        swi_#name# -> HEIGHT := height
+    end if
+
+    make_persistent(swi_#name#)
+    read_persistent_var(swi_#name#)
+end macro
+
+macro ui.button(#name#, #image#, x, y, width, height, #text#, default)
+    declare ui_button btn_#name#
+
+    btn_#name# -> TEXT := #text#
+    btn_#name# -> POS_X := x
+    btn_#name# -> POS_Y := y
+    btn_#name# -> PICTURE := #image#
+    btn_#name# -> DEFAULT := default
+    btn_#name# := default
+
+    if width > -1
+        btn_#name# -> WIDTH := width
+    end if
+
+    if height > -1
+        btn_#name# -> HEIGHT := height
+    end if
+
+    make_persistent(btn_#name#)
+    read_persistent_var(btn_#name#)
+
+end macro
+
+{/**
+* Knob
+*
+* @param    name        Control name - will be auto prefixed
+* @param    image       Control image
+* @param    x           The X position of the control
+* @param    y           The Y position of the control
+* @param    text        Control's text
+* @param    font        Control's text font - a Kontakt font number
+* @param    alignment   Controls text alignment
+* @param    default     Control's default value
+* @param    min         Control's minimum value
+* @param    max         Control's maximum value
+* @param    ratio       Knob ratio
+*/}
+macro ui.knob(#name#, #image#, x, y, #text#, font, alignment, default, min, max, ratio)
+
+    declare ui_knob knb_#name#(min,max,ratio)
+    knb_#name# -> TEXT := #text#
+    knb_#name# -> POS_X := x
+    knb_#name# -> POS_Y := y
+    knb_#name# -> FONT_TYPE := font
+    knb_#name# -> TEXT_ALIGNMENT := alignment
+    knb_#name# -> DEFAULT := default
+    knb_#name# := default
+
+    make_persistent(knb_#name#)
+    read_persistent_var(knb_#name#)
+end macro
+
+macro cl.load_factory_impulse(impulse, slot, generic)
+    {load a Kontakt factory IR}
+    load_ir_sample(get_folder(GET_FOLDER_FACTORY_DIR)&"presets/effects/convolution/<<<K4IR.nkx>>>/K4 IR Samples/"&impulse, slot, generic)
+
+end macro
+
+function ui.remap_scale(value, oldmin, oldmax, newmin, newmax) -> return 
+    {Maps a given value in a given range of values to that of another range of values}
+
+    return := (value - oldmin) * (newmax - newmin) / (oldmax - oldmin) + newmin 
+end function
+
+
+

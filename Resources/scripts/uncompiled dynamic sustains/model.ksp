@@ -1,0 +1,235 @@
+{-----------------------------------------------------------------
+Title: Model
+File: Model.ksp
+Author: Nicolaj M Nielsen
+First written: 
+Current Version: 1.0
+Last Modified:
+-----------------------------------------------------------------}
+
+{******************************************************************************************
+* FUNCTIONS *
+******************************************************************************************}
+//taskfunc f.toggle_switches(switch_1, switch_2)
+//	 //if switch 1 is on, turn off switch 2
+//	set_control_par(switch_2, CONTROL_PAR_VALUE, 1- get_control_par(switch_1, CONTROL_PAR_VALUE))
+//end taskfunc
+
+function f.purge_mic_channel(channel_num)
+	declare i 
+	
+	for i := 0 to NUM_ARTICULATIONS-1
+		if get_control_par(ui_channel_swi_mute[channel_num], CONTROL_PAR_VALUE) = 1 //if mute is ON, purge samples
+			purge_group(channel_num + (NUM_MICS*i), 1)
+		else //mute is OFF, load samples
+			purge_group(channel_num + (NUM_MICS*i), 0)
+		end if 
+	end for
+end function
+
+taskfunc f.update_keyswitch_notes_label(note)
+	declare i 
+	if in_range(note, 0, HIGHEST_POSSIBLE_KEYSWITCH_LOW) or in_range(note, HIGHEST_POSSIBLE_KEYSWITCH_HIGH, 127)
+		for i := 0 to num_elements(ui_art_keyswitch_note_labels)-1
+			set_control_par_str(ui_art_keyswitch_note_labels[i], CONTROL_PAR_TEXT, !note_names[note + i])
+			//set_control_par(ui_art_keyswitch_note_labels[i], CONTROL_PAR_FONT_TYPE, 23) //set keyswitch note number label font type to gray
+		end for
+	end if 
+		//set_control_par(ui_art_keyswitch_note_labels[current_art], CONTROL_PAR_FONT_TYPE, 24) //set keyswitch note number label font type to white
+end taskfunc
+
+taskfunc f.show_keyswitch_notes(value)
+	declare i
+		for i := 0 to num_elements(ui_art_keyswitch_note_labels)-1
+			if value = 1
+				set_control_par(ui_art_keyswitch_note_labels[i], CONTROL_PAR_HIDE, HIDE_PART_NOTHING)
+				set_control_par(ui_art_keyswitch_note_labels[i], CONTROL_PAR_HIDE, HIDE_PART_BG)
+			else 
+				set_control_par(ui_art_keyswitch_note_labels[i], CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL)
+			end if 
+		end for
+end taskfunc
+
+taskfunc f.move_keyswitches(note)
+
+	declare i 
+	declare ii
+	for i := 0 to 127 //set all keys to white
+		set_key_color(i, KEY_COLOR_INACTIVE)
+	end for 
+	
+	if in_range(note, 0, HIGHEST_POSSIBLE_KEYSWITCH_LOW) or in_range(note, HIGHEST_POSSIBLE_KEYSWITCH_HIGH, 127)
+		for i := 0 to NUM_ARTICULATIONS-1 //update key switch array
+			key_switches[i] := note + i
+		end for
+	end if
+
+		for ii := key_switches[0] to key_switches[0] + NUM_ARTICULATIONS-1 //color key switches
+			set_key_color(ii, KEY_COLOR_RED) 
+		end for
+
+	
+		if harmonics_on = 0 //Update all other key colors
+			for i := LOWEST_NOTE_NORMAL to HIGHEST_NOTE_NORMAL
+				set_key_color(i, KEY_COLOR_DEFAULT)
+			end for
+		else 
+			for i := LOWEST_NOTE_HARMONICS to HIGHEST_NOTE_HARMONICS
+				set_key_color(i, KEY_COLOR_DEFAULT)
+			end for
+		end if
+end taskfunc
+
+taskfunc f.select_articulation(art_num)
+	declare i 
+	for i := 0 to num_elements(ui_art_switches)-1
+		set_control_par(ui_art_switches[i], CONTROL_PAR_VALUE, 0)
+	end for
+	set_control_par(ui_art_switches[art_num], CONTROL_PAR_VALUE, 1)
+	current_art := art_num
+
+		if current_art = HARMONICS
+			harmonics_on := 1
+		else 
+			harmonics_on := 0
+		end if
+		f.color_keys()
+end taskfunc
+
+taskfunc f.color_keys()
+	declare i 
+	for i := 0 to 127
+		set_key_color(i, KEY_COLOR_INACTIVE)
+	end for 
+
+	for i := key_switches[0] to key_switches[0] + NUM_ARTICULATIONS -1 //color keyswitches
+		set_key_color(i, KEY_COLOR_RED)
+	end for
+
+	if harmonics_on = 0 //current articulation is not harmonics
+		for i := LOWEST_NOTE_NORMAL to HIGHEST_NOTE_NORMAL
+			set_key_color(i, KEY_COLOR_DEFAULT)
+		end for
+	else 
+		for i := LOWEST_NOTE_HARMONICS to HIGHEST_NOTE_HARMONICS
+			set_key_color(i, KEY_COLOR_DEFAULT)
+		end for
+	end if
+end taskfunc
+
+taskfunc f.update_label(label_num, parameter_num, parameter, group, slot, generic)
+	declare local cb_state[NUM_LABELS]
+
+	cb_state[label_num] := NI_CALLBACK_ID
+
+	ui_labels[label_num] -> text := (!label_units_pre[parameter_num] & get_engine_par_disp(parameter, group, slot, generic) & !label_units_post[parameter_num])
+
+	tcm.wait(LBL_WAIT_TIME)
+
+	if cb_state[label_num] = NI_CALLBACK_ID //control hasn't been touched, reset text
+		ui_labels[label_num] -> text := lbl_text[label_num]
+	end if 
+
+end taskfunc
+
+taskfunc f.update_label_specific(label_num, control_num)
+	declare local cb_state[NUM_LABELS]
+
+	cb_state[label_num] := NI_CALLBACK_ID
+
+	select control_num
+		case 0 //dynamics simulation
+			ui_labels[label_num] -> text := (!label_units_pre[label_num] & $ADSR_panel_dyn_par_sli_dyn_sim_int/100 & !label_units_post[label_num])
+		case 1 //dynamics range
+			ui_labels[label_num] -> text := (!label_units_pre[label_num] & $ADSR_panel_dyn_par_sli_dyn_range/10000 & !label_units_post[label_num])
+	end select
+
+
+	tcm.wait(LBL_WAIT_TIME)
+
+	if cb_state[label_num] = NI_CALLBACK_ID //control hasn't been touched, reset text
+		ui_labels[label_num] -> text := lbl_text[label_num]
+	end if 
+
+end taskfunc
+
+taskfunc f.show_hide_dynamic_settings(value)  //if value = 1 -> show panel
+	if value = 1
+		set_control_par(get_ui_id($ADSR_panel_dyn_par), CONTROL_PAR_HIDE, HIDE_PART_NOTHING)
+	else 
+		set_control_par(get_ui_id($ADSR_panel_dyn_par), CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL)
+	end if
+end taskfunc
+
+taskfunc f.show_hide_panel(value, panel) //if value = 1 -> show panel, else hide panel. Panel is ui_id 
+	if value = 1
+		set_control_par(panel, CONTROL_PAR_HIDE, HIDE_PART_NOTHING)
+	else 
+		set_control_par(panel, CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL)
+	end if
+end taskfunc
+
+taskfunc f.show_delay_controls(value)
+	declare i 
+	for i := 0 to num_elements(ui_delay_modern)-1
+		set_control_par(ui_delay_modern[i], CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL)
+		set_control_par(ui_delay_analogue[i], CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL)
+		set_control_par(ui_delay_tape[i], CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL)
+		set_control_par(ui_delay_vintage[i], CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL)
+		set_control_par(ui_delay_diffusion[i], CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL)
+
+		select value 
+			case 0 
+				set_control_par(ui_delay_modern[i], CONTROL_PAR_HIDE, HIDE_PART_NOTHING)
+				set_control_par(ui_delay_modern[1], CONTROL_PAR_HIDE, HIDE_PART_BG)
+				set_control_par(ui_delay_modern[3], CONTROL_PAR_HIDE, HIDE_PART_BG)
+				set_control_par(ui_delay_modern[5], CONTROL_PAR_HIDE, HIDE_PART_BG)
+			case 1 
+				set_control_par(ui_delay_analogue[i], CONTROL_PAR_HIDE, HIDE_PART_NOTHING)
+				set_control_par(ui_delay_analogue[1], CONTROL_PAR_HIDE, HIDE_PART_BG)
+				set_control_par(ui_delay_analogue[3], CONTROL_PAR_HIDE, HIDE_PART_BG)
+				set_control_par(ui_delay_analogue[5], CONTROL_PAR_HIDE, HIDE_PART_BG)
+			case 2 
+				set_control_par(ui_delay_tape[i], CONTROL_PAR_HIDE, HIDE_PART_NOTHING)
+				set_control_par(ui_delay_tape[1], CONTROL_PAR_HIDE, HIDE_PART_BG)
+				set_control_par(ui_delay_tape[3], CONTROL_PAR_HIDE, HIDE_PART_BG)
+				set_control_par(ui_delay_tape[5], CONTROL_PAR_HIDE, HIDE_PART_BG)
+			case 3 
+				set_control_par(ui_delay_vintage[i], CONTROL_PAR_HIDE, HIDE_PART_NOTHING)
+				set_control_par(ui_delay_vintage[1], CONTROL_PAR_HIDE, HIDE_PART_BG)
+				set_control_par(ui_delay_vintage[3], CONTROL_PAR_HIDE, HIDE_PART_BG)
+				set_control_par(ui_delay_vintage[5], CONTROL_PAR_HIDE, HIDE_PART_BG)
+			case 4 
+				set_control_par(ui_delay_diffusion[i], CONTROL_PAR_HIDE, HIDE_PART_NOTHING)
+				set_control_par(ui_delay_diffusion[1], CONTROL_PAR_HIDE, HIDE_PART_BG)
+				set_control_par(ui_delay_diffusion[3], CONTROL_PAR_HIDE, HIDE_PART_BG)
+				set_control_par(ui_delay_diffusion[5], CONTROL_PAR_HIDE, HIDE_PART_BG)
+		end select
+	end for 
+end taskfunc
+
+taskfunc f.update_delay_controls()
+	declare i 
+	for i := 0 to num_elements(delay_par) -1
+		set_control_par(delay_controls[i], CONTROL_PAR_VALUE, get_engine_par(delay_par[i], -1, SEND_DELAY_SLOT, NI_SEND_BUS))
+	end for
+end taskfunc
+
+taskfunc f.update_channel_controls()
+	declare i 
+	for i := 0 to num_elements(ui_delay_sends)-1
+		set_control_par(ui_delay_sends[i], CONTROL_PAR_VALUE, get_engine_par(ENGINE_PAR_SENDLEVEL_0, -1, SEND_SLOT, NI_BUS_OFFSET + i))
+		set_control_par(ui_reverb_sends[i], CONTROL_PAR_VALUE, get_engine_par(ENGINE_PAR_SENDLEVEL_1, -1, SEND_SLOT, NI_BUS_OFFSET + i))
+		set_control_par(ui_stereo_controls[i], CONTROL_PAR_VALUE, get_engine_par(ENGINE_PAR_STEREO, -1, STEREO_SLOT, NI_BUS_OFFSET + i))
+		if i = 0 //if inside mono mic
+			set_control_par(ui_pan_controls[i], CONTROL_PAR_VALUE, get_engine_par(ENGINE_PAR_PAN, -1, -1, NI_BUS_OFFSET + i))
+		else 
+			set_control_par(ui_pan_controls[i], CONTROL_PAR_VALUE, get_engine_par(ENGINE_PAR_STEREO_PAN, -1, STEREO_SLOT, NI_BUS_OFFSET + i))
+		end if
+	end for
+end taskfunc
+
+
+{******************************************************************************************
+* MACROS *
+******************************************************************************************}

@@ -1,0 +1,5565 @@
+{ Compiled on Mon Nov 23 23:40:16 2026 }
+on init
+  declare %p[32768]
+  declare $sp
+  $sp := 118
+  declare $fp
+  $fp := 118
+  declare $tx
+  declare %tstate__id[654]
+  declare %tstate__sp[654]
+  declare %tstate__fp[654]
+  declare %tstate__fs[654]
+  $tx := 0
+  while ($tx<654)
+    %tstate__fs[$tx] := 68+($tx*50)
+    inc($tx)
+  end while
+  $tx := 0
+  %tstate__id[0] := -1
+  pgs_create_key(TCM_EXCEPTION,5)
+  pgs_set_key_val(TCM_EXCEPTION,$CURRENT_SCRIPT_SLOT,0)
+  set_script_title("ivln_all_sus")
+  load_performance_view("ivln_all_sustains_xy_pad")
+  set_control_par_arr(get_ui_id(?xy_pad_xypad),$CONTROL_PAR_AUTOMATION_ID,0,0)
+  set_control_par_arr(get_ui_id(?xy_pad_xypad),$CONTROL_PAR_AUTOMATION_ID,1,1)
+  set_control_par_str_arr(get_ui_id(?xy_pad_xypad),$CONTROL_PAR_AUTOMATION_NAME,"XY Pad X",0)
+  set_control_par_str_arr(get_ui_id(?xy_pad_xypad),$CONTROL_PAR_AUTOMATION_NAME,"XY Pad Y",1)
+  declare $i
+  declare $ii
+  declare $a
+  declare $c
+  declare !articulation_names[21]
+  !articulation_names[0] := " SUSTAIN NORMALE PPP"
+  !articulation_names[1] := " SUSTAIN NORMALE PP"
+  !articulation_names[2] := " SUSTAIN NORMALE P"
+  !articulation_names[3] := " SUSTAIN CS PPP"
+  !articulation_names[4] := " SUSTAIN CS PP"
+  !articulation_names[5] := " SUSTAIN CS P"
+  !articulation_names[6] := " SUSTAIN SUPER CS PPP"
+  !articulation_names[7] := " SUSTAIN SUPER CS PP"
+  !articulation_names[8] := " SUSTAIN SUPER CS P"
+  !articulation_names[9] := " BOW PULSES CS"
+  !articulation_names[10] := " BOW PULSES NORMALE"
+  !articulation_names[11] := " VIBRATO PULSES CS"
+  !articulation_names[12] := " VIBRATO PULSES NORMALE"
+  !articulation_names[13] := " RANDOM REBOW CS"
+  !articulation_names[14] := " RANDOM REBOW NORMALE"
+  !articulation_names[15] := " TREM BURSTS CS"
+  !articulation_names[16] := " TREM BURSTS NORMALE"
+  !articulation_names[17] := " FLUCTUATING TREM CS"
+  !articulation_names[18] := " FLUCTUATING TREM NORMALE"
+  !articulation_names[19] := " HARMONICS CS"
+  !articulation_names[20] := " HARMONICS NORMALE"
+  declare !articulation_names_short[21]
+  !articulation_names_short[0] := "SUSTAIN NORM. PPP"
+  !articulation_names_short[1] := "SUSTAIN NORM. PP"
+  !articulation_names_short[2] := "SUSTAIN NORM. P"
+  !articulation_names_short[3] := "SUSTAIN CS PPP"
+  !articulation_names_short[4] := "SUSTAIN CS PP"
+  !articulation_names_short[5] := "SUSTAIN CS P"
+  !articulation_names_short[6] := "SUSTAIN SUPER CS PPP"
+  !articulation_names_short[7] := "SUSTAIN SUPER CS PP"
+  !articulation_names_short[8] := "SUSTAIN SUPER CS P"
+  !articulation_names_short[9] := "BOW PULSES CS"
+  !articulation_names_short[10] := "BOW PULSES NORM."
+  !articulation_names_short[11] := "VIBRATO PULSES CS"
+  !articulation_names_short[12] := "VIBRATO PULSES NORM."
+  !articulation_names_short[13] := "RANDOM REBOW CS"
+  !articulation_names_short[14] := "RANDOM REBOW NORM."
+  !articulation_names_short[15] := "TREM BURSTS CS"
+  !articulation_names_short[16] := "TREM BURSTS NORM."
+  !articulation_names_short[17] := "FLUCT. TREM CS"
+  !articulation_names_short[18] := "FLUCT. TREM NORM."
+  !articulation_names_short[19] := "HARMONICS CS"
+  !articulation_names_short[20] := "HARMONICS NORM."
+  declare %xy_corner_art[4] := (0, 1, 2, 3)
+  make_persistent(%xy_corner_art)
+  declare ~XY_TRIM_RANGE_DB := 24.0
+  declare @xy_trim_text
+  declare ui_slider $XY_pwr_blend(0,1000)
+  move_control_px($XY_pwr_blend,93,353)
+  set_control_par(get_ui_id($XY_pwr_blend),$CONTROL_PAR_DEFAULT_VALUE,616)
+  set_control_par(get_ui_id($XY_pwr_blend),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+  make_persistent($XY_pwr_blend)
+  add_menu_item($xy_pad_mnu_cc_x,"OFF",-1)
+  add_menu_item($xy_pad_mnu_cc_y,"OFF",-1)
+  declare %xy_cc_excluded[23] := (0, 6, 32, 38, 64, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 120, 121, 122, 123, 124, 125, 126, 127)
+  declare $xy_cc_allowed
+  $i := 0
+  while ($i<=127)
+    $xy_cc_allowed := 1
+    $ii := 0
+    while ($ii<23)
+      if ($i=%xy_cc_excluded[$ii])
+        $xy_cc_allowed := 0
+      end if
+      inc($ii)
+    end while
+    if ($xy_cc_allowed=1)
+      add_menu_item($xy_pad_mnu_cc_x,"CC " & $i,$i)
+      add_menu_item($xy_pad_mnu_cc_y,"CC " & $i,$i)
+    end if
+    inc($i)
+  end while
+  $xy_pad_mnu_cc_x := -1
+  $xy_pad_mnu_cc_y := -1
+  make_persistent($xy_pad_mnu_cc_x)
+  make_persistent($xy_pad_mnu_cc_y)
+  declare $xy_cc_learn_axis := -1
+  declare $xy_cc_learnable
+  declare %xy_corner_group_start[4] := (0, 105, 210, 315)
+  declare $xy_corner_being_edited
+  declare $current_art
+  make_persistent($current_art)
+  declare $solo_on_flag := 0
+  make_persistent($solo_on_flag)
+  declare %solo_channels[5] := (0)
+  make_persistent(%solo_channels)
+  declare $harmonics_on
+  make_persistent($harmonics_on)
+  declare $load_ir_id
+  declare $current_ir
+  make_persistent($current_ir)
+  declare %current_multi_arts[21] := (0)
+  make_persistent(%current_multi_arts)
+  declare %reverb_cb_state[3]
+  declare ~val
+  declare $res
+  declare !label_units_pre[49]
+  !label_units_pre[5] := " Attack "
+  !label_units_pre[6] := " Decay "
+  !label_units_pre[7] := " Sustain "
+  !label_units_pre[8] := " Release "
+  declare !label_units_post[49]
+  !label_units_post[0] := " dB"
+  !label_units_post[1] := " dB"
+  !label_units_post[2] := " dB"
+  !label_units_post[3] := " dB"
+  !label_units_post[4] := " dB"
+  !label_units_post[5] := " ms"
+  !label_units_post[6] := " ms"
+  !label_units_post[7] := " dB"
+  !label_units_post[8] := " ms"
+  !label_units_post[9] := " %"
+  !label_units_post[10] := " %"
+  !label_units_post[11] := " %"
+  !label_units_post[18] := " dB"
+  !label_units_post[19] := " dB"
+  !label_units_post[20] := " dB"
+  !label_units_post[21] := " dB"
+  !label_units_post[22] := " dB"
+  !label_units_post[23] := " dB"
+  !label_units_post[24] := " dB"
+  !label_units_post[25] := " dB"
+  !label_units_post[26] := " dB"
+  !label_units_post[27] := " dB"
+  !label_units_post[29] := " %"
+  !label_units_post[30] := " Hz"
+  !label_units_post[31] := " Hz"
+  !label_units_post[32] := " %"
+  !label_units_post[33] := " Hz"
+  !label_units_post[34] := " %"
+  !label_units_post[36] := " %"
+  !label_units_post[37] := " %"
+  !label_units_post[39] := " %"
+  !label_units_post[42] := " Hz"
+  !label_units_post[43] := " Hz"
+  declare $dyn_sim_scaled
+  declare $dyn_sim_moved_flag
+  declare %sync_units[15]
+  %sync_units[0] := $NI_SYNC_UNIT_ABS
+  %sync_units[1] := $NI_SYNC_UNIT_WHOLE
+  %sync_units[2] := $NI_SYNC_UNIT_WHOLE_TRIPLET
+  %sync_units[3] := $NI_SYNC_UNIT_HALF
+  %sync_units[4] := $NI_SYNC_UNIT_HALF_TRIPLET
+  %sync_units[5] := $NI_SYNC_UNIT_QUARTER
+  %sync_units[6] := $NI_SYNC_UNIT_QUARTER_TRIPLET
+  %sync_units[7] := $NI_SYNC_UNIT_8TH
+  %sync_units[8] := $NI_SYNC_UNIT_8TH_TRIPLET
+  %sync_units[9] := $NI_SYNC_UNIT_16TH
+  %sync_units[10] := $NI_SYNC_UNIT_16TH_TRIPLET
+  %sync_units[11] := $NI_SYNC_UNIT_32ND
+  %sync_units[12] := $NI_SYNC_UNIT_32ND_TRIPLET
+  %sync_units[13] := $NI_SYNC_UNIT_64TH
+  %sync_units[14] := $NI_SYNC_UNIT_64TH_TRIPLET
+  declare !sync_units_text[15]
+  !sync_units_text[0] := "ms"
+  !sync_units_text[1] := "1/1"
+  !sync_units_text[2] := "1/1 Triplet"
+  !sync_units_text[3] := "1/2"
+  !sync_units_text[4] := "1/2 Triplet"
+  !sync_units_text[5] := "1/4"
+  !sync_units_text[6] := "1/4 Triplet"
+  !sync_units_text[7] := "1/8"
+  !sync_units_text[8] := "1/8 Triplet"
+  !sync_units_text[9] := "1/16"
+  !sync_units_text[10] := "1/16 Triplet"
+  !sync_units_text[11] := "1/32"
+  !sync_units_text[12] := "1/32 Triplet"
+  !sync_units_text[13] := "1/64"
+  !sync_units_text[14] := "1/64 Triplet"
+  declare !delay_modes_names[5]
+  !delay_modes_names[0] := "MODE: MODERN"
+  !delay_modes_names[1] := "MODE: ANALOGUE"
+  !delay_modes_names[2] := "MODE: TAPE"
+  !delay_modes_names[3] := "MODE: VINTAGE"
+  !delay_modes_names[4] := "MODE: DIFFUSION"
+  declare %delay_modes[5] := ($NI_REPLIKA_TYPE_MODERN, $NI_REPLIKA_TYPE_ANALOGUE, $NI_REPLIKA_TYPE_TAPE, $NI_REPLIKA_TYPE_VINTAGE, $NI_REPLIKA_TYPE_DIFFUSION)
+  declare %delay_controls[18]
+  %delay_controls[0] := get_ui_id($SEND_FX_swi_delay_stereo)
+  %delay_controls[1] := get_ui_id($SEND_FX_swi_delay_noise)
+  %delay_controls[2] := get_ui_id($SEND_FX_swi_delay_dense)
+  %delay_controls[3] := get_ui_id($SEND_FX_swi_delay_pingpong)
+  %delay_controls[4] := get_ui_id($SEND_FX_sli_delay_time)
+  %delay_controls[5] := get_ui_id($SEND_FX_sli_delay_feedback)
+  %delay_controls[6] := get_ui_id($SEND_FX_sli_delay_lowcut)
+  %delay_controls[7] := get_ui_id($SEND_FX_sli_delay_hicut)
+  %delay_controls[8] := get_ui_id($SEND_FX_sli_delay_depth)
+  %delay_controls[9] := get_ui_id($SEND_FX_sli_delay_rate)
+  %delay_controls[10] := get_ui_id($SEND_FX_sli_delay_saturate)
+  %delay_controls[11] := get_ui_id($SEND_FX_sli_delay_bbd)
+  %delay_controls[12] := get_ui_id($SEND_FX_sli_delay_tapeage)
+  %delay_controls[13] := get_ui_id($SEND_FX_sli_delay_flutter)
+  %delay_controls[14] := get_ui_id($SEND_FX_sli_delay_quality)
+  %delay_controls[15] := get_ui_id($SEND_FX_sli_delay_amount)
+  %delay_controls[16] := get_ui_id($SEND_FX_sli_delay_size)
+  %delay_controls[17] := get_ui_id($SEND_FX_sli_delay_mod)
+  declare %delay_par[18]
+  %delay_par[0] := $ENGINE_PAR_RDL_STEREO
+  %delay_par[1] := $ENGINE_PAR_RDL_NOISE
+  %delay_par[2] := $ENGINE_PAR_RDL_DENSE
+  %delay_par[3] := $ENGINE_PAR_RDL_PINGPONG
+  %delay_par[4] := $ENGINE_PAR_RDL_TIME
+  %delay_par[5] := $ENGINE_PAR_RDL_FEEDBACK
+  %delay_par[6] := $ENGINE_PAR_RDL_LOWCUT
+  %delay_par[7] := $ENGINE_PAR_RDL_HIGHCUT
+  %delay_par[8] := $ENGINE_PAR_RDL_DEPTH
+  %delay_par[9] := $ENGINE_PAR_RDL_RATE
+  %delay_par[10] := $ENGINE_PAR_RDL_SATURATION
+  %delay_par[11] := $ENGINE_PAR_RDL_BBDTYPE
+  %delay_par[12] := $ENGINE_PAR_RDL_TAPEAGE
+  %delay_par[13] := $ENGINE_PAR_RDL_FLUTTER
+  %delay_par[14] := $ENGINE_PAR_RDL_QUALITY
+  %delay_par[15] := $ENGINE_PAR_RDL_AMOUNT
+  %delay_par[16] := $ENGINE_PAR_RDL_SIZE
+  %delay_par[17] := $ENGINE_PAR_RDL_MODULATION
+  declare !IR_names[31]
+  !IR_names[0] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/<<<K4IR.nkx>>>/K4 IR Samples/L96 Chamber Large A.wav"
+  !IR_names[1] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/<<<K4IR.nkx>>>/K4 IR Samples/BRT 7 Chamber Medium.wav"
+  !IR_names[2] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/<<<K4IR.nkx>>>/K4 IR Samples/BRT 7 Hall Large D.wav"
+  !IR_names[3] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/<<<K4IR.nkx>>>/K4 IR Samples/BRT 7 Hall Dense.wav"
+  !IR_names[4] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/<<<K4IR.nkx>>>/K4 IR Samples/L480 Factory Reverb Tail A.wav"
+  !IR_names[5] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/<<<K4IR.nkx>>>/K4 IR Samples/BRT 7 Location Vehicle Park.wav"
+  !IR_names[6] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/<<<K4IR.nkx>>>/K4 IR Samples/Inversed Room.wav"
+  !IR_names[7] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/<<<K4IR.nkx>>>/K4 IR Samples/E250 1.5s.wav"
+  !IR_names[8] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/<<<K4IR.nkx>>>/K4 IR Samples/E245 2.3s C.wav"
+  !IR_names[9] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/<<<K4IR.nkx>>>/K4 IR Samples/E245 3.2s B.wav"
+  !IR_names[10] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/<<<K4IR.nkx>>>/K4 IR Samples/E252 4.5s.wav"
+  !IR_names[11] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/<<<K4IR.nkx>>>/K4 IR Samples/E252 D-REV 5.0s.wav"
+  !IR_names[12] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/<<<K4IR.nkx>>>/K4 IR Samples/E252 D-REV 8.0s.wav"
+  !IR_names[13] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/<<<K4IR.nkx>>>/K4 IR Samples/E252 D-REV 10.0s.wav"
+  !IR_names[14] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/<<<K4IR.nkx>>>/K4 IR Samples/E252 D-REV 12.0s.wav"
+  !IR_names[15] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/<<<K4IR.nkx>>>/K4 IR Samples/E252 D-REV 16.0s.wav"
+  !IR_names[16] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/11 Unsusual Reverbs/IR Samples/Bubbly Freq Flange.wav"
+  !IR_names[17] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/11 Unsusual Reverbs/IR Samples/Zipper Up.wav"
+  !IR_names[18] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/11 Unsusual Reverbs/IR Samples/Crystal Caves.wav"
+  !IR_names[19] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/11 Unsusual Reverbs/IR Samples/CrystalGyroscope.wav"
+  !IR_names[20] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/15 Special Effects/Mix/IR Samples/Dry Ice.wav"
+  !IR_names[21] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/15 Special Effects/Mix/IR Samples/Delayed Reaction.wav"
+  !IR_names[22] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/15 Special Effects/Mix/IR Samples/Vinyl Liftoff.wav"
+  !IR_names[23] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/15 Special Effects/Mix/IR Samples/Node Unity.wav"
+  !IR_names[24] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/15 Special Effects/Mix/IR Samples/Jerry's Flashback.wav"
+  !IR_names[25] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/15 Special Effects/ModulatorsMedium/IR Samples/Retrovirus.wav"
+  !IR_names[26] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/15 Special Effects/ModulatorsShort/IR Samples/Charging Complete.wav"
+  !IR_names[27] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/15 Special Effects/Reverser/IR Samples/The Sound Of Cluelessness.wav"
+  !IR_names[28] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/15 Special Effects/Reverser/IR Samples/Masonry Bit.wav"
+  !IR_names[29] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/15 Special Effects/Reverser/IR Samples/Highly Corrosive.wav"
+  !IR_names[30] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/15 Special Effects/Reverser/IR Samples/Opacity.wav"
+  declare !IR_menu_names[34]
+  !IR_menu_names[0] := "-- Spaces --"
+  !IR_menu_names[1] := "Chamber A"
+  !IR_menu_names[2] := "Chamber B"
+  !IR_menu_names[3] := "Hall A"
+  !IR_menu_names[4] := "Hall B"
+  !IR_menu_names[5] := "Factory"
+  !IR_menu_names[6] := "Car Park"
+  !IR_menu_names[7] := "Inv. Room"
+  !IR_menu_names[8] := "-- Plates --"
+  !IR_menu_names[9] := "1.5s Plate"
+  !IR_menu_names[10] := "2.3s Plate"
+  !IR_menu_names[11] := "3.2s Plate"
+  !IR_menu_names[12] := "4.5s Plate"
+  !IR_menu_names[13] := "5.0s Plate"
+  !IR_menu_names[14] := "8.0s Plate"
+  !IR_menu_names[15] := "10.0s Plate"
+  !IR_menu_names[16] := "12.0s Plate"
+  !IR_menu_names[17] := "16.0s Plate"
+  !IR_menu_names[18] := "-- FX --"
+  !IR_menu_names[19] := "Bubbly"
+  !IR_menu_names[20] := "Zipper Up"
+  !IR_menu_names[21] := "Crystal Cave"
+  !IR_menu_names[22] := "Crystal Gyro"
+  !IR_menu_names[23] := "Dry Ice"
+  !IR_menu_names[24] := "Dl. Reaction"
+  !IR_menu_names[25] := "Vinyl Liftoff"
+  !IR_menu_names[26] := "Unity"
+  !IR_menu_names[27] := "Flashback"
+  !IR_menu_names[28] := "Retrovirus"
+  !IR_menu_names[29] := "Charging"
+  !IR_menu_names[30] := "Clueless"
+  !IR_menu_names[31] := "Masonry Bit"
+  !IR_menu_names[32] := "Corrosive"
+  !IR_menu_names[33] := "Opacity"
+  declare %IR_index[34]
+  %IR_index[0] := -1
+  %IR_index[1] := 0
+  %IR_index[2] := 1
+  %IR_index[3] := 2
+  %IR_index[4] := 3
+  %IR_index[5] := 4
+  %IR_index[6] := 5
+  %IR_index[7] := 6
+  %IR_index[8] := -1
+  %IR_index[9] := 7
+  %IR_index[10] := 8
+  %IR_index[11] := 9
+  %IR_index[12] := 10
+  %IR_index[13] := 11
+  %IR_index[14] := 12
+  %IR_index[15] := 13
+  %IR_index[16] := 14
+  %IR_index[17] := 15
+  %IR_index[18] := -1
+  %IR_index[19] := 16
+  %IR_index[20] := 17
+  %IR_index[21] := 18
+  %IR_index[22] := 19
+  %IR_index[23] := 20
+  %IR_index[24] := 21
+  %IR_index[25] := 22
+  %IR_index[26] := 23
+  %IR_index[27] := 24
+  %IR_index[28] := 25
+  %IR_index[29] := 26
+  %IR_index[30] := 27
+  %IR_index[31] := 28
+  %IR_index[32] := 29
+  %IR_index[33] := 30
+  declare !notes[12]
+  !notes[0] := "C"
+  !notes[1] := "C#"
+  !notes[2] := "D"
+  !notes[3] := "D#"
+  !notes[4] := "E"
+  !notes[5] := "F"
+  !notes[6] := "F#"
+  !notes[7] := "G"
+  !notes[8] := "G#"
+  !notes[9] := "A"
+  !notes[10] := "A#"
+  !notes[11] := "B"
+  declare !note_names[128]
+  $i := 0
+  while ($i<num_elements(!note_names))
+    !note_names[$i] := !notes[$i mod 12] & ($i/12-2)
+    inc($i)
+  end while
+  declare %ui_art_switches[21]
+  %ui_art_switches[0] := get_ui_id($articulations_swi_sus_norm_ppp)
+  %ui_art_switches[1] := get_ui_id($articulations_swi_sus_norm_pp)
+  %ui_art_switches[2] := get_ui_id($articulations_swi_sus_norm_p)
+  %ui_art_switches[3] := get_ui_id($articulations_swi_sus_cs_ppp)
+  %ui_art_switches[4] := get_ui_id($articulations_swi_sus_cs_pp)
+  %ui_art_switches[5] := get_ui_id($articulations_swi_sus_cs_p)
+  %ui_art_switches[6] := get_ui_id($articulations_swi_sus_supercs_ppp)
+  %ui_art_switches[7] := get_ui_id($articulations_swi_sus_supercs_pp)
+  %ui_art_switches[8] := get_ui_id($articulations_swi_sus_supercs_p)
+  %ui_art_switches[9] := get_ui_id($articulations_swi_portato_cs)
+  %ui_art_switches[10] := get_ui_id($articulations_swi_portato_norm)
+  %ui_art_switches[11] := get_ui_id($articulations_swi_vib_pulses_cs)
+  %ui_art_switches[12] := get_ui_id($articulations_swi_vib_pulses_norm)
+  %ui_art_switches[13] := get_ui_id($articulations_swi_rebow_cs)
+  %ui_art_switches[14] := get_ui_id($articulations_swi_rebow_norm)
+  %ui_art_switches[15] := get_ui_id($articulations_swi_trem_bursts_cs)
+  %ui_art_switches[16] := get_ui_id($articulations_swi_trem_bursts_norm)
+  %ui_art_switches[17] := get_ui_id($articulations_swi_fluctuating_trem_cs)
+  %ui_art_switches[18] := get_ui_id($articulations_swi_fluctuating_trem_norm)
+  %ui_art_switches[19] := get_ui_id($articulations_swi_harmonics_cs)
+  %ui_art_switches[20] := get_ui_id($articulations_swi_harmonics_norm)
+  make_persistent($articulations_swi_sus_norm_ppp)
+  make_persistent($articulations_swi_sus_norm_pp)
+  make_persistent($articulations_swi_sus_norm_p)
+  make_persistent($articulations_swi_sus_cs_ppp)
+  make_persistent($articulations_swi_sus_cs_pp)
+  make_persistent($articulations_swi_sus_cs_p)
+  make_persistent($articulations_swi_sus_supercs_ppp)
+  make_persistent($articulations_swi_sus_supercs_pp)
+  make_persistent($articulations_swi_sus_supercs_p)
+  make_persistent($articulations_swi_portato_cs)
+  make_persistent($articulations_swi_portato_norm)
+  make_persistent($articulations_swi_vib_pulses_cs)
+  make_persistent($articulations_swi_vib_pulses_norm)
+  make_persistent($articulations_swi_rebow_cs)
+  make_persistent($articulations_swi_rebow_norm)
+  make_persistent($articulations_swi_trem_bursts_cs)
+  make_persistent($articulations_swi_trem_bursts_norm)
+  make_persistent($articulations_swi_fluctuating_trem_cs)
+  make_persistent($articulations_swi_fluctuating_trem_norm)
+  make_persistent($articulations_swi_harmonics_cs)
+  make_persistent($articulations_swi_harmonics_norm)
+  make_persistent($mic_positions_sli_inside)
+  make_persistent($mic_positions_sli_superclose)
+  make_persistent($mic_positions_sli_close)
+  make_persistent($mic_positions_sli_mid)
+  make_persistent($mic_positions_sli_far)
+  declare %ui_channel_swi_on_off[5]
+  %ui_channel_swi_on_off[0] := get_ui_id($mic_positions_swi_on_off_inside)
+  %ui_channel_swi_on_off[1] := get_ui_id($mic_positions_swi_on_off_superclose)
+  %ui_channel_swi_on_off[2] := get_ui_id($mic_positions_swi_on_off_close)
+  %ui_channel_swi_on_off[3] := get_ui_id($mic_positions_swi_on_off_mid)
+  %ui_channel_swi_on_off[4] := get_ui_id($mic_positions_swi_on_off_far)
+  make_persistent($mic_positions_swi_on_off_inside)
+  make_persistent($mic_positions_swi_on_off_superclose)
+  make_persistent($mic_positions_swi_on_off_close)
+  make_persistent($mic_positions_swi_on_off_mid)
+  make_persistent($mic_positions_swi_on_off_far)
+  declare %ui_channel_swi_solo[5]
+  %ui_channel_swi_solo[0] := get_ui_id($mic_positions_swi_solo_inside)
+  %ui_channel_swi_solo[1] := get_ui_id($mic_positions_swi_solo_superclose)
+  %ui_channel_swi_solo[2] := get_ui_id($mic_positions_swi_solo_close)
+  %ui_channel_swi_solo[3] := get_ui_id($mic_positions_swi_solo_mid)
+  %ui_channel_swi_solo[4] := get_ui_id($mic_positions_swi_solo_far)
+  make_persistent($mic_positions_swi_solo_inside)
+  make_persistent($mic_positions_swi_solo_superclose)
+  make_persistent($mic_positions_swi_solo_close)
+  make_persistent($mic_positions_swi_solo_mid)
+  make_persistent($mic_positions_swi_solo_far)
+  declare %ui_channel_swi_mute[5]
+  %ui_channel_swi_mute[0] := get_ui_id($mic_positions_swi_on_off_inside)
+  %ui_channel_swi_mute[1] := get_ui_id($mic_positions_swi_on_off_superclose)
+  %ui_channel_swi_mute[2] := get_ui_id($mic_positions_swi_on_off_close)
+  %ui_channel_swi_mute[3] := get_ui_id($mic_positions_swi_on_off_mid)
+  %ui_channel_swi_mute[4] := get_ui_id($mic_positions_swi_on_off_far)
+  $i := 0
+  while ($i<num_elements(%ui_channel_swi_mute))
+    set_control_par(%ui_channel_swi_mute[$i],$CONTROL_PAR_DEFAULT_VALUE,0)
+    inc($i)
+  end while
+  declare %ui_labels[49]
+  %ui_labels[0] := get_ui_id($mic_positions_lbl_inside)
+  %ui_labels[1] := get_ui_id($mic_positions_lbl_superclose_lower)
+  %ui_labels[2] := get_ui_id($mic_positions_lbl_close)
+  %ui_labels[3] := get_ui_id($mic_positions_lbl_mid)
+  %ui_labels[4] := get_ui_id($mic_positions_lbl_far)
+  %ui_labels[5] := get_ui_id($ADSR_lbl_a)
+  %ui_labels[6] := get_ui_id($ADSR_lbl_d)
+  %ui_labels[7] := get_ui_id($ADSR_lbl_s)
+  %ui_labels[8] := get_ui_id($ADSR_lbl_r)
+  %ui_labels[9] := get_ui_id($ADSR_panel_dyn_par_lbl_dyn_sim_int)
+  %ui_labels[10] := get_ui_id($ADSR_panel_dyn_par_lbl_dyn_range)
+  %ui_labels[11] := get_ui_id($ADSR_panel_dyn_par_lbl_dyn_velocity)
+  %ui_labels[12] := get_ui_id($mic_positions_panel_inside_par_lbl_stereo_width)
+  %ui_labels[13] := get_ui_id($mic_positions_panel_superclose_par_lbl_stereo_width)
+  %ui_labels[14] := get_ui_id($mic_positions_panel_close_par_lbl_stereo_width)
+  %ui_labels[15] := get_ui_id($mic_positions_panel_mid_par_lbl_stereo_width)
+  %ui_labels[16] := get_ui_id($mic_positions_panel_far_par_lbl_stereo_width)
+  %ui_labels[17] := get_ui_id($ADSR_lbl_adsr)
+  %ui_labels[18] := get_ui_id($mic_positions_panel_inside_par_lbl_delay_send)
+  %ui_labels[19] := get_ui_id($mic_positions_panel_superclose_par_lbl_delay_send)
+  %ui_labels[20] := get_ui_id($mic_positions_panel_close_par_lbl_delay_send)
+  %ui_labels[21] := get_ui_id($mic_positions_panel_mid_par_lbl_delay_send)
+  %ui_labels[22] := get_ui_id($mic_positions_panel_far_par_lbl_delay_send)
+  %ui_labels[23] := get_ui_id($mic_positions_panel_inside_par_lbl_reverb_send)
+  %ui_labels[24] := get_ui_id($mic_positions_panel_superclose_par_lbl_reverb_send)
+  %ui_labels[25] := get_ui_id($mic_positions_panel_close_par_lbl_reverb_send)
+  %ui_labels[26] := get_ui_id($mic_positions_panel_mid_par_lbl_reverb_send)
+  %ui_labels[27] := get_ui_id($mic_positions_panel_far_par_lbl_reverb_send)
+  %ui_labels[28] := get_ui_id($SEND_FX_lbl_delay_time)
+  %ui_labels[29] := get_ui_id($SEND_FX_lbl_delay_feedback)
+  %ui_labels[30] := get_ui_id($SEND_FX_lbl_delay_lowcut)
+  %ui_labels[31] := get_ui_id($SEND_FX_lbl_delay_hicut)
+  %ui_labels[32] := get_ui_id($SEND_FX_lbl_delay_depth)
+  %ui_labels[33] := get_ui_id($SEND_FX_lbl_delay_rate)
+  %ui_labels[34] := get_ui_id($SEND_FX_lbl_delay_saturate)
+  %ui_labels[35] := get_ui_id($SEND_FX_lbl_delay_bbd)
+  %ui_labels[36] := get_ui_id($SEND_FX_lbl_delay_tapeage)
+  %ui_labels[37] := get_ui_id($SEND_FX_lbl_delay_flutter)
+  %ui_labels[38] := get_ui_id($SEND_FX_lbl_delay_quality)
+  %ui_labels[39] := get_ui_id($SEND_FX_lbl_delay_amount)
+  %ui_labels[40] := get_ui_id($SEND_FX_lbl_delay_size)
+  %ui_labels[41] := get_ui_id($SEND_FX_lbl_delay_mod)
+  %ui_labels[42] := get_ui_id($SEND_FX_lbl_reverb_lowcut)
+  %ui_labels[43] := get_ui_id($SEND_FX_lbl_reverb_hicut)
+  %ui_labels[44] := get_ui_id($mic_positions_panel_inside_par_lbl_pan)
+  %ui_labels[45] := get_ui_id($mic_positions_panel_superclose_par_lbl_pan)
+  %ui_labels[46] := get_ui_id($mic_positions_panel_close_par_lbl_pan)
+  %ui_labels[47] := get_ui_id($mic_positions_panel_mid_par_lbl_pan)
+  %ui_labels[48] := get_ui_id($mic_positions_panel_far_par_lbl_pan)
+  declare !lbl_text[49]
+  !lbl_text[0] := "INSIDE"
+  !lbl_text[1] := "CLOSE"
+  !lbl_text[2] := "CLOSE"
+  !lbl_text[3] := "MID"
+  !lbl_text[4] := "FAR"
+  !lbl_text[5] := "A"
+  !lbl_text[6] := "D"
+  !lbl_text[7] := "S"
+  !lbl_text[8] := "R"
+  !lbl_text[9] := "HIGH BOOST/CUT"
+  !lbl_text[10] := "DYNAMIC RANGE"
+  !lbl_text[11] := "VELOCITY CONTROL"
+  !lbl_text[12] := "STEREO WIDTH"
+  !lbl_text[13] := "STEREO WIDTH"
+  !lbl_text[14] := "STEREO WIDTH"
+  !lbl_text[15] := "STEREO WIDTH"
+  !lbl_text[16] := "STEREO WIDTH"
+  !lbl_text[18] := "DELAY SEND"
+  !lbl_text[19] := "DELAY SEND"
+  !lbl_text[20] := "DELAY SEND"
+  !lbl_text[21] := "DELAY SEND"
+  !lbl_text[22] := "DELAY SEND"
+  !lbl_text[23] := "REVERB SEND"
+  !lbl_text[24] := "REVERB SEND"
+  !lbl_text[25] := "REVERB SEND"
+  !lbl_text[26] := "REVERB SEND"
+  !lbl_text[27] := "REVERB SEND"
+  !lbl_text[28] := "TIME"
+  !lbl_text[29] := "FEEDBACK"
+  !lbl_text[30] := "LOW CUT"
+  !lbl_text[31] := "HIGH CUT"
+  !lbl_text[32] := "DEPTH"
+  !lbl_text[33] := "RATE"
+  !lbl_text[34] := "SATURATE"
+  !lbl_text[35] := "BBD TYPE"
+  !lbl_text[36] := "TAPE AGE"
+  !lbl_text[37] := "FLUTTER"
+  !lbl_text[38] := "QUALITY"
+  !lbl_text[39] := "AMOUNT"
+  !lbl_text[40] := "SIZE"
+  !lbl_text[41] := "MOD"
+  !lbl_text[42] := "LOW CUT"
+  !lbl_text[43] := "HIGH CUT"
+  !lbl_text[44] := "PAN"
+  !lbl_text[45] := "PAN"
+  !lbl_text[46] := "PAN"
+  !lbl_text[47] := "PAN"
+  !lbl_text[48] := "PAN"
+  declare %ui_adsr_controls[8]
+  %ui_adsr_controls[0] := get_ui_id($ADSR_A)
+  %ui_adsr_controls[1] := get_ui_id($ADSR_D)
+  %ui_adsr_controls[2] := get_ui_id($ADSR_S)
+  %ui_adsr_controls[3] := get_ui_id($ADSR_R)
+  %ui_adsr_controls[4] := get_ui_id($ADSR_lbl_a)
+  %ui_adsr_controls[5] := get_ui_id($ADSR_lbl_d)
+  %ui_adsr_controls[6] := get_ui_id($ADSR_lbl_s)
+  %ui_adsr_controls[7] := get_ui_id($ADSR_lbl_r)
+  make_persistent($ADSR_A)
+  make_persistent($ADSR_D)
+  make_persistent($ADSR_S)
+  make_persistent($ADSR_R)
+  $i := 0
+  while ($i<num_elements(%ui_adsr_controls))
+    set_control_par(%ui_adsr_controls[$i],$CONTROL_PAR_POS_X,get_control_par(%ui_adsr_controls[$i],$CONTROL_PAR_POS_X)-0)
+    inc($i)
+  end while
+  $i := 0
+  while ($i<num_elements(%ui_adsr_controls))
+    set_control_par(%ui_adsr_controls[$i],$CONTROL_PAR_POS_Y,get_control_par(%ui_adsr_controls[$i],$CONTROL_PAR_POS_Y)+30)
+    inc($i)
+  end while
+  make_persistent($ADSR_sli_dyn)
+  make_persistent($ADSR_sli_exp)
+  make_persistent($ADSR_panel_dyn_par_sli_dyn_sim_int)
+  make_persistent($ADSR_panel_dyn_par_sli_dyn_range)
+  make_persistent($ADSR_panel_dyn_par_sli_dyn_velocity)
+  make_persistent($ADSR_panel_dyn_par_sli_dyn_range)
+  make_persistent($mic_positions_panel_inside_par_lbl_phase_on)
+  make_persistent($mic_positions_panel_superclose_par_lbl_phase_on)
+  make_persistent($mic_positions_panel_close_par_lbl_phase_on)
+  make_persistent($mic_positions_panel_mid_par_lbl_phase_on)
+  make_persistent($mic_positions_panel_far_par_lbl_phase_on)
+  declare %ui_lbl_phase[5]
+  %ui_lbl_phase[0] := get_ui_id($mic_positions_panel_inside_par_lbl_phase_on)
+  %ui_lbl_phase[1] := get_ui_id($mic_positions_panel_superclose_par_lbl_phase_on)
+  %ui_lbl_phase[2] := get_ui_id($mic_positions_panel_close_par_lbl_phase_on)
+  %ui_lbl_phase[3] := get_ui_id($mic_positions_panel_mid_par_lbl_phase_on)
+  %ui_lbl_phase[4] := get_ui_id($mic_positions_panel_far_par_lbl_phase_on)
+  make_persistent($ADSR_swi_phase)
+  make_persistent($mic_positions_panel_inside_par_sli_stereo_width)
+  make_persistent($mic_positions_panel_superclose_par_sli_stereo_width)
+  make_persistent($mic_positions_panel_close_par_sli_stereo_width)
+  make_persistent($mic_positions_panel_mid_par_sli_stereo_width)
+  make_persistent($mic_positions_panel_far_par_sli_stereo_width)
+  declare %ui_stereo_controls[5]
+  %ui_stereo_controls[0] := get_ui_id($mic_positions_panel_inside_par_sli_stereo_width)
+  %ui_stereo_controls[1] := get_ui_id($mic_positions_panel_superclose_par_sli_stereo_width)
+  %ui_stereo_controls[2] := get_ui_id($mic_positions_panel_close_par_sli_stereo_width)
+  %ui_stereo_controls[3] := get_ui_id($mic_positions_panel_mid_par_sli_stereo_width)
+  %ui_stereo_controls[4] := get_ui_id($mic_positions_panel_far_par_sli_stereo_width)
+  make_persistent($mic_positions_panel_far_par_sli_delay_send)
+  make_persistent($mic_positions_panel_far_par_sli_reverb_send)
+  make_persistent($mic_positions_panel_mid_par_sli_delay_send)
+  make_persistent($mic_positions_panel_mid_par_sli_reverb_send)
+  make_persistent($mic_positions_panel_close_par_sli_delay_send)
+  make_persistent($mic_positions_panel_close_par_sli_reverb_send)
+  make_persistent($mic_positions_panel_superclose_par_sli_delay_send)
+  make_persistent($mic_positions_panel_superclose_par_sli_reverb_send)
+  make_persistent($mic_positions_panel_inside_par_sli_delay_send)
+  make_persistent($mic_positions_panel_inside_par_sli_reverb_send)
+  declare %ui_delay_sends[5]
+  %ui_delay_sends[0] := get_ui_id($mic_positions_panel_inside_par_sli_delay_send)
+  %ui_delay_sends[1] := get_ui_id($mic_positions_panel_superclose_par_sli_delay_send)
+  %ui_delay_sends[2] := get_ui_id($mic_positions_panel_close_par_sli_delay_send)
+  %ui_delay_sends[3] := get_ui_id($mic_positions_panel_mid_par_sli_delay_send)
+  %ui_delay_sends[4] := get_ui_id($mic_positions_panel_far_par_sli_delay_send)
+  declare %ui_reverb_sends[5]
+  %ui_reverb_sends[0] := get_ui_id($mic_positions_panel_inside_par_sli_reverb_send)
+  %ui_reverb_sends[1] := get_ui_id($mic_positions_panel_superclose_par_sli_reverb_send)
+  %ui_reverb_sends[2] := get_ui_id($mic_positions_panel_close_par_sli_reverb_send)
+  %ui_reverb_sends[3] := get_ui_id($mic_positions_panel_mid_par_sli_reverb_send)
+  %ui_reverb_sends[4] := get_ui_id($mic_positions_panel_far_par_sli_reverb_send)
+  make_persistent($mic_positions_panel_inside_par_sli_pan)
+  make_persistent($mic_positions_panel_superclose_par_sli_pan)
+  make_persistent($mic_positions_panel_close_par_sli_pan)
+  make_persistent($mic_positions_panel_mid_par_sli_pan)
+  make_persistent($mic_positions_panel_far_par_sli_pan)
+  declare %ui_pan_controls[5]
+  %ui_pan_controls[0] := get_ui_id($mic_positions_panel_inside_par_sli_pan)
+  %ui_pan_controls[1] := get_ui_id($mic_positions_panel_superclose_par_sli_pan)
+  %ui_pan_controls[2] := get_ui_id($mic_positions_panel_close_par_sli_pan)
+  %ui_pan_controls[3] := get_ui_id($mic_positions_panel_mid_par_sli_pan)
+  %ui_pan_controls[4] := get_ui_id($mic_positions_panel_far_par_sli_pan)
+  make_persistent($mic_positions_panel_inside_par_mnu_channel_output)
+  make_persistent($mic_positions_panel_superclose_par_mnu_channel_output)
+  make_persistent($mic_positions_panel_close_par_mnu_channel_output)
+  make_persistent($mic_positions_panel_mid_par_mnu_channel_output)
+  make_persistent($mic_positions_panel_far_par_mnu_channel_output)
+  add_menu_item($mic_positions_panel_inside_par_mnu_channel_output,"Default",-1)
+  add_menu_item($mic_positions_panel_superclose_par_mnu_channel_output,"Default",-1)
+  add_menu_item($mic_positions_panel_close_par_mnu_channel_output,"Default",-1)
+  add_menu_item($mic_positions_panel_mid_par_mnu_channel_output,"Default",-1)
+  add_menu_item($mic_positions_panel_far_par_mnu_channel_output,"Default",-1)
+  $i := 0
+  while ($i<$NUM_OUTPUT_CHANNELS)
+    add_menu_item($mic_positions_panel_inside_par_mnu_channel_output,output_channel_name($i),$i)
+    add_menu_item($mic_positions_panel_superclose_par_mnu_channel_output,output_channel_name($i),$i)
+    add_menu_item($mic_positions_panel_close_par_mnu_channel_output,output_channel_name($i),$i)
+    add_menu_item($mic_positions_panel_mid_par_mnu_channel_output,output_channel_name($i),$i)
+    add_menu_item($mic_positions_panel_far_par_mnu_channel_output,output_channel_name($i),$i)
+    inc($i)
+  end while
+  declare %ui_output_menus[5]
+  %ui_output_menus[0] := get_ui_id($mic_positions_panel_inside_par_mnu_channel_output)
+  %ui_output_menus[1] := get_ui_id($mic_positions_panel_superclose_par_mnu_channel_output)
+  %ui_output_menus[2] := get_ui_id($mic_positions_panel_close_par_mnu_channel_output)
+  %ui_output_menus[3] := get_ui_id($mic_positions_panel_mid_par_mnu_channel_output)
+  %ui_output_menus[4] := get_ui_id($mic_positions_panel_far_par_mnu_channel_output)
+  declare %ui_output_labels[5]
+  %ui_output_labels[0] := get_ui_id($mic_positions_panel_inside_par_lbl_channel_output)
+  %ui_output_labels[1] := get_ui_id($mic_positions_panel_superclose_par_lbl_channel_output)
+  %ui_output_labels[2] := get_ui_id($mic_positions_panel_close_par_lbl_channel_output)
+  %ui_output_labels[3] := get_ui_id($mic_positions_panel_mid_par_lbl_channel_output)
+  %ui_output_labels[4] := get_ui_id($mic_positions_panel_far_par_lbl_channel_output)
+  declare %ui_swi_mic_par[5]
+  %ui_swi_mic_par[0] := get_ui_id($mic_positions_swi_inside_par)
+  %ui_swi_mic_par[1] := get_ui_id($mic_positions_swi_superclose_par)
+  %ui_swi_mic_par[2] := get_ui_id($mic_positions_swi_close_par)
+  %ui_swi_mic_par[3] := get_ui_id($mic_positions_swi_mid_par)
+  %ui_swi_mic_par[4] := get_ui_id($mic_positions_swi_far_par)
+  declare %ui_channel_panels[5]
+  %ui_channel_panels[0] := get_ui_id($mic_positions_panel_inside_par)
+  %ui_channel_panels[1] := get_ui_id($mic_positions_panel_superclose_par)
+  %ui_channel_panels[2] := get_ui_id($mic_positions_panel_close_par)
+  %ui_channel_panels[3] := get_ui_id($mic_positions_panel_mid_par)
+  %ui_channel_panels[4] := get_ui_id($mic_positions_panel_far_par)
+  make_persistent($SEND_FX_swi_delay_on)
+  make_persistent($SEND_FX_mnu_delay_mode)
+  make_persistent($SEND_FX_swi_delay_stereo)
+  make_persistent($SEND_FX_swi_delay_noise)
+  make_persistent($SEND_FX_swi_delay_dense)
+  make_persistent($SEND_FX_swi_delay_pingpong)
+  make_persistent($SEND_FX_mnu_sync_unit)
+  make_persistent($SEND_FX_lbl_sync_unit)
+  make_persistent($SEND_FX_sli_delay_time)
+  make_persistent($SEND_FX_lbl_delay_time)
+  make_persistent($SEND_FX_sli_delay_feedback)
+  make_persistent($SEND_FX_lbl_delay_feedback)
+  make_persistent($SEND_FX_sli_delay_lowcut)
+  make_persistent($SEND_FX_lbl_delay_lowcut)
+  make_persistent($SEND_FX_sli_delay_hicut)
+  make_persistent($SEND_FX_lbl_delay_hicut)
+  make_persistent($SEND_FX_sli_delay_depth)
+  make_persistent($SEND_FX_lbl_delay_depth)
+  make_persistent($SEND_FX_sli_delay_rate)
+  make_persistent($SEND_FX_lbl_delay_rate)
+  make_persistent($SEND_FX_sli_delay_saturate)
+  make_persistent($SEND_FX_lbl_delay_saturate)
+  make_persistent($SEND_FX_sli_delay_bbd)
+  make_persistent($SEND_FX_lbl_delay_bbd)
+  make_persistent($SEND_FX_sli_delay_tapeage)
+  make_persistent($SEND_FX_lbl_delay_tapeage)
+  make_persistent($SEND_FX_sli_delay_flutter)
+  make_persistent($SEND_FX_lbl_delay_flutter)
+  make_persistent($SEND_FX_sli_delay_quality)
+  make_persistent($SEND_FX_lbl_delay_quality)
+  make_persistent($SEND_FX_sli_delay_amount)
+  make_persistent($SEND_FX_lbl_delay_amount)
+  make_persistent($SEND_FX_sli_delay_size)
+  make_persistent($SEND_FX_lbl_delay_size)
+  make_persistent($SEND_FX_sli_delay_mod)
+  make_persistent($SEND_FX_lbl_delay_mod)
+  declare %ui_delay_modern[7]
+  %ui_delay_modern[0] := get_ui_id($SEND_FX_sli_delay_depth)
+  %ui_delay_modern[1] := get_ui_id($SEND_FX_lbl_delay_depth)
+  %ui_delay_modern[2] := get_ui_id($SEND_FX_sli_delay_rate)
+  %ui_delay_modern[3] := get_ui_id($SEND_FX_lbl_delay_rate)
+  %ui_delay_modern[4] := get_ui_id($SEND_FX_sli_delay_saturate)
+  %ui_delay_modern[5] := get_ui_id($SEND_FX_lbl_delay_saturate)
+  %ui_delay_modern[6] := get_ui_id($SEND_FX_swi_delay_stereo)
+  declare %ui_delay_analogue[7]
+  %ui_delay_analogue[0] := get_ui_id($SEND_FX_sli_delay_depth)
+  %ui_delay_analogue[1] := get_ui_id($SEND_FX_lbl_delay_depth)
+  %ui_delay_analogue[2] := get_ui_id($SEND_FX_sli_delay_rate)
+  %ui_delay_analogue[3] := get_ui_id($SEND_FX_lbl_delay_rate)
+  %ui_delay_analogue[4] := get_ui_id($SEND_FX_sli_delay_bbd)
+  %ui_delay_analogue[5] := get_ui_id($SEND_FX_lbl_delay_bbd)
+  %ui_delay_analogue[6] := get_ui_id($SEND_FX_swi_delay_stereo)
+  declare %ui_delay_tape[7]
+  %ui_delay_tape[0] := get_ui_id($SEND_FX_sli_delay_tapeage)
+  %ui_delay_tape[1] := get_ui_id($SEND_FX_lbl_delay_tapeage)
+  %ui_delay_tape[2] := get_ui_id($SEND_FX_sli_delay_flutter)
+  %ui_delay_tape[3] := get_ui_id($SEND_FX_lbl_delay_flutter)
+  %ui_delay_tape[4] := get_ui_id($SEND_FX_sli_delay_saturate)
+  %ui_delay_tape[5] := get_ui_id($SEND_FX_lbl_delay_saturate)
+  %ui_delay_tape[6] := get_ui_id($SEND_FX_swi_delay_noise)
+  declare %ui_delay_vintage[7]
+  %ui_delay_vintage[0] := get_ui_id($SEND_FX_sli_delay_depth)
+  %ui_delay_vintage[1] := get_ui_id($SEND_FX_lbl_delay_depth)
+  %ui_delay_vintage[2] := get_ui_id($SEND_FX_sli_delay_rate)
+  %ui_delay_vintage[3] := get_ui_id($SEND_FX_lbl_delay_rate)
+  %ui_delay_vintage[4] := get_ui_id($SEND_FX_sli_delay_quality)
+  %ui_delay_vintage[5] := get_ui_id($SEND_FX_lbl_delay_quality)
+  %ui_delay_vintage[6] := get_ui_id($SEND_FX_swi_delay_stereo)
+  declare %ui_delay_diffusion[7]
+  %ui_delay_diffusion[0] := get_ui_id($SEND_FX_sli_delay_amount)
+  %ui_delay_diffusion[1] := get_ui_id($SEND_FX_lbl_delay_amount)
+  %ui_delay_diffusion[2] := get_ui_id($SEND_FX_sli_delay_size)
+  %ui_delay_diffusion[3] := get_ui_id($SEND_FX_lbl_delay_size)
+  %ui_delay_diffusion[4] := get_ui_id($SEND_FX_sli_delay_mod)
+  %ui_delay_diffusion[5] := get_ui_id($SEND_FX_lbl_delay_mod)
+  %ui_delay_diffusion[6] := get_ui_id($SEND_FX_swi_delay_dense)
+  $i := 0
+  while ($i<num_elements(!delay_modes_names))
+    add_menu_item($SEND_FX_mnu_delay_mode,!delay_modes_names[$i],$i)
+    inc($i)
+  end while
+  $i := 0
+  while ($i<num_elements(!sync_units_text))
+    add_menu_item($SEND_FX_mnu_sync_unit,!sync_units_text[$i],$i)
+    inc($i)
+  end while
+  make_persistent($SEND_FX_swi_reverb_on)
+  make_persistent($SEND_FX_mnu_reverb_IR)
+  make_persistent($SEND_FX_sli_reverb_lowcut)
+  make_persistent($SEND_FX_lbl_reverb_lowcut)
+  make_persistent($SEND_FX_sli_reverb_hicut)
+  make_persistent($SEND_FX_lbl_reverb_hicut)
+  $i := 0
+  while ($i<num_elements(!IR_menu_names))
+    add_menu_item($SEND_FX_mnu_reverb_IR,!IR_menu_names[$i],%IR_index[$i])
+    inc($i)
+  end while
+  declare %ui_xy_art_buttons[4]
+  %ui_xy_art_buttons[0] := get_ui_id($xy_pad_btn_xy_art_1)
+  %ui_xy_art_buttons[1] := get_ui_id($xy_pad_btn_xy_art_2)
+  %ui_xy_art_buttons[2] := get_ui_id($xy_pad_btn_xy_art_3)
+  %ui_xy_art_buttons[3] := get_ui_id($xy_pad_btn_xy_art_4)
+  declare %ui_xy_corner_labels[4]
+  %ui_xy_corner_labels[0] := get_ui_id($xy_pad_lbl_corner_1)
+  %ui_xy_corner_labels[1] := get_ui_id($xy_pad_lbl_corner_2)
+  %ui_xy_corner_labels[2] := get_ui_id($xy_pad_lbl_corner_3)
+  %ui_xy_corner_labels[3] := get_ui_id($xy_pad_lbl_corner_4)
+  declare %ui_xy_corner_on_switches[4]
+  %ui_xy_corner_on_switches[0] := get_ui_id($xy_pad_swi_corner_on_1)
+  %ui_xy_corner_on_switches[1] := get_ui_id($xy_pad_swi_corner_on_2)
+  %ui_xy_corner_on_switches[2] := get_ui_id($xy_pad_swi_corner_on_3)
+  %ui_xy_corner_on_switches[3] := get_ui_id($xy_pad_swi_corner_on_4)
+  declare %ui_xy_cc_learn_switches[2]
+  %ui_xy_cc_learn_switches[0] := get_ui_id($xy_pad_swi_cc_learn_x)
+  %ui_xy_cc_learn_switches[1] := get_ui_id($xy_pad_swi_cc_learn_y)
+  $i := 0
+  while ($i<num_elements(%ui_xy_cc_learn_switches))
+    set_control_par(%ui_xy_cc_learn_switches[$i],$CONTROL_PAR_VALUE,0)
+    set_control_par(%ui_xy_cc_learn_switches[$i],$CONTROL_PAR_DEFAULT_VALUE,0)
+    inc($i)
+  end while
+  $i := 0
+  while ($i<num_elements(%ui_xy_corner_on_switches))
+    set_control_par(%ui_xy_corner_on_switches[$i],$CONTROL_PAR_VALUE,1)
+    set_control_par(%ui_xy_corner_on_switches[$i],$CONTROL_PAR_DEFAULT_VALUE,1)
+    inc($i)
+  end while
+  make_persistent($xy_pad_btn_xy_art_1)
+  make_persistent($xy_pad_btn_xy_art_2)
+  make_persistent($xy_pad_btn_xy_art_3)
+  make_persistent($xy_pad_btn_xy_art_4)
+  make_persistent($xy_pad_swi_corner_on_1)
+  make_persistent($xy_pad_swi_corner_on_2)
+  make_persistent($xy_pad_swi_corner_on_3)
+  make_persistent($xy_pad_swi_corner_on_4)
+  make_persistent(?xy_pad_xypad)
+  make_persistent($xy_pad_sli_trim_1)
+  make_persistent($xy_pad_sli_trim_2)
+  make_persistent($xy_pad_sli_trim_3)
+  make_persistent($xy_pad_sli_trim_4)
+  declare $_i3
+  $_i3 := 0
+  while ($_i3<4)
+    if (get_control_par(%ui_xy_corner_on_switches[$_i3],$CONTROL_PAR_VALUE)=1)
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT,!articulation_names[%xy_corner_art[$_i3]])
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,!articulation_names_short[%xy_corner_art[$_i3]])
+    else
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT," OFF")
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,"OFF")
+    end if
+    inc($_i3)
+  end while
+  message("")
+  declare %_cb_state4[49]
+  declare %_cb_state3[49]
+  declare $_i4
+  declare $_any_harmonics
+  declare $_any_normal
+  declare %_cb_state2[4]
+  declare %_cb_state[2]
+  declare %_lamp[2]
+  declare $_j
+  declare ~_x
+  declare ~_y
+  declare ~_half_pi := 1.5707963
+  declare ~_blend
+  declare ?_w_lin[4]
+  declare ?_w_pow[4]
+  declare ?_w[4]
+  declare $_trim_raw
+  declare ~_trim_min_db
+  declare ~_trim_pct
+  declare ~_trim_range
+  declare ~_trim_db
+  declare ~_trim_lin
+  declare $_cc_val
+  declare $_i2
+end on
+
+function _twait
+  %p[$sp-2] := search(%tstate__id,0)
+  if (%p[$sp-2]=-1)
+    pgs_set_key_val(TCM_EXCEPTION,$CURRENT_SCRIPT_SLOT,1)
+  else
+    %tstate__id[$tx] := $NI_CALLBACK_ID
+    %tstate__fp[$tx] := $fp
+    %tstate__sp[$tx] := $sp
+    $tx := %p[$sp-2]
+    %tstate__id[$tx] := -1
+    $fp := %tstate__fs[$tx]+50
+    %p[$fp-1] := %p[$sp-1]
+    $sp := $fp
+    wait(%p[$sp-1])
+    %tstate__id[$tx] := 0
+    $tx := search(%tstate__id,$NI_CALLBACK_ID)
+    %tstate__id[$tx] := -1
+    $fp := %tstate__fp[$tx]
+    $sp := %tstate__sp[$tx]
+  end if
+end function
+
+function f__xy_learn_blink
+  %p[$sp-2] := $fp
+  $fp := $sp-2
+  $sp := $fp
+  %_cb_state[%p[$fp+1]] := $NI_CALLBACK_ID
+  %_lamp[%p[$fp+1]] := 1
+  while ($xy_cc_learn_axis=%p[$fp+1] and (%_cb_state[%p[$fp+1]]=$NI_CALLBACK_ID))
+    set_control_par(%ui_xy_cc_learn_switches[%p[$fp+1]],$CONTROL_PAR_VALUE,%_lamp[%p[$fp+1]])
+    %_lamp[%p[$fp+1]] := 1-%_lamp[%p[$fp+1]]
+    %p[$sp-1] := 500000
+    call _twait
+  end while
+  if (%_cb_state[%p[$fp+1]]=$NI_CALLBACK_ID)
+    set_control_par(%ui_xy_cc_learn_switches[%p[$fp+1]],$CONTROL_PAR_VALUE,0)
+  end if
+  $sp := $fp
+  $fp := %p[$fp]
+  $sp := $sp+2
+end function
+
+function f__update_xy_trim_label
+  %p[$sp-4] := $fp
+  $fp := $sp-4
+  $sp := $fp
+  %_cb_state2[%p[$fp+3]] := $NI_CALLBACK_ID
+  select (%p[$fp+3])
+    case 0
+      %p[$fp+1] := $xy_pad_sli_trim_1
+    case 1
+      %p[$fp+1] := $xy_pad_sli_trim_2
+    case 2
+      %p[$fp+1] := $xy_pad_sli_trim_3
+    case 3
+      %p[$fp+1] := $xy_pad_sli_trim_4
+  end select
+  %p[$fp+2] := 240-((%p[$fp+1]*240+500000)/1000000)
+  if (%p[$fp+2]=0)
+    @xy_trim_text := "0.0 dB"
+  else
+    @xy_trim_text := "-" & (%p[$fp+2]/10) & "." & (%p[$fp+2] mod 10) & " dB"
+  end if
+  select (%p[$fp+3])
+    case 0
+      set_text($xy_pad_lbl_trim_1,@xy_trim_text)
+    case 1
+      set_text($xy_pad_lbl_trim_2,@xy_trim_text)
+    case 2
+      set_text($xy_pad_lbl_trim_3,@xy_trim_text)
+    case 3
+      set_text($xy_pad_lbl_trim_4,@xy_trim_text)
+  end select
+  %p[$sp-1] := 2000000
+  call _twait
+  if (%_cb_state2[%p[$fp+3]]=$NI_CALLBACK_ID)
+    select (%p[$fp+3])
+      case 0
+        set_text($xy_pad_lbl_trim_1,"TRIM")
+      case 1
+        set_text($xy_pad_lbl_trim_2,"TRIM")
+      case 2
+        set_text($xy_pad_lbl_trim_3,"TRIM")
+      case 3
+        set_text($xy_pad_lbl_trim_4,"TRIM")
+    end select
+  end if
+  $sp := $fp
+  $fp := %p[$fp]
+  $sp := $sp+4
+end function
+
+function f__update_delay_controls
+  %p[$sp-2] := $fp
+  $fp := $sp-2
+  $sp := $fp
+  %p[$fp+1] := 0
+  while (%p[$fp+1]<num_elements(%delay_par))
+    set_control_par(%delay_controls[%p[$fp+1]],$CONTROL_PAR_VALUE,get_engine_par(%delay_par[%p[$fp+1]],-1,0,$NI_SEND_BUS))
+    inc(%p[$fp+1])
+  end while
+  $sp := $fp
+  $fp := %p[$fp]
+  $sp := $sp+2
+end function
+
+function f__update_channel_controls
+  %p[$sp-2] := $fp
+  $fp := $sp-2
+  $sp := $fp
+  %p[$fp+1] := 0
+  while (%p[$fp+1]<num_elements(%ui_delay_sends))
+    set_control_par(%ui_delay_sends[%p[$fp+1]],$CONTROL_PAR_VALUE,get_engine_par($ENGINE_PAR_SENDLEVEL_0,-1,7,$NI_BUS_OFFSET+%p[$fp+1]))
+    set_control_par(%ui_reverb_sends[%p[$fp+1]],$CONTROL_PAR_VALUE,get_engine_par($ENGINE_PAR_SENDLEVEL_1,-1,7,$NI_BUS_OFFSET+%p[$fp+1]))
+    set_control_par(%ui_stereo_controls[%p[$fp+1]],$CONTROL_PAR_VALUE,get_engine_par($ENGINE_PAR_STEREO,-1,0,$NI_BUS_OFFSET+%p[$fp+1]))
+    if (%p[$fp+1]=0)
+      set_control_par(%ui_pan_controls[%p[$fp+1]],$CONTROL_PAR_VALUE,get_engine_par($ENGINE_PAR_PAN,-1,-1,$NI_BUS_OFFSET+%p[$fp+1]))
+    else
+      set_control_par(%ui_pan_controls[%p[$fp+1]],$CONTROL_PAR_VALUE,get_engine_par($ENGINE_PAR_STEREO_PAN,-1,0,$NI_BUS_OFFSET+%p[$fp+1]))
+    end if
+    inc(%p[$fp+1])
+  end while
+  $sp := $fp
+  $fp := %p[$fp]
+  $sp := $sp+2
+end function
+
+function f__update_label_specific
+  %p[$sp-3] := $fp
+  $fp := $sp-3
+  $sp := $fp
+  %_cb_state4[%p[$fp+1]] := $NI_CALLBACK_ID
+  select (%p[$fp+2])
+    case 0
+      set_control_par_str(%ui_labels[%p[$fp+1]],$CONTROL_PAR_TEXT,!label_units_pre[%p[$fp+1]] & ($ADSR_panel_dyn_par_sli_dyn_sim_int/100) & !label_units_post[%p[$fp+1]])
+    case 1
+      set_control_par_str(%ui_labels[%p[$fp+1]],$CONTROL_PAR_TEXT,!label_units_pre[%p[$fp+1]] & ($ADSR_panel_dyn_par_sli_dyn_range/10000) & !label_units_post[%p[$fp+1]])
+  end select
+  %p[$sp-1] := 2000000
+  call _twait
+  if (%_cb_state4[%p[$fp+1]]=$NI_CALLBACK_ID)
+    set_control_par_str(%ui_labels[%p[$fp+1]],$CONTROL_PAR_TEXT,!lbl_text[%p[$fp+1]])
+  end if
+  $sp := $fp
+  $fp := %p[$fp]
+  $sp := $sp+3
+end function
+
+function f__show_hide_dynamic_settings
+  %p[$sp-2] := $fp
+  $fp := $sp-2
+  $sp := $fp
+  if (%p[$fp+1]=1)
+    set_control_par(get_ui_id($ADSR_panel_dyn_par),$CONTROL_PAR_HIDE,$HIDE_PART_NOTHING)
+  else
+    set_control_par(get_ui_id($ADSR_panel_dyn_par),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+  end if
+  $sp := $fp
+  $fp := %p[$fp]
+  $sp := $sp+2
+end function
+
+function f__show_delay_controls
+  %p[$sp-3] := $fp
+  $fp := $sp-3
+  $sp := $fp
+  %p[$fp+1] := 0
+  while (%p[$fp+1]<num_elements(%ui_delay_modern))
+    set_control_par(%ui_delay_modern[%p[$fp+1]],$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+    set_control_par(%ui_delay_analogue[%p[$fp+1]],$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+    set_control_par(%ui_delay_tape[%p[$fp+1]],$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+    set_control_par(%ui_delay_vintage[%p[$fp+1]],$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+    set_control_par(%ui_delay_diffusion[%p[$fp+1]],$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+    select (%p[$fp+2])
+      case 0
+        set_control_par(%ui_delay_modern[%p[$fp+1]],$CONTROL_PAR_HIDE,$HIDE_PART_NOTHING)
+        set_control_par(%ui_delay_modern[1],$CONTROL_PAR_HIDE,$HIDE_PART_BG)
+        set_control_par(%ui_delay_modern[3],$CONTROL_PAR_HIDE,$HIDE_PART_BG)
+        set_control_par(%ui_delay_modern[5],$CONTROL_PAR_HIDE,$HIDE_PART_BG)
+      case 1
+        set_control_par(%ui_delay_analogue[%p[$fp+1]],$CONTROL_PAR_HIDE,$HIDE_PART_NOTHING)
+        set_control_par(%ui_delay_analogue[1],$CONTROL_PAR_HIDE,$HIDE_PART_BG)
+        set_control_par(%ui_delay_analogue[3],$CONTROL_PAR_HIDE,$HIDE_PART_BG)
+        set_control_par(%ui_delay_analogue[5],$CONTROL_PAR_HIDE,$HIDE_PART_BG)
+      case 2
+        set_control_par(%ui_delay_tape[%p[$fp+1]],$CONTROL_PAR_HIDE,$HIDE_PART_NOTHING)
+        set_control_par(%ui_delay_tape[1],$CONTROL_PAR_HIDE,$HIDE_PART_BG)
+        set_control_par(%ui_delay_tape[3],$CONTROL_PAR_HIDE,$HIDE_PART_BG)
+        set_control_par(%ui_delay_tape[5],$CONTROL_PAR_HIDE,$HIDE_PART_BG)
+      case 3
+        set_control_par(%ui_delay_vintage[%p[$fp+1]],$CONTROL_PAR_HIDE,$HIDE_PART_NOTHING)
+        set_control_par(%ui_delay_vintage[1],$CONTROL_PAR_HIDE,$HIDE_PART_BG)
+        set_control_par(%ui_delay_vintage[3],$CONTROL_PAR_HIDE,$HIDE_PART_BG)
+        set_control_par(%ui_delay_vintage[5],$CONTROL_PAR_HIDE,$HIDE_PART_BG)
+      case 4
+        set_control_par(%ui_delay_diffusion[%p[$fp+1]],$CONTROL_PAR_HIDE,$HIDE_PART_NOTHING)
+        set_control_par(%ui_delay_diffusion[1],$CONTROL_PAR_HIDE,$HIDE_PART_BG)
+        set_control_par(%ui_delay_diffusion[3],$CONTROL_PAR_HIDE,$HIDE_PART_BG)
+        set_control_par(%ui_delay_diffusion[5],$CONTROL_PAR_HIDE,$HIDE_PART_BG)
+    end select
+    inc(%p[$fp+1])
+  end while
+  $sp := $fp
+  $fp := %p[$fp]
+  $sp := $sp+3
+end function
+
+function f__color_keys
+  %p[$sp-2] := $fp
+  $fp := $sp-2
+  $sp := $fp
+  %p[$fp+1] := 0
+  while (%p[$fp+1]<=127)
+    set_key_color(%p[$fp+1],$KEY_COLOR_INACTIVE)
+    inc(%p[$fp+1])
+  end while
+  $_any_harmonics := 0
+  $_any_normal := 0
+  $_i4 := 0
+  while ($_i4<4)
+    if (%xy_corner_art[$_i4]=19 or (%xy_corner_art[$_i4]=20))
+      $_any_harmonics := 1
+    else
+      $_any_normal := 1
+    end if
+    inc($_i4)
+  end while
+  if ($_any_normal=1)
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_DEFAULT)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  if ($_any_harmonics=1 and ($_any_normal=1))
+    $_i4 := 78
+    while ($_i4<=96)
+      set_key_color($_i4,$KEY_COLOR_MINT)
+      inc($_i4)
+    end while
+  else
+    if ($_any_harmonics=1)
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_GREEN)
+        inc($_i4)
+      end while
+    else
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_DEFAULT)
+        inc($_i4)
+      end while
+    end if
+  end if
+  if ($_any_harmonics=1)
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_GREEN)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  $sp := $fp
+  $fp := %p[$fp]
+  $sp := $sp+2
+end function
+
+function f__select_multi_articulation
+  %p[$sp-3] := $fp
+  $fp := $sp-3
+  $sp := $fp
+  if (get_control_par(%ui_art_switches[%p[$fp+2]],$CONTROL_PAR_KEY_SHIFT)=0)
+    %p[$fp+1] := 0
+    while (%p[$fp+1]<num_elements(%ui_art_switches))
+      set_control_par(%ui_art_switches[%p[$fp+1]],$CONTROL_PAR_VALUE,0)
+      inc(%p[$fp+1])
+    end while
+  end if
+  set_control_par(%ui_art_switches[%p[$fp+2]],$CONTROL_PAR_VALUE,1)
+  $current_art := %p[$fp+2]
+  if ($current_art=19 or ($current_art=20))
+    $harmonics_on := 1
+  else
+    $harmonics_on := 0
+  end if
+  call f__color_keys
+  $sp := $fp
+  $fp := %p[$fp]
+  $sp := $sp+3
+end function
+
+function f__highlight_corner_articulation
+  %p[$sp-3] := $fp
+  $fp := $sp-3
+  $sp := $fp
+  %p[$fp+1] := 0
+  while (%p[$fp+1]<num_elements(%ui_art_switches))
+    set_control_par(%ui_art_switches[%p[$fp+1]],$CONTROL_PAR_VALUE,0)
+    inc(%p[$fp+1])
+  end while
+  set_control_par(%ui_art_switches[%xy_corner_art[%p[$fp+2]]],$CONTROL_PAR_VALUE,1)
+  $sp := $fp
+  $fp := %p[$fp]
+  $sp := $sp+3
+end function
+
+function f__show_hide_panel
+  %p[$sp-3] := $fp
+  $fp := $sp-3
+  $sp := $fp
+  if (%p[$fp+1]=1)
+    set_control_par(%p[$fp+2],$CONTROL_PAR_HIDE,$HIDE_PART_NOTHING)
+  else
+    set_control_par(%p[$fp+2],$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+  end if
+  $sp := $fp
+  $fp := %p[$fp]
+  $sp := $sp+3
+end function
+
+function f__update_label
+  %p[$sp-7] := $fp
+  $fp := $sp-7
+  $sp := $fp
+  %_cb_state3[%p[$fp+1]] := $NI_CALLBACK_ID
+  set_control_par_str(%ui_labels[%p[$fp+1]],$CONTROL_PAR_TEXT,!label_units_pre[%p[$fp+2]] & get_engine_par_disp(%p[$fp+3],%p[$fp+4],%p[$fp+5],%p[$fp+6]) & !label_units_post[%p[$fp+2]])
+  %p[$sp-1] := 2000000
+  call _twait
+  if (%_cb_state3[%p[$fp+1]]=$NI_CALLBACK_ID)
+    set_control_par_str(%ui_labels[%p[$fp+1]],$CONTROL_PAR_TEXT,!lbl_text[%p[$fp+1]])
+  end if
+  $sp := $fp
+  $fp := %p[$fp]
+  $sp := $sp+7
+end function
+
+on ui_control(?xy_pad_xypad)
+  ~_half_pi := 1.5707963
+  ~_x := ?xy_pad_xypad[0]
+  ~_y := ?xy_pad_xypad[1]
+  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
+  ?_w_lin[1] := (1.0-~_x)*~_y
+  ?_w_lin[2] := ~_x*~_y
+  ?_w_lin[3] := ~_x*(1.0-~_y)
+  ?_w_pow[0] := cos(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  ?_w_pow[1] := cos(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[2] := sin(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[3] := sin(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  $c := 0
+  while ($c<4)
+    ?_w[$c] := ?_w_lin[$c]+(~_blend*(?_w_pow[$c]-?_w_lin[$c]))
+    select ($c)
+      case 0
+        $_trim_raw := $xy_pad_sli_trim_1
+      case 1
+        $_trim_raw := $xy_pad_sli_trim_2
+      case 2
+        $_trim_raw := $xy_pad_sli_trim_3
+      case 3
+        $_trim_raw := $xy_pad_sli_trim_4
+    end select
+    ~_trim_min_db := 0.0-~XY_TRIM_RANGE_DB
+    ~_trim_pct := int_to_real($_trim_raw)/1000000.0
+    ~_trim_range := 0.0-~_trim_min_db
+    ~_trim_db := ~_trim_pct*~_trim_range
+    ~_trim_db := ~_trim_db+~_trim_min_db
+    ~_trim_lin := pow(10.0,~_trim_db/20.0)
+    ?_w[$c] := ?_w[$c]*~_trim_lin
+    $_cc_val := real_to_int((?_w[$c]-0.0)*127.0/1.0)
+    if ($_cc_val>127)
+      $_cc_val := 127
+    else
+      if ($_cc_val<0)
+        $_cc_val := 0
+      end if
+    end if
+    set_controller(104+$c,$_cc_val)
+    inc($c)
+  end while
+end on
+
+on controller
+  if ($xy_cc_learn_axis # -1)
+    $xy_cc_learnable := 0
+    if ($CC_NUM>=0 and ($CC_NUM<=127))
+      $xy_cc_learnable := 1
+      $_j := 0
+      while ($_j<23)
+        if ($CC_NUM=%xy_cc_excluded[$_j])
+          $xy_cc_learnable := 0
+        end if
+        inc($_j)
+      end while
+    end if
+    if ($xy_cc_learnable=1)
+      if ($xy_cc_learn_axis=0)
+        $xy_pad_mnu_cc_x := $CC_NUM
+      else
+        $xy_pad_mnu_cc_y := $CC_NUM
+      end if
+      $xy_cc_learn_axis := -1
+    end if
+  else
+    if ($CC_NUM=$xy_pad_mnu_cc_x)
+      ?xy_pad_xypad[0] := int_to_real(%CC[$CC_NUM])/127.0
+    end if
+    if ($CC_NUM=$xy_pad_mnu_cc_y)
+      ?xy_pad_xypad[1] := int_to_real(%CC[$CC_NUM])/127.0
+    end if
+    if ($CC_NUM=$xy_pad_mnu_cc_x or ($CC_NUM=$xy_pad_mnu_cc_y))
+      ~_half_pi := 1.5707963
+      ~_x := ?xy_pad_xypad[0]
+      ~_y := ?xy_pad_xypad[1]
+      ~_blend := int_to_real($XY_pwr_blend)/1000.0
+      ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
+      ?_w_lin[1] := (1.0-~_x)*~_y
+      ?_w_lin[2] := ~_x*~_y
+      ?_w_lin[3] := ~_x*(1.0-~_y)
+      ?_w_pow[0] := cos(~_x*~_half_pi)*cos(~_y*~_half_pi)
+      ?_w_pow[1] := cos(~_x*~_half_pi)*sin(~_y*~_half_pi)
+      ?_w_pow[2] := sin(~_x*~_half_pi)*sin(~_y*~_half_pi)
+      ?_w_pow[3] := sin(~_x*~_half_pi)*cos(~_y*~_half_pi)
+      $c := 0
+      while ($c<4)
+        ?_w[$c] := ?_w_lin[$c]+(~_blend*(?_w_pow[$c]-?_w_lin[$c]))
+        select ($c)
+          case 0
+            $_trim_raw := $xy_pad_sli_trim_1
+          case 1
+            $_trim_raw := $xy_pad_sli_trim_2
+          case 2
+            $_trim_raw := $xy_pad_sli_trim_3
+          case 3
+            $_trim_raw := $xy_pad_sli_trim_4
+        end select
+        ~_trim_min_db := 0.0-~XY_TRIM_RANGE_DB
+        ~_trim_pct := int_to_real($_trim_raw)/1000000.0
+        ~_trim_range := 0.0-~_trim_min_db
+        ~_trim_db := ~_trim_pct*~_trim_range
+        ~_trim_db := ~_trim_db+~_trim_min_db
+        ~_trim_lin := pow(10.0,~_trim_db/20.0)
+        ?_w[$c] := ?_w[$c]*~_trim_lin
+        $_cc_val := real_to_int((?_w[$c]-0.0)*127.0/1.0)
+        if ($_cc_val>127)
+          $_cc_val := 127
+        else
+          if ($_cc_val<0)
+            $_cc_val := 0
+          end if
+        end if
+        set_controller(104+$c,$_cc_val)
+        inc($c)
+      end while
+    end if
+  end if
+end on
+
+on ui_control($xy_pad_swi_cc_learn_x)
+  if ($xy_cc_learn_axis=0)
+    $xy_cc_learn_axis := -1
+  else
+    $xy_cc_learn_axis := 0
+  end if
+  %p[$sp-1] := 0
+  call f__xy_learn_blink
+end on
+
+on ui_control($xy_pad_swi_cc_learn_y)
+  if ($xy_cc_learn_axis=1)
+    $xy_cc_learn_axis := -1
+  else
+    $xy_cc_learn_axis := 1
+  end if
+  %p[$sp-1] := 1
+  call f__xy_learn_blink
+end on
+
+on ui_control($XY_pwr_blend)
+  ~_half_pi := 1.5707963
+  ~_x := ?xy_pad_xypad[0]
+  ~_y := ?xy_pad_xypad[1]
+  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
+  ?_w_lin[1] := (1.0-~_x)*~_y
+  ?_w_lin[2] := ~_x*~_y
+  ?_w_lin[3] := ~_x*(1.0-~_y)
+  ?_w_pow[0] := cos(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  ?_w_pow[1] := cos(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[2] := sin(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[3] := sin(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  $c := 0
+  while ($c<4)
+    ?_w[$c] := ?_w_lin[$c]+(~_blend*(?_w_pow[$c]-?_w_lin[$c]))
+    select ($c)
+      case 0
+        $_trim_raw := $xy_pad_sli_trim_1
+      case 1
+        $_trim_raw := $xy_pad_sli_trim_2
+      case 2
+        $_trim_raw := $xy_pad_sli_trim_3
+      case 3
+        $_trim_raw := $xy_pad_sli_trim_4
+    end select
+    ~_trim_min_db := 0.0-~XY_TRIM_RANGE_DB
+    ~_trim_pct := int_to_real($_trim_raw)/1000000.0
+    ~_trim_range := 0.0-~_trim_min_db
+    ~_trim_db := ~_trim_pct*~_trim_range
+    ~_trim_db := ~_trim_db+~_trim_min_db
+    ~_trim_lin := pow(10.0,~_trim_db/20.0)
+    ?_w[$c] := ?_w[$c]*~_trim_lin
+    $_cc_val := real_to_int((?_w[$c]-0.0)*127.0/1.0)
+    if ($_cc_val>127)
+      $_cc_val := 127
+    else
+      if ($_cc_val<0)
+        $_cc_val := 0
+      end if
+    end if
+    set_controller(104+$c,$_cc_val)
+    inc($c)
+  end while
+end on
+
+on ui_control($xy_pad_sli_trim_1)
+  ~_half_pi := 1.5707963
+  ~_x := ?xy_pad_xypad[0]
+  ~_y := ?xy_pad_xypad[1]
+  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
+  ?_w_lin[1] := (1.0-~_x)*~_y
+  ?_w_lin[2] := ~_x*~_y
+  ?_w_lin[3] := ~_x*(1.0-~_y)
+  ?_w_pow[0] := cos(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  ?_w_pow[1] := cos(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[2] := sin(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[3] := sin(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  $c := 0
+  while ($c<4)
+    ?_w[$c] := ?_w_lin[$c]+(~_blend*(?_w_pow[$c]-?_w_lin[$c]))
+    select ($c)
+      case 0
+        $_trim_raw := $xy_pad_sli_trim_1
+      case 1
+        $_trim_raw := $xy_pad_sli_trim_2
+      case 2
+        $_trim_raw := $xy_pad_sli_trim_3
+      case 3
+        $_trim_raw := $xy_pad_sli_trim_4
+    end select
+    ~_trim_min_db := 0.0-~XY_TRIM_RANGE_DB
+    ~_trim_pct := int_to_real($_trim_raw)/1000000.0
+    ~_trim_range := 0.0-~_trim_min_db
+    ~_trim_db := ~_trim_pct*~_trim_range
+    ~_trim_db := ~_trim_db+~_trim_min_db
+    ~_trim_lin := pow(10.0,~_trim_db/20.0)
+    ?_w[$c] := ?_w[$c]*~_trim_lin
+    $_cc_val := real_to_int((?_w[$c]-0.0)*127.0/1.0)
+    if ($_cc_val>127)
+      $_cc_val := 127
+    else
+      if ($_cc_val<0)
+        $_cc_val := 0
+      end if
+    end if
+    set_controller(104+$c,$_cc_val)
+    inc($c)
+  end while
+  %p[$sp-1] := 0
+  call f__update_xy_trim_label
+end on
+
+on ui_control($xy_pad_sli_trim_2)
+  ~_half_pi := 1.5707963
+  ~_x := ?xy_pad_xypad[0]
+  ~_y := ?xy_pad_xypad[1]
+  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
+  ?_w_lin[1] := (1.0-~_x)*~_y
+  ?_w_lin[2] := ~_x*~_y
+  ?_w_lin[3] := ~_x*(1.0-~_y)
+  ?_w_pow[0] := cos(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  ?_w_pow[1] := cos(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[2] := sin(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[3] := sin(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  $c := 0
+  while ($c<4)
+    ?_w[$c] := ?_w_lin[$c]+(~_blend*(?_w_pow[$c]-?_w_lin[$c]))
+    select ($c)
+      case 0
+        $_trim_raw := $xy_pad_sli_trim_1
+      case 1
+        $_trim_raw := $xy_pad_sli_trim_2
+      case 2
+        $_trim_raw := $xy_pad_sli_trim_3
+      case 3
+        $_trim_raw := $xy_pad_sli_trim_4
+    end select
+    ~_trim_min_db := 0.0-~XY_TRIM_RANGE_DB
+    ~_trim_pct := int_to_real($_trim_raw)/1000000.0
+    ~_trim_range := 0.0-~_trim_min_db
+    ~_trim_db := ~_trim_pct*~_trim_range
+    ~_trim_db := ~_trim_db+~_trim_min_db
+    ~_trim_lin := pow(10.0,~_trim_db/20.0)
+    ?_w[$c] := ?_w[$c]*~_trim_lin
+    $_cc_val := real_to_int((?_w[$c]-0.0)*127.0/1.0)
+    if ($_cc_val>127)
+      $_cc_val := 127
+    else
+      if ($_cc_val<0)
+        $_cc_val := 0
+      end if
+    end if
+    set_controller(104+$c,$_cc_val)
+    inc($c)
+  end while
+  %p[$sp-1] := 1
+  call f__update_xy_trim_label
+end on
+
+on ui_control($xy_pad_sli_trim_3)
+  ~_half_pi := 1.5707963
+  ~_x := ?xy_pad_xypad[0]
+  ~_y := ?xy_pad_xypad[1]
+  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
+  ?_w_lin[1] := (1.0-~_x)*~_y
+  ?_w_lin[2] := ~_x*~_y
+  ?_w_lin[3] := ~_x*(1.0-~_y)
+  ?_w_pow[0] := cos(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  ?_w_pow[1] := cos(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[2] := sin(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[3] := sin(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  $c := 0
+  while ($c<4)
+    ?_w[$c] := ?_w_lin[$c]+(~_blend*(?_w_pow[$c]-?_w_lin[$c]))
+    select ($c)
+      case 0
+        $_trim_raw := $xy_pad_sli_trim_1
+      case 1
+        $_trim_raw := $xy_pad_sli_trim_2
+      case 2
+        $_trim_raw := $xy_pad_sli_trim_3
+      case 3
+        $_trim_raw := $xy_pad_sli_trim_4
+    end select
+    ~_trim_min_db := 0.0-~XY_TRIM_RANGE_DB
+    ~_trim_pct := int_to_real($_trim_raw)/1000000.0
+    ~_trim_range := 0.0-~_trim_min_db
+    ~_trim_db := ~_trim_pct*~_trim_range
+    ~_trim_db := ~_trim_db+~_trim_min_db
+    ~_trim_lin := pow(10.0,~_trim_db/20.0)
+    ?_w[$c] := ?_w[$c]*~_trim_lin
+    $_cc_val := real_to_int((?_w[$c]-0.0)*127.0/1.0)
+    if ($_cc_val>127)
+      $_cc_val := 127
+    else
+      if ($_cc_val<0)
+        $_cc_val := 0
+      end if
+    end if
+    set_controller(104+$c,$_cc_val)
+    inc($c)
+  end while
+  %p[$sp-1] := 2
+  call f__update_xy_trim_label
+end on
+
+on ui_control($xy_pad_sli_trim_4)
+  ~_half_pi := 1.5707963
+  ~_x := ?xy_pad_xypad[0]
+  ~_y := ?xy_pad_xypad[1]
+  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
+  ?_w_lin[1] := (1.0-~_x)*~_y
+  ?_w_lin[2] := ~_x*~_y
+  ?_w_lin[3] := ~_x*(1.0-~_y)
+  ?_w_pow[0] := cos(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  ?_w_pow[1] := cos(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[2] := sin(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[3] := sin(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  $c := 0
+  while ($c<4)
+    ?_w[$c] := ?_w_lin[$c]+(~_blend*(?_w_pow[$c]-?_w_lin[$c]))
+    select ($c)
+      case 0
+        $_trim_raw := $xy_pad_sli_trim_1
+      case 1
+        $_trim_raw := $xy_pad_sli_trim_2
+      case 2
+        $_trim_raw := $xy_pad_sli_trim_3
+      case 3
+        $_trim_raw := $xy_pad_sli_trim_4
+    end select
+    ~_trim_min_db := 0.0-~XY_TRIM_RANGE_DB
+    ~_trim_pct := int_to_real($_trim_raw)/1000000.0
+    ~_trim_range := 0.0-~_trim_min_db
+    ~_trim_db := ~_trim_pct*~_trim_range
+    ~_trim_db := ~_trim_db+~_trim_min_db
+    ~_trim_lin := pow(10.0,~_trim_db/20.0)
+    ?_w[$c] := ?_w[$c]*~_trim_lin
+    $_cc_val := real_to_int((?_w[$c]-0.0)*127.0/1.0)
+    if ($_cc_val>127)
+      $_cc_val := 127
+    else
+      if ($_cc_val<0)
+        $_cc_val := 0
+      end if
+    end if
+    set_controller(104+$c,$_cc_val)
+    inc($c)
+  end while
+  %p[$sp-1] := 3
+  call f__update_xy_trim_label
+end on
+
+on pgs_changed
+  call f__color_keys
+  ~_half_pi := 1.5707963
+  ~_x := ?xy_pad_xypad[0]
+  ~_y := ?xy_pad_xypad[1]
+  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
+  ?_w_lin[1] := (1.0-~_x)*~_y
+  ?_w_lin[2] := ~_x*~_y
+  ?_w_lin[3] := ~_x*(1.0-~_y)
+  ?_w_pow[0] := cos(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  ?_w_pow[1] := cos(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[2] := sin(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[3] := sin(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  $c := 0
+  while ($c<4)
+    ?_w[$c] := ?_w_lin[$c]+(~_blend*(?_w_pow[$c]-?_w_lin[$c]))
+    select ($c)
+      case 0
+        $_trim_raw := $xy_pad_sli_trim_1
+      case 1
+        $_trim_raw := $xy_pad_sli_trim_2
+      case 2
+        $_trim_raw := $xy_pad_sli_trim_3
+      case 3
+        $_trim_raw := $xy_pad_sli_trim_4
+    end select
+    ~_trim_min_db := 0.0-~XY_TRIM_RANGE_DB
+    ~_trim_pct := int_to_real($_trim_raw)/1000000.0
+    ~_trim_range := 0.0-~_trim_min_db
+    ~_trim_db := ~_trim_pct*~_trim_range
+    ~_trim_db := ~_trim_db+~_trim_min_db
+    ~_trim_lin := pow(10.0,~_trim_db/20.0)
+    ?_w[$c] := ?_w[$c]*~_trim_lin
+    $_cc_val := real_to_int((?_w[$c]-0.0)*127.0/1.0)
+    if ($_cc_val>127)
+      $_cc_val := 127
+    else
+      if ($_cc_val<0)
+        $_cc_val := 0
+      end if
+    end if
+    set_controller(104+$c,$_cc_val)
+    inc($c)
+  end while
+  set_control_par(get_ui_id($ADSR_panel_dyn_par),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+  set_control_par(get_ui_id($mic_positions_panel_inside_par),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+  set_control_par(get_ui_id($mic_positions_panel_superclose_par),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+  set_control_par(get_ui_id($mic_positions_panel_close_par),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+  set_control_par(get_ui_id($mic_positions_panel_mid_par),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+  set_control_par(get_ui_id($mic_positions_panel_far_par),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+  set_control_par(get_ui_id($articulations),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+  if ($ADSR_swi_phase=1)
+    set_text($ADSR_lbl_phase,"ALIGN S.START OFF")
+  else
+    set_text($ADSR_lbl_phase,"ALIGN S.START ON")
+  end if
+  $swi_main := 1
+  $swi_fx := 0
+  set_control_par(get_ui_id($SEND_FX),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+  set_control_par(get_ui_id($SEND_FX_lbl_sync_unit),$CONTROL_PAR_PICTURE_STATE,$SEND_FX_mnu_sync_unit)
+  set_control_par(get_ui_id($SETTINGS),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+  $i := 0
+  while ($i<5)
+    set_control_par_str(%ui_output_labels[$i],$CONTROL_PAR_TEXT,get_menu_item_str(%ui_output_menus[$i],get_control_par(%ui_output_menus[$i],$CONTROL_PAR_VALUE)))
+    inc($i)
+  end while
+  call f__update_delay_controls
+  call f__update_channel_controls
+  %p[$sp-1] := $current_art
+  call f__select_multi_articulation
+end on
+
+on persistence_changed
+  $i := 0
+  while ($i<5)
+    $c := 0
+    while ($c<4)
+      $_i2 := 0
+      while ($_i2<21)
+        if (get_control_par(%ui_channel_swi_mute[$i],$CONTROL_PAR_VALUE)=1)
+          purge_group(%xy_corner_group_start[$c]+$i+(5*$_i2),1)
+        else
+          purge_group(%xy_corner_group_start[$c]+$i+(5*$_i2),0)
+        end if
+        inc($_i2)
+      end while
+      inc($c)
+    end while
+    inc($i)
+  end while
+  $_i3 := 0
+  while ($_i3<4)
+    if (get_control_par(%ui_xy_corner_on_switches[$_i3],$CONTROL_PAR_VALUE)=1)
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT,!articulation_names[%xy_corner_art[$_i3]])
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,!articulation_names_short[%xy_corner_art[$_i3]])
+    else
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT," OFF")
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,"OFF")
+    end if
+    inc($_i3)
+  end while
+  $_any_harmonics := 0
+  $_any_normal := 0
+  $_i4 := 0
+  while ($_i4<4)
+    if (%xy_corner_art[$_i4]=19 or (%xy_corner_art[$_i4]=20))
+      $_any_harmonics := 1
+    else
+      $_any_normal := 1
+    end if
+    inc($_i4)
+  end while
+  if ($_any_normal=1)
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_DEFAULT)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  if ($_any_harmonics=1 and ($_any_normal=1))
+    $_i4 := 78
+    while ($_i4<=96)
+      set_key_color($_i4,$KEY_COLOR_MINT)
+      inc($_i4)
+    end while
+  else
+    if ($_any_harmonics=1)
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_GREEN)
+        inc($_i4)
+      end while
+    else
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_DEFAULT)
+        inc($_i4)
+      end while
+    end if
+  end if
+  if ($_any_harmonics=1)
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_GREEN)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  ~_half_pi := 1.5707963
+  ~_x := ?xy_pad_xypad[0]
+  ~_y := ?xy_pad_xypad[1]
+  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
+  ?_w_lin[1] := (1.0-~_x)*~_y
+  ?_w_lin[2] := ~_x*~_y
+  ?_w_lin[3] := ~_x*(1.0-~_y)
+  ?_w_pow[0] := cos(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  ?_w_pow[1] := cos(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[2] := sin(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[3] := sin(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  $c := 0
+  while ($c<4)
+    ?_w[$c] := ?_w_lin[$c]+(~_blend*(?_w_pow[$c]-?_w_lin[$c]))
+    select ($c)
+      case 0
+        $_trim_raw := $xy_pad_sli_trim_1
+      case 1
+        $_trim_raw := $xy_pad_sli_trim_2
+      case 2
+        $_trim_raw := $xy_pad_sli_trim_3
+      case 3
+        $_trim_raw := $xy_pad_sli_trim_4
+    end select
+    ~_trim_min_db := 0.0-~XY_TRIM_RANGE_DB
+    ~_trim_pct := int_to_real($_trim_raw)/1000000.0
+    ~_trim_range := 0.0-~_trim_min_db
+    ~_trim_db := ~_trim_pct*~_trim_range
+    ~_trim_db := ~_trim_db+~_trim_min_db
+    ~_trim_lin := pow(10.0,~_trim_db/20.0)
+    ?_w[$c] := ?_w[$c]*~_trim_lin
+    $_cc_val := real_to_int((?_w[$c]-0.0)*127.0/1.0)
+    if ($_cc_val>127)
+      $_cc_val := 127
+    else
+      if ($_cc_val<0)
+        $_cc_val := 0
+      end if
+    end if
+    set_controller(104+$c,$_cc_val)
+    inc($c)
+  end while
+end on
+
+on async_complete
+end on
+
+on note
+  disallow_group($ALL_GROUPS)
+  $a := 0
+  while ($a<5)
+    if (get_control_par(%ui_channel_swi_mute[$a],$CONTROL_PAR_VALUE)=1)
+      if ($solo_on_flag=0)
+        $c := 0
+        while ($c<4)
+          if (get_control_par(%ui_xy_corner_on_switches[$c],$CONTROL_PAR_VALUE)=1)
+            allow_group(%xy_corner_group_start[$c]+(%xy_corner_art[$c]*5)+$a)
+          end if
+          inc($c)
+        end while
+      else
+        if (%solo_channels[$a]=1)
+          $c := 0
+          while ($c<4)
+            if (get_control_par(%ui_xy_corner_on_switches[$c],$CONTROL_PAR_VALUE)=1)
+              allow_group(%xy_corner_group_start[$c]+(%xy_corner_art[$c]*5)+$a)
+            end if
+            inc($c)
+          end while
+        end if
+      end if
+    end if
+    inc($a)
+  end while
+end on
+
+on release
+end on
+
+on ui_control($swi_main)
+  $swi_main := 1
+  $swi_fx := 0
+  $swi_settings := 0
+  set_control_par(get_ui_id($mic_positions),$CONTROL_PAR_HIDE,$HIDE_PART_NOTHING)
+  set_control_par(get_ui_id($ADSR),$CONTROL_PAR_HIDE,$HIDE_PART_NOTHING)
+  set_control_par(get_ui_id($SEND_FX),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+  set_control_par(get_ui_id($SETTINGS),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+end on
+
+on ui_control($swi_fx)
+  $swi_fx := 1
+  $swi_main := 0
+  $swi_settings := 0
+  set_control_par(get_ui_id($mic_positions),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+  set_control_par(get_ui_id($ADSR),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+  set_control_par(get_ui_id($SEND_FX),$CONTROL_PAR_HIDE,$HIDE_PART_NOTHING)
+  set_control_par(get_ui_id($SETTINGS),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+  %p[$sp-1] := $SEND_FX_mnu_delay_mode
+  call f__show_delay_controls
+end on
+
+on ui_control($swi_settings)
+  $swi_settings := 1
+  $swi_main := 0
+  $swi_fx := 0
+  set_control_par(get_ui_id($SETTINGS),$CONTROL_PAR_HIDE,$HIDE_PART_NOTHING)
+  set_control_par(get_ui_id($SEND_FX),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+  set_control_par(get_ui_id($mic_positions),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+  set_control_par(get_ui_id($ADSR),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+end on
+
+on ui_control($mic_positions_sli_inside)
+  $c := 0
+  while ($c<4)
+    $i := 0
+    while ($i<21)
+      set_engine_par($ENGINE_PAR_VOLUME,$mic_positions_sli_inside,%xy_corner_group_start[$c]+(5*$i),-1,-1)
+      inc($i)
+    end while
+    inc($c)
+  end while
+  %p[$sp-6] := 0
+  %p[$sp-5] := 0
+  %p[$sp-4] := $ENGINE_PAR_VOLUME
+  %p[$sp-3] := 0
+  %p[$sp-2] := -1
+  %p[$sp-1] := -1
+  call f__update_label
+end on
+
+on ui_control($mic_positions_sli_superclose)
+  $c := 0
+  while ($c<4)
+    $i := 0
+    while ($i<21)
+      set_engine_par($ENGINE_PAR_VOLUME,$mic_positions_sli_superclose,%xy_corner_group_start[$c]+1+(5*$i),-1,-1)
+      inc($i)
+    end while
+    inc($c)
+  end while
+  %p[$sp-6] := 1
+  %p[$sp-5] := 1
+  %p[$sp-4] := $ENGINE_PAR_VOLUME
+  %p[$sp-3] := 1
+  %p[$sp-2] := -1
+  %p[$sp-1] := -1
+  call f__update_label
+end on
+
+on ui_control($mic_positions_sli_close)
+  $c := 0
+  while ($c<4)
+    $i := 0
+    while ($i<21)
+      set_engine_par($ENGINE_PAR_VOLUME,$mic_positions_sli_close,%xy_corner_group_start[$c]+2+(5*$i),-1,-1)
+      inc($i)
+    end while
+    inc($c)
+  end while
+  %p[$sp-6] := 2
+  %p[$sp-5] := 2
+  %p[$sp-4] := $ENGINE_PAR_VOLUME
+  %p[$sp-3] := 2
+  %p[$sp-2] := -1
+  %p[$sp-1] := -1
+  call f__update_label
+end on
+
+on ui_control($mic_positions_sli_mid)
+  $c := 0
+  while ($c<4)
+    $i := 0
+    while ($i<21)
+      set_engine_par($ENGINE_PAR_VOLUME,$mic_positions_sli_mid,%xy_corner_group_start[$c]+3+(5*$i),-1,-1)
+      inc($i)
+    end while
+    inc($c)
+  end while
+  %p[$sp-6] := 3
+  %p[$sp-5] := 3
+  %p[$sp-4] := $ENGINE_PAR_VOLUME
+  %p[$sp-3] := 3
+  %p[$sp-2] := -1
+  %p[$sp-1] := -1
+  call f__update_label
+end on
+
+on ui_control($mic_positions_sli_far)
+  $c := 0
+  while ($c<4)
+    $i := 0
+    while ($i<21)
+      set_engine_par($ENGINE_PAR_VOLUME,$mic_positions_sli_far,%xy_corner_group_start[$c]+4+(5*$i),-1,-1)
+      inc($i)
+    end while
+    inc($c)
+  end while
+  %p[$sp-6] := 4
+  %p[$sp-5] := 4
+  %p[$sp-4] := $ENGINE_PAR_VOLUME
+  %p[$sp-3] := 4
+  %p[$sp-2] := -1
+  %p[$sp-1] := -1
+  call f__update_label
+end on
+
+on ui_control($mic_positions_swi_on_off_inside)
+  $c := 0
+  while ($c<4)
+    $_i2 := 0
+    while ($_i2<21)
+      if (get_control_par(%ui_channel_swi_mute[0],$CONTROL_PAR_VALUE)=1)
+        purge_group(%xy_corner_group_start[$c]+(5*$_i2),1)
+      else
+        purge_group(%xy_corner_group_start[$c]+(5*$_i2),0)
+      end if
+      inc($_i2)
+    end while
+    inc($c)
+  end while
+end on
+
+on ui_control($mic_positions_swi_on_off_superclose)
+  $c := 0
+  while ($c<4)
+    $_i2 := 0
+    while ($_i2<21)
+      if (get_control_par(%ui_channel_swi_mute[1],$CONTROL_PAR_VALUE)=1)
+        purge_group(%xy_corner_group_start[$c]+1+(5*$_i2),1)
+      else
+        purge_group(%xy_corner_group_start[$c]+1+(5*$_i2),0)
+      end if
+      inc($_i2)
+    end while
+    inc($c)
+  end while
+end on
+
+on ui_control($mic_positions_swi_on_off_close)
+  $c := 0
+  while ($c<4)
+    $_i2 := 0
+    while ($_i2<21)
+      if (get_control_par(%ui_channel_swi_mute[2],$CONTROL_PAR_VALUE)=1)
+        purge_group(%xy_corner_group_start[$c]+2+(5*$_i2),1)
+      else
+        purge_group(%xy_corner_group_start[$c]+2+(5*$_i2),0)
+      end if
+      inc($_i2)
+    end while
+    inc($c)
+  end while
+end on
+
+on ui_control($mic_positions_swi_on_off_mid)
+  $c := 0
+  while ($c<4)
+    $_i2 := 0
+    while ($_i2<21)
+      if (get_control_par(%ui_channel_swi_mute[3],$CONTROL_PAR_VALUE)=1)
+        purge_group(%xy_corner_group_start[$c]+3+(5*$_i2),1)
+      else
+        purge_group(%xy_corner_group_start[$c]+3+(5*$_i2),0)
+      end if
+      inc($_i2)
+    end while
+    inc($c)
+  end while
+end on
+
+on ui_control($mic_positions_swi_on_off_far)
+  $c := 0
+  while ($c<4)
+    $_i2 := 0
+    while ($_i2<21)
+      if (get_control_par(%ui_channel_swi_mute[4],$CONTROL_PAR_VALUE)=1)
+        purge_group(%xy_corner_group_start[$c]+4+(5*$_i2),1)
+      else
+        purge_group(%xy_corner_group_start[$c]+4+(5*$_i2),0)
+      end if
+      inc($_i2)
+    end while
+    inc($c)
+  end while
+end on
+
+on ui_control($ADSR_A)
+  $i := 0
+  while ($i<$NUM_GROUPS)
+    set_engine_par($ENGINE_PAR_ATTACK,$ADSR_A,$i,find_mod($i,"ENV_AHDSR"),find_target($i,find_mod($i,"ENV_AHDSR"),"ENV_AHDSR_VOLUME"))
+    inc($i)
+  end while
+  %p[$sp-6] := 17
+  %p[$sp-5] := 5
+  %p[$sp-4] := $ENGINE_PAR_ATTACK
+  %p[$sp-3] := 0
+  %p[$sp-2] := find_mod(0,"ENV_AHDSR")
+  %p[$sp-1] := find_target(0,find_mod(0,"ENV_AHDSR"),"ENV_AHDSR_VOLUME")
+  call f__update_label
+end on
+
+on ui_control($ADSR_D)
+  $i := 0
+  while ($i<$NUM_GROUPS)
+    set_engine_par($ENGINE_PAR_DECAY,$ADSR_D,$i,find_mod($i,"ENV_AHDSR"),find_target($i,find_mod($i,"ENV_AHDSR"),"ENV_AHDSR_VOLUME"))
+    inc($i)
+  end while
+  %p[$sp-6] := 17
+  %p[$sp-5] := 6
+  %p[$sp-4] := $ENGINE_PAR_DECAY
+  %p[$sp-3] := 0
+  %p[$sp-2] := find_mod(0,"ENV_AHDSR")
+  %p[$sp-1] := find_target(0,find_mod(0,"ENV_AHDSR"),"ENV_AHDSR_VOLUME")
+  call f__update_label
+end on
+
+on ui_control($ADSR_S)
+  $i := 0
+  while ($i<$NUM_GROUPS)
+    set_engine_par($ENGINE_PAR_SUSTAIN,$ADSR_S,$i,find_mod($i,"ENV_AHDSR"),find_target($i,find_mod($i,"ENV_AHDSR"),"ENV_AHDSR_VOLUME"))
+    inc($i)
+  end while
+  %p[$sp-6] := 17
+  %p[$sp-5] := 7
+  %p[$sp-4] := $ENGINE_PAR_SUSTAIN
+  %p[$sp-3] := 0
+  %p[$sp-2] := find_mod(0,"ENV_AHDSR")
+  %p[$sp-1] := find_target(0,find_mod(0,"ENV_AHDSR"),"ENV_AHDSR_VOLUME")
+  call f__update_label
+end on
+
+on ui_control($ADSR_R)
+  $i := 0
+  while ($i<$NUM_GROUPS)
+    set_engine_par($ENGINE_PAR_RELEASE,$ADSR_R,$i,find_mod($i,"ENV_AHDSR"),find_target($i,find_mod($i,"ENV_AHDSR"),"ENV_AHDSR_VOLUME"))
+    inc($i)
+  end while
+  %p[$sp-6] := 17
+  %p[$sp-5] := 8
+  %p[$sp-4] := $ENGINE_PAR_RELEASE
+  %p[$sp-3] := 0
+  %p[$sp-2] := find_mod(0,"ENV_AHDSR")
+  %p[$sp-1] := find_target(0,find_mod(0,"ENV_AHDSR"),"ENV_AHDSR_VOLUME")
+  call f__update_label
+end on
+
+on ui_control($ADSR_panel_dyn_par_sli_dyn_sim_int)
+  if ($ADSR_panel_dyn_par_sli_dyn_sim_int>0)
+    $dyn_sim_moved_flag := 1
+  else
+    if ($ADSR_panel_dyn_par_sli_dyn_sim_int=0)
+      $dyn_sim_moved_flag := 0
+    end if
+  end if
+  $dyn_sim_scaled := ($ADSR_panel_dyn_par_sli_dyn_sim_int-0)*7000/10000
+  $i := 0
+  while ($i<$NUM_GROUPS)
+    set_engine_par($ENGINE_PAR_MOD_TARGET_INTENSITY,$dyn_sim_scaled*100,$i,find_mod($i,"EQ1_GAIN"),-1)
+    if ($dyn_sim_moved_flag=1)
+      set_engine_par($ENGINE_PAR_EFFECT_BYPASS,0,$i,0,$NI_INSERT_BUS)
+    else
+      set_engine_par($ENGINE_PAR_EFFECT_BYPASS,1,$i,0,$NI_INSERT_BUS)
+    end if
+    inc($i)
+  end while
+  %p[$sp-2] := 9
+  %p[$sp-1] := 0
+  call f__update_label_specific
+end on
+
+on ui_control($ADSR_panel_dyn_par_sli_dyn_range)
+  $i := 0
+  while ($i<$NUM_GROUPS)
+    set_engine_par($ENGINE_PAR_MOD_TARGET_INTENSITY,$ADSR_panel_dyn_par_sli_dyn_range,$i,find_mod($i,"CC->DYN_RANGE"),-1)
+    inc($i)
+  end while
+  %p[$sp-2] := 10
+  %p[$sp-1] := 1
+  call f__update_label_specific
+end on
+
+on ui_control($ADSR_sli_dyn)
+  set_controller(102,$ADSR_sli_dyn)
+end on
+
+on ui_control($ADSR_sli_exp)
+  set_controller(103,$ADSR_sli_exp)
+end on
+
+on ui_control($ADSR_panel_dyn_par_sli_dyn_velocity)
+  $i := 0
+  while ($i<$NUM_GROUPS)
+    set_engine_par($ENGINE_PAR_MOD_TARGET_INTENSITY,$ADSR_panel_dyn_par_sli_dyn_velocity,$i,find_mod($i,"VEL->VOL"),-1)
+    inc($i)
+  end while
+  %p[$sp-6] := 11
+  %p[$sp-5] := 11
+  %p[$sp-4] := $ENGINE_PAR_MOD_TARGET_INTENSITY
+  %p[$sp-3] := 0
+  %p[$sp-2] := find_mod(0,"VEL->VOL")
+  %p[$sp-1] := -1
+  call f__update_label
+end on
+
+on ui_control($ADSR_swi_dyn_par)
+  %p[$sp-1] := $ADSR_swi_dyn_par
+  call f__show_hide_dynamic_settings
+  $i := 0
+  while ($i<num_elements(%ui_swi_mic_par))
+    %p[$sp-2] := 0
+    %p[$sp-1] := %ui_channel_panels[$i]
+    call f__show_hide_panel
+    set_control_par(%ui_swi_mic_par[$i],$CONTROL_PAR_VALUE,0)
+    inc($i)
+  end while
+end on
+
+on ui_control($ADSR_panel_dyn_par_swi_close_dyn_par)
+  %p[$sp-1] := 0
+  call f__show_hide_dynamic_settings
+  $ADSR_swi_dyn_par := 0
+end on
+
+on ui_control($ADSR_swi_phase)
+  if ($ADSR_swi_phase=1)
+    set_text($ADSR_lbl_phase,"ALIGN S.START OFF")
+    $i := 0
+    while ($i<$NUM_GROUPS)
+      set_engine_par($ENGINE_PAR_MOD_TARGET_INTENSITY,0,$i,find_mod($i,"CONSTANT->SAMPLE_START"),-1)
+      inc($i)
+    end while
+  else
+    set_text($ADSR_lbl_phase,"ALIGN S.START ON")
+    $i := 0
+    while ($i<$NUM_GROUPS)
+      set_engine_par($ENGINE_PAR_MOD_TARGET_INTENSITY,1000000,$i,find_mod($i,"CONSTANT->SAMPLE_START"),-1)
+      inc($i)
+    end while
+  end if
+end on
+
+on ui_control($SEND_FX_swi_delay_on)
+  set_engine_par($ENGINE_PAR_SEND_EFFECT_BYPASS,1-$SEND_FX_swi_delay_on,-1,0,$NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_mnu_delay_mode)
+  %p[$sp-1] := $SEND_FX_mnu_delay_mode
+  call f__show_delay_controls
+  set_engine_par($ENGINE_PAR_RDL_TYPE,%delay_modes[$SEND_FX_mnu_delay_mode],-1,0,$NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_mnu_sync_unit)
+  set_control_par(get_ui_id($SEND_FX_lbl_sync_unit),$CONTROL_PAR_PICTURE_STATE,$SEND_FX_mnu_sync_unit)
+  set_engine_par($ENGINE_PAR_RDL_TIME_UNIT,%sync_units[$SEND_FX_mnu_sync_unit],-1,0,$NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_swi_delay_stereo)
+  set_engine_par($ENGINE_PAR_RDL_STEREO,$SEND_FX_swi_delay_stereo,-1,0,$NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_swi_delay_noise)
+  set_engine_par($ENGINE_PAR_RDL_NOISE,$SEND_FX_swi_delay_noise,-1,0,$NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_swi_delay_dense)
+  set_engine_par($ENGINE_PAR_RDL_DENSE,$SEND_FX_swi_delay_dense,-1,0,$NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_swi_delay_pingpong)
+  set_engine_par($ENGINE_PAR_RDL_PINGPONG,$SEND_FX_swi_delay_pingpong,-1,0,$NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_sli_delay_time)
+  set_engine_par($ENGINE_PAR_RDL_TIME,$SEND_FX_sli_delay_time,-1,0,$NI_SEND_BUS)
+  %p[$sp-6] := 28
+  %p[$sp-5] := 28
+  %p[$sp-4] := $ENGINE_PAR_RDL_TIME
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_SEND_BUS
+  call f__update_label
+end on
+
+on ui_control($SEND_FX_sli_delay_feedback)
+  set_engine_par($ENGINE_PAR_RDL_FEEDBACK,$SEND_FX_sli_delay_feedback,-1,0,$NI_SEND_BUS)
+  %p[$sp-6] := 29
+  %p[$sp-5] := 29
+  %p[$sp-4] := $ENGINE_PAR_RDL_FEEDBACK
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_SEND_BUS
+  call f__update_label
+end on
+
+on ui_control($SEND_FX_sli_delay_lowcut)
+  set_engine_par($ENGINE_PAR_RDL_LOWCUT,$SEND_FX_sli_delay_lowcut,-1,0,$NI_SEND_BUS)
+  %p[$sp-6] := 30
+  %p[$sp-5] := 30
+  %p[$sp-4] := $ENGINE_PAR_RDL_LOWCUT
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_SEND_BUS
+  call f__update_label
+end on
+
+on ui_control($SEND_FX_sli_delay_hicut)
+  set_engine_par($ENGINE_PAR_RDL_HIGHCUT,$SEND_FX_sli_delay_hicut,-1,0,$NI_SEND_BUS)
+  %p[$sp-6] := 31
+  %p[$sp-5] := 31
+  %p[$sp-4] := $ENGINE_PAR_RDL_HIGHCUT
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_SEND_BUS
+  call f__update_label
+end on
+
+on ui_control($SEND_FX_sli_delay_depth)
+  set_engine_par($ENGINE_PAR_RDL_DEPTH,$SEND_FX_sli_delay_depth,-1,0,$NI_SEND_BUS)
+  %p[$sp-6] := 32
+  %p[$sp-5] := 32
+  %p[$sp-4] := $ENGINE_PAR_RDL_DEPTH
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_SEND_BUS
+  call f__update_label
+end on
+
+on ui_control($SEND_FX_sli_delay_rate)
+  set_engine_par($ENGINE_PAR_RDL_RATE,$SEND_FX_sli_delay_rate,-1,0,$NI_SEND_BUS)
+  %p[$sp-6] := 33
+  %p[$sp-5] := 33
+  %p[$sp-4] := $ENGINE_PAR_RDL_RATE
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_SEND_BUS
+  call f__update_label
+end on
+
+on ui_control($SEND_FX_sli_delay_saturate)
+  set_engine_par($ENGINE_PAR_RDL_SATURATION,$SEND_FX_sli_delay_saturate,-1,0,$NI_SEND_BUS)
+  %p[$sp-6] := 34
+  %p[$sp-5] := 34
+  %p[$sp-4] := $ENGINE_PAR_RDL_SATURATION
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_SEND_BUS
+  call f__update_label
+end on
+
+on ui_control($SEND_FX_sli_delay_bbd)
+  set_engine_par($ENGINE_PAR_RDL_BBDTYPE,$SEND_FX_sli_delay_bbd,-1,0,$NI_SEND_BUS)
+  %p[$sp-6] := 35
+  %p[$sp-5] := 35
+  %p[$sp-4] := $ENGINE_PAR_RDL_BBDTYPE
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_SEND_BUS
+  call f__update_label
+end on
+
+on ui_control($SEND_FX_sli_delay_tapeage)
+  set_engine_par($ENGINE_PAR_RDL_TAPEAGE,$SEND_FX_sli_delay_tapeage,-1,0,$NI_SEND_BUS)
+  %p[$sp-6] := 36
+  %p[$sp-5] := 36
+  %p[$sp-4] := $ENGINE_PAR_RDL_TAPEAGE
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_SEND_BUS
+  call f__update_label
+end on
+
+on ui_control($SEND_FX_sli_delay_flutter)
+  set_engine_par($ENGINE_PAR_RDL_FLUTTER,$SEND_FX_sli_delay_flutter,-1,0,$NI_SEND_BUS)
+  %p[$sp-6] := 37
+  %p[$sp-5] := 37
+  %p[$sp-4] := $ENGINE_PAR_RDL_FLUTTER
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_SEND_BUS
+  call f__update_label
+end on
+
+on ui_control($SEND_FX_sli_delay_quality)
+  set_engine_par($ENGINE_PAR_RDL_QUALITY,$SEND_FX_sli_delay_quality,-1,0,$NI_SEND_BUS)
+  %p[$sp-6] := 38
+  %p[$sp-5] := 38
+  %p[$sp-4] := $ENGINE_PAR_RDL_QUALITY
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_SEND_BUS
+  call f__update_label
+end on
+
+on ui_control($SEND_FX_sli_delay_amount)
+  set_engine_par($ENGINE_PAR_RDL_AMOUNT,$SEND_FX_sli_delay_amount,-1,0,$NI_SEND_BUS)
+  %p[$sp-6] := 39
+  %p[$sp-5] := 39
+  %p[$sp-4] := $ENGINE_PAR_RDL_AMOUNT
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_SEND_BUS
+  call f__update_label
+end on
+
+on ui_control($SEND_FX_sli_delay_size)
+  set_engine_par($ENGINE_PAR_RDL_SIZE,$SEND_FX_sli_delay_size,-1,0,$NI_SEND_BUS)
+  %p[$sp-6] := 40
+  %p[$sp-5] := 40
+  %p[$sp-4] := $ENGINE_PAR_RDL_SIZE
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_SEND_BUS
+  call f__update_label
+end on
+
+on ui_control($SEND_FX_sli_delay_mod)
+  set_engine_par($ENGINE_PAR_RDL_MODULATION,$SEND_FX_sli_delay_mod,-1,0,$NI_SEND_BUS)
+  %p[$sp-6] := 41
+  %p[$sp-5] := 41
+  %p[$sp-4] := $ENGINE_PAR_RDL_MODULATION
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_SEND_BUS
+  call f__update_label
+end on
+
+on ui_control($SEND_FX_swi_reverb_on)
+  set_engine_par($ENGINE_PAR_SEND_EFFECT_BYPASS,1-$SEND_FX_swi_reverb_on,-1,1,$NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_mnu_reverb_IR)
+  if ($SEND_FX_mnu_reverb_IR # -1)
+    $load_ir_id := load_ir_sample(!IR_names[$SEND_FX_mnu_reverb_IR],1,$NI_SEND_BUS)
+    $current_ir := $SEND_FX_mnu_reverb_IR
+  else
+    $SEND_FX_mnu_reverb_IR := $current_ir
+  end if
+end on
+
+on ui_control($SEND_FX_sli_reverb_lowcut)
+  %reverb_cb_state[0] := $NI_CALLBACK_ID
+  ~val := int_to_real($SEND_FX_sli_reverb_lowcut)*0.000001
+  ~val := ~val*6.90775527898213+2.99573227355399
+  ~val := pow(~NI_MATH_E,~val)
+  $res := real_to_int(round(~val*10.0))
+  if ($res<10000)
+    set_text($SEND_FX_lbl_reverb_lowcut,$res/10 & "." & ($res mod 10) & " Hz")
+  else
+    set_text($SEND_FX_lbl_reverb_lowcut,$res/10000 & "." & (($res+500)/1000 mod 10) & "k" & " Hz")
+  end if
+  set_engine_par($ENGINE_PAR_IRC_FREQ_HIGHPASS_ER,$SEND_FX_sli_reverb_lowcut,-1,1,$NI_SEND_BUS)
+  set_engine_par($ENGINE_PAR_IRC_FREQ_HIGHPASS_LR,$SEND_FX_sli_reverb_lowcut,-1,1,$NI_SEND_BUS)
+  wait(2000000)
+  if (%reverb_cb_state[0]=$NI_CALLBACK_ID)
+    set_text($SEND_FX_lbl_reverb_lowcut,"LOW CUT")
+  end if
+end on
+
+on ui_control($SEND_FX_sli_reverb_hicut)
+  %reverb_cb_state[1] := $NI_CALLBACK_ID
+  ~val := int_to_real($SEND_FX_sli_reverb_hicut)*0.000001
+  ~val := ~val*6.90775527898213+2.99573227355399
+  ~val := pow(~NI_MATH_E,~val)
+  $res := real_to_int(round(~val*10.0))
+  if ($res<10000)
+    set_text($SEND_FX_lbl_reverb_hicut,$res/10 & "." & ($res mod 10) & " Hz")
+  else
+    set_text($SEND_FX_lbl_reverb_hicut,$res/10000 & "." & (($res+500)/1000 mod 10) & "k" & " Hz")
+  end if
+  set_engine_par($ENGINE_PAR_IRC_FREQ_LOWPASS_ER,$SEND_FX_sli_reverb_hicut,-1,1,$NI_SEND_BUS)
+  set_engine_par($ENGINE_PAR_IRC_FREQ_LOWPASS_LR,$SEND_FX_sli_reverb_hicut,-1,1,$NI_SEND_BUS)
+  wait(2000000)
+  if (%reverb_cb_state[1]=$NI_CALLBACK_ID)
+    set_text($SEND_FX_lbl_reverb_hicut,"HIGH CUT")
+  end if
+end on
+
+on ui_control($SEND_FX_sli_reverb_predelay)
+  %reverb_cb_state[2] := $NI_CALLBACK_ID
+  ~val := int_to_real($SEND_FX_sli_reverb_predelay)*0.000001
+  ~val := ~val*5.017279836814924+0.6931471805599453
+  ~val := pow(~NI_MATH_E,~val)-2.0
+  $res := real_to_int(round(~val*100.0))
+  if ($res<10)
+    set_text($SEND_FX_lbl_reverb_predelay,$res/100 & ".0" & ($res mod 100) & " ms")
+  else
+    if ($res<100)
+      set_text($SEND_FX_lbl_reverb_predelay,$res/100 & "." & ($res mod 100) & " ms")
+    else
+      set_text($SEND_FX_lbl_reverb_predelay,$res/100 & "." & ($res/10 mod 10) & " ms")
+    end if
+  end if
+  set_engine_par($ENGINE_PAR_IRC_PREDELAY,$SEND_FX_sli_reverb_predelay,-1,1,$NI_SEND_BUS)
+  wait(2000000)
+  if (%reverb_cb_state[2]=$NI_CALLBACK_ID)
+    set_text($SEND_FX_lbl_reverb_predelay,"PRE DELAY")
+  end if
+end on
+
+on ui_control($articulations_swi_close_art)
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($articulations)
+  call f__show_hide_panel
+  %p[$sp-2] := 1
+  %p[$sp-1] := get_ui_id($xy_pad)
+  call f__show_hide_panel
+  $articulations_swi_close_art := 0
+end on
+
+on ui_control($articulations_swi_sus_norm_ppp)
+  %p[$sp-1] := 0
+  call f__select_multi_articulation
+  %xy_corner_art[$xy_corner_being_edited] := 0
+  $_i3 := 0
+  while ($_i3<4)
+    if (get_control_par(%ui_xy_corner_on_switches[$_i3],$CONTROL_PAR_VALUE)=1)
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT,!articulation_names[%xy_corner_art[$_i3]])
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,!articulation_names_short[%xy_corner_art[$_i3]])
+    else
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT," OFF")
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,"OFF")
+    end if
+    inc($_i3)
+  end while
+  $_any_harmonics := 0
+  $_any_normal := 0
+  $_i4 := 0
+  while ($_i4<4)
+    if (%xy_corner_art[$_i4]=19 or (%xy_corner_art[$_i4]=20))
+      $_any_harmonics := 1
+    else
+      $_any_normal := 1
+    end if
+    inc($_i4)
+  end while
+  if ($_any_normal=1)
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_DEFAULT)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  if ($_any_harmonics=1 and ($_any_normal=1))
+    $_i4 := 78
+    while ($_i4<=96)
+      set_key_color($_i4,$KEY_COLOR_MINT)
+      inc($_i4)
+    end while
+  else
+    if ($_any_harmonics=1)
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_GREEN)
+        inc($_i4)
+      end while
+    else
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_DEFAULT)
+        inc($_i4)
+      end while
+    end if
+  end if
+  if ($_any_harmonics=1)
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_GREEN)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  ~_half_pi := 1.5707963
+  ~_x := ?xy_pad_xypad[0]
+  ~_y := ?xy_pad_xypad[1]
+  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
+  ?_w_lin[1] := (1.0-~_x)*~_y
+  ?_w_lin[2] := ~_x*~_y
+  ?_w_lin[3] := ~_x*(1.0-~_y)
+  ?_w_pow[0] := cos(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  ?_w_pow[1] := cos(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[2] := sin(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[3] := sin(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  $c := 0
+  while ($c<4)
+    ?_w[$c] := ?_w_lin[$c]+(~_blend*(?_w_pow[$c]-?_w_lin[$c]))
+    select ($c)
+      case 0
+        $_trim_raw := $xy_pad_sli_trim_1
+      case 1
+        $_trim_raw := $xy_pad_sli_trim_2
+      case 2
+        $_trim_raw := $xy_pad_sli_trim_3
+      case 3
+        $_trim_raw := $xy_pad_sli_trim_4
+    end select
+    ~_trim_min_db := 0.0-~XY_TRIM_RANGE_DB
+    ~_trim_pct := int_to_real($_trim_raw)/1000000.0
+    ~_trim_range := 0.0-~_trim_min_db
+    ~_trim_db := ~_trim_pct*~_trim_range
+    ~_trim_db := ~_trim_db+~_trim_min_db
+    ~_trim_lin := pow(10.0,~_trim_db/20.0)
+    ?_w[$c] := ?_w[$c]*~_trim_lin
+    $_cc_val := real_to_int((?_w[$c]-0.0)*127.0/1.0)
+    if ($_cc_val>127)
+      $_cc_val := 127
+    else
+      if ($_cc_val<0)
+        $_cc_val := 0
+      end if
+    end if
+    set_controller(104+$c,$_cc_val)
+    inc($c)
+  end while
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($articulations)
+  call f__show_hide_panel
+  %p[$sp-2] := 1
+  %p[$sp-1] := get_ui_id($xy_pad)
+  call f__show_hide_panel
+end on
+
+on ui_control($articulations_swi_sus_norm_pp)
+  %p[$sp-1] := 1
+  call f__select_multi_articulation
+  %xy_corner_art[$xy_corner_being_edited] := 1
+  $_i3 := 0
+  while ($_i3<4)
+    if (get_control_par(%ui_xy_corner_on_switches[$_i3],$CONTROL_PAR_VALUE)=1)
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT,!articulation_names[%xy_corner_art[$_i3]])
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,!articulation_names_short[%xy_corner_art[$_i3]])
+    else
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT," OFF")
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,"OFF")
+    end if
+    inc($_i3)
+  end while
+  $_any_harmonics := 0
+  $_any_normal := 0
+  $_i4 := 0
+  while ($_i4<4)
+    if (%xy_corner_art[$_i4]=19 or (%xy_corner_art[$_i4]=20))
+      $_any_harmonics := 1
+    else
+      $_any_normal := 1
+    end if
+    inc($_i4)
+  end while
+  if ($_any_normal=1)
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_DEFAULT)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  if ($_any_harmonics=1 and ($_any_normal=1))
+    $_i4 := 78
+    while ($_i4<=96)
+      set_key_color($_i4,$KEY_COLOR_MINT)
+      inc($_i4)
+    end while
+  else
+    if ($_any_harmonics=1)
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_GREEN)
+        inc($_i4)
+      end while
+    else
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_DEFAULT)
+        inc($_i4)
+      end while
+    end if
+  end if
+  if ($_any_harmonics=1)
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_GREEN)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  ~_half_pi := 1.5707963
+  ~_x := ?xy_pad_xypad[0]
+  ~_y := ?xy_pad_xypad[1]
+  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
+  ?_w_lin[1] := (1.0-~_x)*~_y
+  ?_w_lin[2] := ~_x*~_y
+  ?_w_lin[3] := ~_x*(1.0-~_y)
+  ?_w_pow[0] := cos(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  ?_w_pow[1] := cos(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[2] := sin(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[3] := sin(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  $c := 0
+  while ($c<4)
+    ?_w[$c] := ?_w_lin[$c]+(~_blend*(?_w_pow[$c]-?_w_lin[$c]))
+    select ($c)
+      case 0
+        $_trim_raw := $xy_pad_sli_trim_1
+      case 1
+        $_trim_raw := $xy_pad_sli_trim_2
+      case 2
+        $_trim_raw := $xy_pad_sli_trim_3
+      case 3
+        $_trim_raw := $xy_pad_sli_trim_4
+    end select
+    ~_trim_min_db := 0.0-~XY_TRIM_RANGE_DB
+    ~_trim_pct := int_to_real($_trim_raw)/1000000.0
+    ~_trim_range := 0.0-~_trim_min_db
+    ~_trim_db := ~_trim_pct*~_trim_range
+    ~_trim_db := ~_trim_db+~_trim_min_db
+    ~_trim_lin := pow(10.0,~_trim_db/20.0)
+    ?_w[$c] := ?_w[$c]*~_trim_lin
+    $_cc_val := real_to_int((?_w[$c]-0.0)*127.0/1.0)
+    if ($_cc_val>127)
+      $_cc_val := 127
+    else
+      if ($_cc_val<0)
+        $_cc_val := 0
+      end if
+    end if
+    set_controller(104+$c,$_cc_val)
+    inc($c)
+  end while
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($articulations)
+  call f__show_hide_panel
+  %p[$sp-2] := 1
+  %p[$sp-1] := get_ui_id($xy_pad)
+  call f__show_hide_panel
+end on
+
+on ui_control($articulations_swi_sus_norm_p)
+  %p[$sp-1] := 2
+  call f__select_multi_articulation
+  %xy_corner_art[$xy_corner_being_edited] := 2
+  $_i3 := 0
+  while ($_i3<4)
+    if (get_control_par(%ui_xy_corner_on_switches[$_i3],$CONTROL_PAR_VALUE)=1)
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT,!articulation_names[%xy_corner_art[$_i3]])
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,!articulation_names_short[%xy_corner_art[$_i3]])
+    else
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT," OFF")
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,"OFF")
+    end if
+    inc($_i3)
+  end while
+  $_any_harmonics := 0
+  $_any_normal := 0
+  $_i4 := 0
+  while ($_i4<4)
+    if (%xy_corner_art[$_i4]=19 or (%xy_corner_art[$_i4]=20))
+      $_any_harmonics := 1
+    else
+      $_any_normal := 1
+    end if
+    inc($_i4)
+  end while
+  if ($_any_normal=1)
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_DEFAULT)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  if ($_any_harmonics=1 and ($_any_normal=1))
+    $_i4 := 78
+    while ($_i4<=96)
+      set_key_color($_i4,$KEY_COLOR_MINT)
+      inc($_i4)
+    end while
+  else
+    if ($_any_harmonics=1)
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_GREEN)
+        inc($_i4)
+      end while
+    else
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_DEFAULT)
+        inc($_i4)
+      end while
+    end if
+  end if
+  if ($_any_harmonics=1)
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_GREEN)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  ~_half_pi := 1.5707963
+  ~_x := ?xy_pad_xypad[0]
+  ~_y := ?xy_pad_xypad[1]
+  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
+  ?_w_lin[1] := (1.0-~_x)*~_y
+  ?_w_lin[2] := ~_x*~_y
+  ?_w_lin[3] := ~_x*(1.0-~_y)
+  ?_w_pow[0] := cos(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  ?_w_pow[1] := cos(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[2] := sin(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[3] := sin(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  $c := 0
+  while ($c<4)
+    ?_w[$c] := ?_w_lin[$c]+(~_blend*(?_w_pow[$c]-?_w_lin[$c]))
+    select ($c)
+      case 0
+        $_trim_raw := $xy_pad_sli_trim_1
+      case 1
+        $_trim_raw := $xy_pad_sli_trim_2
+      case 2
+        $_trim_raw := $xy_pad_sli_trim_3
+      case 3
+        $_trim_raw := $xy_pad_sli_trim_4
+    end select
+    ~_trim_min_db := 0.0-~XY_TRIM_RANGE_DB
+    ~_trim_pct := int_to_real($_trim_raw)/1000000.0
+    ~_trim_range := 0.0-~_trim_min_db
+    ~_trim_db := ~_trim_pct*~_trim_range
+    ~_trim_db := ~_trim_db+~_trim_min_db
+    ~_trim_lin := pow(10.0,~_trim_db/20.0)
+    ?_w[$c] := ?_w[$c]*~_trim_lin
+    $_cc_val := real_to_int((?_w[$c]-0.0)*127.0/1.0)
+    if ($_cc_val>127)
+      $_cc_val := 127
+    else
+      if ($_cc_val<0)
+        $_cc_val := 0
+      end if
+    end if
+    set_controller(104+$c,$_cc_val)
+    inc($c)
+  end while
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($articulations)
+  call f__show_hide_panel
+  %p[$sp-2] := 1
+  %p[$sp-1] := get_ui_id($xy_pad)
+  call f__show_hide_panel
+end on
+
+on ui_control($articulations_swi_sus_cs_ppp)
+  %p[$sp-1] := 3
+  call f__select_multi_articulation
+  %xy_corner_art[$xy_corner_being_edited] := 3
+  $_i3 := 0
+  while ($_i3<4)
+    if (get_control_par(%ui_xy_corner_on_switches[$_i3],$CONTROL_PAR_VALUE)=1)
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT,!articulation_names[%xy_corner_art[$_i3]])
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,!articulation_names_short[%xy_corner_art[$_i3]])
+    else
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT," OFF")
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,"OFF")
+    end if
+    inc($_i3)
+  end while
+  $_any_harmonics := 0
+  $_any_normal := 0
+  $_i4 := 0
+  while ($_i4<4)
+    if (%xy_corner_art[$_i4]=19 or (%xy_corner_art[$_i4]=20))
+      $_any_harmonics := 1
+    else
+      $_any_normal := 1
+    end if
+    inc($_i4)
+  end while
+  if ($_any_normal=1)
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_DEFAULT)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  if ($_any_harmonics=1 and ($_any_normal=1))
+    $_i4 := 78
+    while ($_i4<=96)
+      set_key_color($_i4,$KEY_COLOR_MINT)
+      inc($_i4)
+    end while
+  else
+    if ($_any_harmonics=1)
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_GREEN)
+        inc($_i4)
+      end while
+    else
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_DEFAULT)
+        inc($_i4)
+      end while
+    end if
+  end if
+  if ($_any_harmonics=1)
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_GREEN)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  ~_half_pi := 1.5707963
+  ~_x := ?xy_pad_xypad[0]
+  ~_y := ?xy_pad_xypad[1]
+  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
+  ?_w_lin[1] := (1.0-~_x)*~_y
+  ?_w_lin[2] := ~_x*~_y
+  ?_w_lin[3] := ~_x*(1.0-~_y)
+  ?_w_pow[0] := cos(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  ?_w_pow[1] := cos(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[2] := sin(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[3] := sin(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  $c := 0
+  while ($c<4)
+    ?_w[$c] := ?_w_lin[$c]+(~_blend*(?_w_pow[$c]-?_w_lin[$c]))
+    select ($c)
+      case 0
+        $_trim_raw := $xy_pad_sli_trim_1
+      case 1
+        $_trim_raw := $xy_pad_sli_trim_2
+      case 2
+        $_trim_raw := $xy_pad_sli_trim_3
+      case 3
+        $_trim_raw := $xy_pad_sli_trim_4
+    end select
+    ~_trim_min_db := 0.0-~XY_TRIM_RANGE_DB
+    ~_trim_pct := int_to_real($_trim_raw)/1000000.0
+    ~_trim_range := 0.0-~_trim_min_db
+    ~_trim_db := ~_trim_pct*~_trim_range
+    ~_trim_db := ~_trim_db+~_trim_min_db
+    ~_trim_lin := pow(10.0,~_trim_db/20.0)
+    ?_w[$c] := ?_w[$c]*~_trim_lin
+    $_cc_val := real_to_int((?_w[$c]-0.0)*127.0/1.0)
+    if ($_cc_val>127)
+      $_cc_val := 127
+    else
+      if ($_cc_val<0)
+        $_cc_val := 0
+      end if
+    end if
+    set_controller(104+$c,$_cc_val)
+    inc($c)
+  end while
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($articulations)
+  call f__show_hide_panel
+  %p[$sp-2] := 1
+  %p[$sp-1] := get_ui_id($xy_pad)
+  call f__show_hide_panel
+end on
+
+on ui_control($articulations_swi_sus_cs_pp)
+  %p[$sp-1] := 4
+  call f__select_multi_articulation
+  %xy_corner_art[$xy_corner_being_edited] := 4
+  $_i3 := 0
+  while ($_i3<4)
+    if (get_control_par(%ui_xy_corner_on_switches[$_i3],$CONTROL_PAR_VALUE)=1)
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT,!articulation_names[%xy_corner_art[$_i3]])
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,!articulation_names_short[%xy_corner_art[$_i3]])
+    else
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT," OFF")
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,"OFF")
+    end if
+    inc($_i3)
+  end while
+  $_any_harmonics := 0
+  $_any_normal := 0
+  $_i4 := 0
+  while ($_i4<4)
+    if (%xy_corner_art[$_i4]=19 or (%xy_corner_art[$_i4]=20))
+      $_any_harmonics := 1
+    else
+      $_any_normal := 1
+    end if
+    inc($_i4)
+  end while
+  if ($_any_normal=1)
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_DEFAULT)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  if ($_any_harmonics=1 and ($_any_normal=1))
+    $_i4 := 78
+    while ($_i4<=96)
+      set_key_color($_i4,$KEY_COLOR_MINT)
+      inc($_i4)
+    end while
+  else
+    if ($_any_harmonics=1)
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_GREEN)
+        inc($_i4)
+      end while
+    else
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_DEFAULT)
+        inc($_i4)
+      end while
+    end if
+  end if
+  if ($_any_harmonics=1)
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_GREEN)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  ~_half_pi := 1.5707963
+  ~_x := ?xy_pad_xypad[0]
+  ~_y := ?xy_pad_xypad[1]
+  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
+  ?_w_lin[1] := (1.0-~_x)*~_y
+  ?_w_lin[2] := ~_x*~_y
+  ?_w_lin[3] := ~_x*(1.0-~_y)
+  ?_w_pow[0] := cos(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  ?_w_pow[1] := cos(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[2] := sin(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[3] := sin(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  $c := 0
+  while ($c<4)
+    ?_w[$c] := ?_w_lin[$c]+(~_blend*(?_w_pow[$c]-?_w_lin[$c]))
+    select ($c)
+      case 0
+        $_trim_raw := $xy_pad_sli_trim_1
+      case 1
+        $_trim_raw := $xy_pad_sli_trim_2
+      case 2
+        $_trim_raw := $xy_pad_sli_trim_3
+      case 3
+        $_trim_raw := $xy_pad_sli_trim_4
+    end select
+    ~_trim_min_db := 0.0-~XY_TRIM_RANGE_DB
+    ~_trim_pct := int_to_real($_trim_raw)/1000000.0
+    ~_trim_range := 0.0-~_trim_min_db
+    ~_trim_db := ~_trim_pct*~_trim_range
+    ~_trim_db := ~_trim_db+~_trim_min_db
+    ~_trim_lin := pow(10.0,~_trim_db/20.0)
+    ?_w[$c] := ?_w[$c]*~_trim_lin
+    $_cc_val := real_to_int((?_w[$c]-0.0)*127.0/1.0)
+    if ($_cc_val>127)
+      $_cc_val := 127
+    else
+      if ($_cc_val<0)
+        $_cc_val := 0
+      end if
+    end if
+    set_controller(104+$c,$_cc_val)
+    inc($c)
+  end while
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($articulations)
+  call f__show_hide_panel
+  %p[$sp-2] := 1
+  %p[$sp-1] := get_ui_id($xy_pad)
+  call f__show_hide_panel
+end on
+
+on ui_control($articulations_swi_sus_cs_p)
+  %p[$sp-1] := 5
+  call f__select_multi_articulation
+  %xy_corner_art[$xy_corner_being_edited] := 5
+  $_i3 := 0
+  while ($_i3<4)
+    if (get_control_par(%ui_xy_corner_on_switches[$_i3],$CONTROL_PAR_VALUE)=1)
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT,!articulation_names[%xy_corner_art[$_i3]])
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,!articulation_names_short[%xy_corner_art[$_i3]])
+    else
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT," OFF")
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,"OFF")
+    end if
+    inc($_i3)
+  end while
+  $_any_harmonics := 0
+  $_any_normal := 0
+  $_i4 := 0
+  while ($_i4<4)
+    if (%xy_corner_art[$_i4]=19 or (%xy_corner_art[$_i4]=20))
+      $_any_harmonics := 1
+    else
+      $_any_normal := 1
+    end if
+    inc($_i4)
+  end while
+  if ($_any_normal=1)
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_DEFAULT)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  if ($_any_harmonics=1 and ($_any_normal=1))
+    $_i4 := 78
+    while ($_i4<=96)
+      set_key_color($_i4,$KEY_COLOR_MINT)
+      inc($_i4)
+    end while
+  else
+    if ($_any_harmonics=1)
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_GREEN)
+        inc($_i4)
+      end while
+    else
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_DEFAULT)
+        inc($_i4)
+      end while
+    end if
+  end if
+  if ($_any_harmonics=1)
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_GREEN)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  ~_half_pi := 1.5707963
+  ~_x := ?xy_pad_xypad[0]
+  ~_y := ?xy_pad_xypad[1]
+  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
+  ?_w_lin[1] := (1.0-~_x)*~_y
+  ?_w_lin[2] := ~_x*~_y
+  ?_w_lin[3] := ~_x*(1.0-~_y)
+  ?_w_pow[0] := cos(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  ?_w_pow[1] := cos(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[2] := sin(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[3] := sin(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  $c := 0
+  while ($c<4)
+    ?_w[$c] := ?_w_lin[$c]+(~_blend*(?_w_pow[$c]-?_w_lin[$c]))
+    select ($c)
+      case 0
+        $_trim_raw := $xy_pad_sli_trim_1
+      case 1
+        $_trim_raw := $xy_pad_sli_trim_2
+      case 2
+        $_trim_raw := $xy_pad_sli_trim_3
+      case 3
+        $_trim_raw := $xy_pad_sli_trim_4
+    end select
+    ~_trim_min_db := 0.0-~XY_TRIM_RANGE_DB
+    ~_trim_pct := int_to_real($_trim_raw)/1000000.0
+    ~_trim_range := 0.0-~_trim_min_db
+    ~_trim_db := ~_trim_pct*~_trim_range
+    ~_trim_db := ~_trim_db+~_trim_min_db
+    ~_trim_lin := pow(10.0,~_trim_db/20.0)
+    ?_w[$c] := ?_w[$c]*~_trim_lin
+    $_cc_val := real_to_int((?_w[$c]-0.0)*127.0/1.0)
+    if ($_cc_val>127)
+      $_cc_val := 127
+    else
+      if ($_cc_val<0)
+        $_cc_val := 0
+      end if
+    end if
+    set_controller(104+$c,$_cc_val)
+    inc($c)
+  end while
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($articulations)
+  call f__show_hide_panel
+  %p[$sp-2] := 1
+  %p[$sp-1] := get_ui_id($xy_pad)
+  call f__show_hide_panel
+end on
+
+on ui_control($articulations_swi_sus_supercs_ppp)
+  %p[$sp-1] := 6
+  call f__select_multi_articulation
+  %xy_corner_art[$xy_corner_being_edited] := 6
+  $_i3 := 0
+  while ($_i3<4)
+    if (get_control_par(%ui_xy_corner_on_switches[$_i3],$CONTROL_PAR_VALUE)=1)
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT,!articulation_names[%xy_corner_art[$_i3]])
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,!articulation_names_short[%xy_corner_art[$_i3]])
+    else
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT," OFF")
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,"OFF")
+    end if
+    inc($_i3)
+  end while
+  $_any_harmonics := 0
+  $_any_normal := 0
+  $_i4 := 0
+  while ($_i4<4)
+    if (%xy_corner_art[$_i4]=19 or (%xy_corner_art[$_i4]=20))
+      $_any_harmonics := 1
+    else
+      $_any_normal := 1
+    end if
+    inc($_i4)
+  end while
+  if ($_any_normal=1)
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_DEFAULT)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  if ($_any_harmonics=1 and ($_any_normal=1))
+    $_i4 := 78
+    while ($_i4<=96)
+      set_key_color($_i4,$KEY_COLOR_MINT)
+      inc($_i4)
+    end while
+  else
+    if ($_any_harmonics=1)
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_GREEN)
+        inc($_i4)
+      end while
+    else
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_DEFAULT)
+        inc($_i4)
+      end while
+    end if
+  end if
+  if ($_any_harmonics=1)
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_GREEN)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  ~_half_pi := 1.5707963
+  ~_x := ?xy_pad_xypad[0]
+  ~_y := ?xy_pad_xypad[1]
+  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
+  ?_w_lin[1] := (1.0-~_x)*~_y
+  ?_w_lin[2] := ~_x*~_y
+  ?_w_lin[3] := ~_x*(1.0-~_y)
+  ?_w_pow[0] := cos(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  ?_w_pow[1] := cos(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[2] := sin(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[3] := sin(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  $c := 0
+  while ($c<4)
+    ?_w[$c] := ?_w_lin[$c]+(~_blend*(?_w_pow[$c]-?_w_lin[$c]))
+    select ($c)
+      case 0
+        $_trim_raw := $xy_pad_sli_trim_1
+      case 1
+        $_trim_raw := $xy_pad_sli_trim_2
+      case 2
+        $_trim_raw := $xy_pad_sli_trim_3
+      case 3
+        $_trim_raw := $xy_pad_sli_trim_4
+    end select
+    ~_trim_min_db := 0.0-~XY_TRIM_RANGE_DB
+    ~_trim_pct := int_to_real($_trim_raw)/1000000.0
+    ~_trim_range := 0.0-~_trim_min_db
+    ~_trim_db := ~_trim_pct*~_trim_range
+    ~_trim_db := ~_trim_db+~_trim_min_db
+    ~_trim_lin := pow(10.0,~_trim_db/20.0)
+    ?_w[$c] := ?_w[$c]*~_trim_lin
+    $_cc_val := real_to_int((?_w[$c]-0.0)*127.0/1.0)
+    if ($_cc_val>127)
+      $_cc_val := 127
+    else
+      if ($_cc_val<0)
+        $_cc_val := 0
+      end if
+    end if
+    set_controller(104+$c,$_cc_val)
+    inc($c)
+  end while
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($articulations)
+  call f__show_hide_panel
+  %p[$sp-2] := 1
+  %p[$sp-1] := get_ui_id($xy_pad)
+  call f__show_hide_panel
+end on
+
+on ui_control($articulations_swi_sus_supercs_pp)
+  %p[$sp-1] := 7
+  call f__select_multi_articulation
+  %xy_corner_art[$xy_corner_being_edited] := 7
+  $_i3 := 0
+  while ($_i3<4)
+    if (get_control_par(%ui_xy_corner_on_switches[$_i3],$CONTROL_PAR_VALUE)=1)
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT,!articulation_names[%xy_corner_art[$_i3]])
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,!articulation_names_short[%xy_corner_art[$_i3]])
+    else
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT," OFF")
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,"OFF")
+    end if
+    inc($_i3)
+  end while
+  $_any_harmonics := 0
+  $_any_normal := 0
+  $_i4 := 0
+  while ($_i4<4)
+    if (%xy_corner_art[$_i4]=19 or (%xy_corner_art[$_i4]=20))
+      $_any_harmonics := 1
+    else
+      $_any_normal := 1
+    end if
+    inc($_i4)
+  end while
+  if ($_any_normal=1)
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_DEFAULT)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  if ($_any_harmonics=1 and ($_any_normal=1))
+    $_i4 := 78
+    while ($_i4<=96)
+      set_key_color($_i4,$KEY_COLOR_MINT)
+      inc($_i4)
+    end while
+  else
+    if ($_any_harmonics=1)
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_GREEN)
+        inc($_i4)
+      end while
+    else
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_DEFAULT)
+        inc($_i4)
+      end while
+    end if
+  end if
+  if ($_any_harmonics=1)
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_GREEN)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  ~_half_pi := 1.5707963
+  ~_x := ?xy_pad_xypad[0]
+  ~_y := ?xy_pad_xypad[1]
+  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
+  ?_w_lin[1] := (1.0-~_x)*~_y
+  ?_w_lin[2] := ~_x*~_y
+  ?_w_lin[3] := ~_x*(1.0-~_y)
+  ?_w_pow[0] := cos(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  ?_w_pow[1] := cos(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[2] := sin(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[3] := sin(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  $c := 0
+  while ($c<4)
+    ?_w[$c] := ?_w_lin[$c]+(~_blend*(?_w_pow[$c]-?_w_lin[$c]))
+    select ($c)
+      case 0
+        $_trim_raw := $xy_pad_sli_trim_1
+      case 1
+        $_trim_raw := $xy_pad_sli_trim_2
+      case 2
+        $_trim_raw := $xy_pad_sli_trim_3
+      case 3
+        $_trim_raw := $xy_pad_sli_trim_4
+    end select
+    ~_trim_min_db := 0.0-~XY_TRIM_RANGE_DB
+    ~_trim_pct := int_to_real($_trim_raw)/1000000.0
+    ~_trim_range := 0.0-~_trim_min_db
+    ~_trim_db := ~_trim_pct*~_trim_range
+    ~_trim_db := ~_trim_db+~_trim_min_db
+    ~_trim_lin := pow(10.0,~_trim_db/20.0)
+    ?_w[$c] := ?_w[$c]*~_trim_lin
+    $_cc_val := real_to_int((?_w[$c]-0.0)*127.0/1.0)
+    if ($_cc_val>127)
+      $_cc_val := 127
+    else
+      if ($_cc_val<0)
+        $_cc_val := 0
+      end if
+    end if
+    set_controller(104+$c,$_cc_val)
+    inc($c)
+  end while
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($articulations)
+  call f__show_hide_panel
+  %p[$sp-2] := 1
+  %p[$sp-1] := get_ui_id($xy_pad)
+  call f__show_hide_panel
+end on
+
+on ui_control($articulations_swi_sus_supercs_p)
+  %p[$sp-1] := 8
+  call f__select_multi_articulation
+  %xy_corner_art[$xy_corner_being_edited] := 8
+  $_i3 := 0
+  while ($_i3<4)
+    if (get_control_par(%ui_xy_corner_on_switches[$_i3],$CONTROL_PAR_VALUE)=1)
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT,!articulation_names[%xy_corner_art[$_i3]])
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,!articulation_names_short[%xy_corner_art[$_i3]])
+    else
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT," OFF")
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,"OFF")
+    end if
+    inc($_i3)
+  end while
+  $_any_harmonics := 0
+  $_any_normal := 0
+  $_i4 := 0
+  while ($_i4<4)
+    if (%xy_corner_art[$_i4]=19 or (%xy_corner_art[$_i4]=20))
+      $_any_harmonics := 1
+    else
+      $_any_normal := 1
+    end if
+    inc($_i4)
+  end while
+  if ($_any_normal=1)
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_DEFAULT)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  if ($_any_harmonics=1 and ($_any_normal=1))
+    $_i4 := 78
+    while ($_i4<=96)
+      set_key_color($_i4,$KEY_COLOR_MINT)
+      inc($_i4)
+    end while
+  else
+    if ($_any_harmonics=1)
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_GREEN)
+        inc($_i4)
+      end while
+    else
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_DEFAULT)
+        inc($_i4)
+      end while
+    end if
+  end if
+  if ($_any_harmonics=1)
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_GREEN)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  ~_half_pi := 1.5707963
+  ~_x := ?xy_pad_xypad[0]
+  ~_y := ?xy_pad_xypad[1]
+  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
+  ?_w_lin[1] := (1.0-~_x)*~_y
+  ?_w_lin[2] := ~_x*~_y
+  ?_w_lin[3] := ~_x*(1.0-~_y)
+  ?_w_pow[0] := cos(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  ?_w_pow[1] := cos(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[2] := sin(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[3] := sin(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  $c := 0
+  while ($c<4)
+    ?_w[$c] := ?_w_lin[$c]+(~_blend*(?_w_pow[$c]-?_w_lin[$c]))
+    select ($c)
+      case 0
+        $_trim_raw := $xy_pad_sli_trim_1
+      case 1
+        $_trim_raw := $xy_pad_sli_trim_2
+      case 2
+        $_trim_raw := $xy_pad_sli_trim_3
+      case 3
+        $_trim_raw := $xy_pad_sli_trim_4
+    end select
+    ~_trim_min_db := 0.0-~XY_TRIM_RANGE_DB
+    ~_trim_pct := int_to_real($_trim_raw)/1000000.0
+    ~_trim_range := 0.0-~_trim_min_db
+    ~_trim_db := ~_trim_pct*~_trim_range
+    ~_trim_db := ~_trim_db+~_trim_min_db
+    ~_trim_lin := pow(10.0,~_trim_db/20.0)
+    ?_w[$c] := ?_w[$c]*~_trim_lin
+    $_cc_val := real_to_int((?_w[$c]-0.0)*127.0/1.0)
+    if ($_cc_val>127)
+      $_cc_val := 127
+    else
+      if ($_cc_val<0)
+        $_cc_val := 0
+      end if
+    end if
+    set_controller(104+$c,$_cc_val)
+    inc($c)
+  end while
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($articulations)
+  call f__show_hide_panel
+  %p[$sp-2] := 1
+  %p[$sp-1] := get_ui_id($xy_pad)
+  call f__show_hide_panel
+end on
+
+on ui_control($articulations_swi_portato_cs)
+  %p[$sp-1] := 9
+  call f__select_multi_articulation
+  %xy_corner_art[$xy_corner_being_edited] := 9
+  $_i3 := 0
+  while ($_i3<4)
+    if (get_control_par(%ui_xy_corner_on_switches[$_i3],$CONTROL_PAR_VALUE)=1)
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT,!articulation_names[%xy_corner_art[$_i3]])
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,!articulation_names_short[%xy_corner_art[$_i3]])
+    else
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT," OFF")
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,"OFF")
+    end if
+    inc($_i3)
+  end while
+  $_any_harmonics := 0
+  $_any_normal := 0
+  $_i4 := 0
+  while ($_i4<4)
+    if (%xy_corner_art[$_i4]=19 or (%xy_corner_art[$_i4]=20))
+      $_any_harmonics := 1
+    else
+      $_any_normal := 1
+    end if
+    inc($_i4)
+  end while
+  if ($_any_normal=1)
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_DEFAULT)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  if ($_any_harmonics=1 and ($_any_normal=1))
+    $_i4 := 78
+    while ($_i4<=96)
+      set_key_color($_i4,$KEY_COLOR_MINT)
+      inc($_i4)
+    end while
+  else
+    if ($_any_harmonics=1)
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_GREEN)
+        inc($_i4)
+      end while
+    else
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_DEFAULT)
+        inc($_i4)
+      end while
+    end if
+  end if
+  if ($_any_harmonics=1)
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_GREEN)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  ~_half_pi := 1.5707963
+  ~_x := ?xy_pad_xypad[0]
+  ~_y := ?xy_pad_xypad[1]
+  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
+  ?_w_lin[1] := (1.0-~_x)*~_y
+  ?_w_lin[2] := ~_x*~_y
+  ?_w_lin[3] := ~_x*(1.0-~_y)
+  ?_w_pow[0] := cos(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  ?_w_pow[1] := cos(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[2] := sin(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[3] := sin(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  $c := 0
+  while ($c<4)
+    ?_w[$c] := ?_w_lin[$c]+(~_blend*(?_w_pow[$c]-?_w_lin[$c]))
+    select ($c)
+      case 0
+        $_trim_raw := $xy_pad_sli_trim_1
+      case 1
+        $_trim_raw := $xy_pad_sli_trim_2
+      case 2
+        $_trim_raw := $xy_pad_sli_trim_3
+      case 3
+        $_trim_raw := $xy_pad_sli_trim_4
+    end select
+    ~_trim_min_db := 0.0-~XY_TRIM_RANGE_DB
+    ~_trim_pct := int_to_real($_trim_raw)/1000000.0
+    ~_trim_range := 0.0-~_trim_min_db
+    ~_trim_db := ~_trim_pct*~_trim_range
+    ~_trim_db := ~_trim_db+~_trim_min_db
+    ~_trim_lin := pow(10.0,~_trim_db/20.0)
+    ?_w[$c] := ?_w[$c]*~_trim_lin
+    $_cc_val := real_to_int((?_w[$c]-0.0)*127.0/1.0)
+    if ($_cc_val>127)
+      $_cc_val := 127
+    else
+      if ($_cc_val<0)
+        $_cc_val := 0
+      end if
+    end if
+    set_controller(104+$c,$_cc_val)
+    inc($c)
+  end while
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($articulations)
+  call f__show_hide_panel
+  %p[$sp-2] := 1
+  %p[$sp-1] := get_ui_id($xy_pad)
+  call f__show_hide_panel
+end on
+
+on ui_control($articulations_swi_portato_norm)
+  %p[$sp-1] := 10
+  call f__select_multi_articulation
+  %xy_corner_art[$xy_corner_being_edited] := 10
+  $_i3 := 0
+  while ($_i3<4)
+    if (get_control_par(%ui_xy_corner_on_switches[$_i3],$CONTROL_PAR_VALUE)=1)
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT,!articulation_names[%xy_corner_art[$_i3]])
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,!articulation_names_short[%xy_corner_art[$_i3]])
+    else
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT," OFF")
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,"OFF")
+    end if
+    inc($_i3)
+  end while
+  $_any_harmonics := 0
+  $_any_normal := 0
+  $_i4 := 0
+  while ($_i4<4)
+    if (%xy_corner_art[$_i4]=19 or (%xy_corner_art[$_i4]=20))
+      $_any_harmonics := 1
+    else
+      $_any_normal := 1
+    end if
+    inc($_i4)
+  end while
+  if ($_any_normal=1)
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_DEFAULT)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  if ($_any_harmonics=1 and ($_any_normal=1))
+    $_i4 := 78
+    while ($_i4<=96)
+      set_key_color($_i4,$KEY_COLOR_MINT)
+      inc($_i4)
+    end while
+  else
+    if ($_any_harmonics=1)
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_GREEN)
+        inc($_i4)
+      end while
+    else
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_DEFAULT)
+        inc($_i4)
+      end while
+    end if
+  end if
+  if ($_any_harmonics=1)
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_GREEN)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  ~_half_pi := 1.5707963
+  ~_x := ?xy_pad_xypad[0]
+  ~_y := ?xy_pad_xypad[1]
+  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
+  ?_w_lin[1] := (1.0-~_x)*~_y
+  ?_w_lin[2] := ~_x*~_y
+  ?_w_lin[3] := ~_x*(1.0-~_y)
+  ?_w_pow[0] := cos(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  ?_w_pow[1] := cos(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[2] := sin(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[3] := sin(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  $c := 0
+  while ($c<4)
+    ?_w[$c] := ?_w_lin[$c]+(~_blend*(?_w_pow[$c]-?_w_lin[$c]))
+    select ($c)
+      case 0
+        $_trim_raw := $xy_pad_sli_trim_1
+      case 1
+        $_trim_raw := $xy_pad_sli_trim_2
+      case 2
+        $_trim_raw := $xy_pad_sli_trim_3
+      case 3
+        $_trim_raw := $xy_pad_sli_trim_4
+    end select
+    ~_trim_min_db := 0.0-~XY_TRIM_RANGE_DB
+    ~_trim_pct := int_to_real($_trim_raw)/1000000.0
+    ~_trim_range := 0.0-~_trim_min_db
+    ~_trim_db := ~_trim_pct*~_trim_range
+    ~_trim_db := ~_trim_db+~_trim_min_db
+    ~_trim_lin := pow(10.0,~_trim_db/20.0)
+    ?_w[$c] := ?_w[$c]*~_trim_lin
+    $_cc_val := real_to_int((?_w[$c]-0.0)*127.0/1.0)
+    if ($_cc_val>127)
+      $_cc_val := 127
+    else
+      if ($_cc_val<0)
+        $_cc_val := 0
+      end if
+    end if
+    set_controller(104+$c,$_cc_val)
+    inc($c)
+  end while
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($articulations)
+  call f__show_hide_panel
+  %p[$sp-2] := 1
+  %p[$sp-1] := get_ui_id($xy_pad)
+  call f__show_hide_panel
+end on
+
+on ui_control($articulations_swi_vib_pulses_cs)
+  %p[$sp-1] := 11
+  call f__select_multi_articulation
+  %xy_corner_art[$xy_corner_being_edited] := 11
+  $_i3 := 0
+  while ($_i3<4)
+    if (get_control_par(%ui_xy_corner_on_switches[$_i3],$CONTROL_PAR_VALUE)=1)
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT,!articulation_names[%xy_corner_art[$_i3]])
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,!articulation_names_short[%xy_corner_art[$_i3]])
+    else
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT," OFF")
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,"OFF")
+    end if
+    inc($_i3)
+  end while
+  $_any_harmonics := 0
+  $_any_normal := 0
+  $_i4 := 0
+  while ($_i4<4)
+    if (%xy_corner_art[$_i4]=19 or (%xy_corner_art[$_i4]=20))
+      $_any_harmonics := 1
+    else
+      $_any_normal := 1
+    end if
+    inc($_i4)
+  end while
+  if ($_any_normal=1)
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_DEFAULT)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  if ($_any_harmonics=1 and ($_any_normal=1))
+    $_i4 := 78
+    while ($_i4<=96)
+      set_key_color($_i4,$KEY_COLOR_MINT)
+      inc($_i4)
+    end while
+  else
+    if ($_any_harmonics=1)
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_GREEN)
+        inc($_i4)
+      end while
+    else
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_DEFAULT)
+        inc($_i4)
+      end while
+    end if
+  end if
+  if ($_any_harmonics=1)
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_GREEN)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  ~_half_pi := 1.5707963
+  ~_x := ?xy_pad_xypad[0]
+  ~_y := ?xy_pad_xypad[1]
+  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
+  ?_w_lin[1] := (1.0-~_x)*~_y
+  ?_w_lin[2] := ~_x*~_y
+  ?_w_lin[3] := ~_x*(1.0-~_y)
+  ?_w_pow[0] := cos(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  ?_w_pow[1] := cos(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[2] := sin(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[3] := sin(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  $c := 0
+  while ($c<4)
+    ?_w[$c] := ?_w_lin[$c]+(~_blend*(?_w_pow[$c]-?_w_lin[$c]))
+    select ($c)
+      case 0
+        $_trim_raw := $xy_pad_sli_trim_1
+      case 1
+        $_trim_raw := $xy_pad_sli_trim_2
+      case 2
+        $_trim_raw := $xy_pad_sli_trim_3
+      case 3
+        $_trim_raw := $xy_pad_sli_trim_4
+    end select
+    ~_trim_min_db := 0.0-~XY_TRIM_RANGE_DB
+    ~_trim_pct := int_to_real($_trim_raw)/1000000.0
+    ~_trim_range := 0.0-~_trim_min_db
+    ~_trim_db := ~_trim_pct*~_trim_range
+    ~_trim_db := ~_trim_db+~_trim_min_db
+    ~_trim_lin := pow(10.0,~_trim_db/20.0)
+    ?_w[$c] := ?_w[$c]*~_trim_lin
+    $_cc_val := real_to_int((?_w[$c]-0.0)*127.0/1.0)
+    if ($_cc_val>127)
+      $_cc_val := 127
+    else
+      if ($_cc_val<0)
+        $_cc_val := 0
+      end if
+    end if
+    set_controller(104+$c,$_cc_val)
+    inc($c)
+  end while
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($articulations)
+  call f__show_hide_panel
+  %p[$sp-2] := 1
+  %p[$sp-1] := get_ui_id($xy_pad)
+  call f__show_hide_panel
+end on
+
+on ui_control($articulations_swi_vib_pulses_norm)
+  %p[$sp-1] := 12
+  call f__select_multi_articulation
+  %xy_corner_art[$xy_corner_being_edited] := 12
+  $_i3 := 0
+  while ($_i3<4)
+    if (get_control_par(%ui_xy_corner_on_switches[$_i3],$CONTROL_PAR_VALUE)=1)
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT,!articulation_names[%xy_corner_art[$_i3]])
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,!articulation_names_short[%xy_corner_art[$_i3]])
+    else
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT," OFF")
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,"OFF")
+    end if
+    inc($_i3)
+  end while
+  $_any_harmonics := 0
+  $_any_normal := 0
+  $_i4 := 0
+  while ($_i4<4)
+    if (%xy_corner_art[$_i4]=19 or (%xy_corner_art[$_i4]=20))
+      $_any_harmonics := 1
+    else
+      $_any_normal := 1
+    end if
+    inc($_i4)
+  end while
+  if ($_any_normal=1)
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_DEFAULT)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  if ($_any_harmonics=1 and ($_any_normal=1))
+    $_i4 := 78
+    while ($_i4<=96)
+      set_key_color($_i4,$KEY_COLOR_MINT)
+      inc($_i4)
+    end while
+  else
+    if ($_any_harmonics=1)
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_GREEN)
+        inc($_i4)
+      end while
+    else
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_DEFAULT)
+        inc($_i4)
+      end while
+    end if
+  end if
+  if ($_any_harmonics=1)
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_GREEN)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  ~_half_pi := 1.5707963
+  ~_x := ?xy_pad_xypad[0]
+  ~_y := ?xy_pad_xypad[1]
+  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
+  ?_w_lin[1] := (1.0-~_x)*~_y
+  ?_w_lin[2] := ~_x*~_y
+  ?_w_lin[3] := ~_x*(1.0-~_y)
+  ?_w_pow[0] := cos(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  ?_w_pow[1] := cos(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[2] := sin(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[3] := sin(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  $c := 0
+  while ($c<4)
+    ?_w[$c] := ?_w_lin[$c]+(~_blend*(?_w_pow[$c]-?_w_lin[$c]))
+    select ($c)
+      case 0
+        $_trim_raw := $xy_pad_sli_trim_1
+      case 1
+        $_trim_raw := $xy_pad_sli_trim_2
+      case 2
+        $_trim_raw := $xy_pad_sli_trim_3
+      case 3
+        $_trim_raw := $xy_pad_sli_trim_4
+    end select
+    ~_trim_min_db := 0.0-~XY_TRIM_RANGE_DB
+    ~_trim_pct := int_to_real($_trim_raw)/1000000.0
+    ~_trim_range := 0.0-~_trim_min_db
+    ~_trim_db := ~_trim_pct*~_trim_range
+    ~_trim_db := ~_trim_db+~_trim_min_db
+    ~_trim_lin := pow(10.0,~_trim_db/20.0)
+    ?_w[$c] := ?_w[$c]*~_trim_lin
+    $_cc_val := real_to_int((?_w[$c]-0.0)*127.0/1.0)
+    if ($_cc_val>127)
+      $_cc_val := 127
+    else
+      if ($_cc_val<0)
+        $_cc_val := 0
+      end if
+    end if
+    set_controller(104+$c,$_cc_val)
+    inc($c)
+  end while
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($articulations)
+  call f__show_hide_panel
+  %p[$sp-2] := 1
+  %p[$sp-1] := get_ui_id($xy_pad)
+  call f__show_hide_panel
+end on
+
+on ui_control($articulations_swi_rebow_cs)
+  %p[$sp-1] := 13
+  call f__select_multi_articulation
+  %xy_corner_art[$xy_corner_being_edited] := 13
+  $_i3 := 0
+  while ($_i3<4)
+    if (get_control_par(%ui_xy_corner_on_switches[$_i3],$CONTROL_PAR_VALUE)=1)
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT,!articulation_names[%xy_corner_art[$_i3]])
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,!articulation_names_short[%xy_corner_art[$_i3]])
+    else
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT," OFF")
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,"OFF")
+    end if
+    inc($_i3)
+  end while
+  $_any_harmonics := 0
+  $_any_normal := 0
+  $_i4 := 0
+  while ($_i4<4)
+    if (%xy_corner_art[$_i4]=19 or (%xy_corner_art[$_i4]=20))
+      $_any_harmonics := 1
+    else
+      $_any_normal := 1
+    end if
+    inc($_i4)
+  end while
+  if ($_any_normal=1)
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_DEFAULT)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  if ($_any_harmonics=1 and ($_any_normal=1))
+    $_i4 := 78
+    while ($_i4<=96)
+      set_key_color($_i4,$KEY_COLOR_MINT)
+      inc($_i4)
+    end while
+  else
+    if ($_any_harmonics=1)
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_GREEN)
+        inc($_i4)
+      end while
+    else
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_DEFAULT)
+        inc($_i4)
+      end while
+    end if
+  end if
+  if ($_any_harmonics=1)
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_GREEN)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  ~_half_pi := 1.5707963
+  ~_x := ?xy_pad_xypad[0]
+  ~_y := ?xy_pad_xypad[1]
+  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
+  ?_w_lin[1] := (1.0-~_x)*~_y
+  ?_w_lin[2] := ~_x*~_y
+  ?_w_lin[3] := ~_x*(1.0-~_y)
+  ?_w_pow[0] := cos(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  ?_w_pow[1] := cos(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[2] := sin(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[3] := sin(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  $c := 0
+  while ($c<4)
+    ?_w[$c] := ?_w_lin[$c]+(~_blend*(?_w_pow[$c]-?_w_lin[$c]))
+    select ($c)
+      case 0
+        $_trim_raw := $xy_pad_sli_trim_1
+      case 1
+        $_trim_raw := $xy_pad_sli_trim_2
+      case 2
+        $_trim_raw := $xy_pad_sli_trim_3
+      case 3
+        $_trim_raw := $xy_pad_sli_trim_4
+    end select
+    ~_trim_min_db := 0.0-~XY_TRIM_RANGE_DB
+    ~_trim_pct := int_to_real($_trim_raw)/1000000.0
+    ~_trim_range := 0.0-~_trim_min_db
+    ~_trim_db := ~_trim_pct*~_trim_range
+    ~_trim_db := ~_trim_db+~_trim_min_db
+    ~_trim_lin := pow(10.0,~_trim_db/20.0)
+    ?_w[$c] := ?_w[$c]*~_trim_lin
+    $_cc_val := real_to_int((?_w[$c]-0.0)*127.0/1.0)
+    if ($_cc_val>127)
+      $_cc_val := 127
+    else
+      if ($_cc_val<0)
+        $_cc_val := 0
+      end if
+    end if
+    set_controller(104+$c,$_cc_val)
+    inc($c)
+  end while
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($articulations)
+  call f__show_hide_panel
+  %p[$sp-2] := 1
+  %p[$sp-1] := get_ui_id($xy_pad)
+  call f__show_hide_panel
+end on
+
+on ui_control($articulations_swi_rebow_norm)
+  %p[$sp-1] := 14
+  call f__select_multi_articulation
+  %xy_corner_art[$xy_corner_being_edited] := 14
+  $_i3 := 0
+  while ($_i3<4)
+    if (get_control_par(%ui_xy_corner_on_switches[$_i3],$CONTROL_PAR_VALUE)=1)
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT,!articulation_names[%xy_corner_art[$_i3]])
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,!articulation_names_short[%xy_corner_art[$_i3]])
+    else
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT," OFF")
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,"OFF")
+    end if
+    inc($_i3)
+  end while
+  $_any_harmonics := 0
+  $_any_normal := 0
+  $_i4 := 0
+  while ($_i4<4)
+    if (%xy_corner_art[$_i4]=19 or (%xy_corner_art[$_i4]=20))
+      $_any_harmonics := 1
+    else
+      $_any_normal := 1
+    end if
+    inc($_i4)
+  end while
+  if ($_any_normal=1)
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_DEFAULT)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  if ($_any_harmonics=1 and ($_any_normal=1))
+    $_i4 := 78
+    while ($_i4<=96)
+      set_key_color($_i4,$KEY_COLOR_MINT)
+      inc($_i4)
+    end while
+  else
+    if ($_any_harmonics=1)
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_GREEN)
+        inc($_i4)
+      end while
+    else
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_DEFAULT)
+        inc($_i4)
+      end while
+    end if
+  end if
+  if ($_any_harmonics=1)
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_GREEN)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  ~_half_pi := 1.5707963
+  ~_x := ?xy_pad_xypad[0]
+  ~_y := ?xy_pad_xypad[1]
+  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
+  ?_w_lin[1] := (1.0-~_x)*~_y
+  ?_w_lin[2] := ~_x*~_y
+  ?_w_lin[3] := ~_x*(1.0-~_y)
+  ?_w_pow[0] := cos(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  ?_w_pow[1] := cos(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[2] := sin(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[3] := sin(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  $c := 0
+  while ($c<4)
+    ?_w[$c] := ?_w_lin[$c]+(~_blend*(?_w_pow[$c]-?_w_lin[$c]))
+    select ($c)
+      case 0
+        $_trim_raw := $xy_pad_sli_trim_1
+      case 1
+        $_trim_raw := $xy_pad_sli_trim_2
+      case 2
+        $_trim_raw := $xy_pad_sli_trim_3
+      case 3
+        $_trim_raw := $xy_pad_sli_trim_4
+    end select
+    ~_trim_min_db := 0.0-~XY_TRIM_RANGE_DB
+    ~_trim_pct := int_to_real($_trim_raw)/1000000.0
+    ~_trim_range := 0.0-~_trim_min_db
+    ~_trim_db := ~_trim_pct*~_trim_range
+    ~_trim_db := ~_trim_db+~_trim_min_db
+    ~_trim_lin := pow(10.0,~_trim_db/20.0)
+    ?_w[$c] := ?_w[$c]*~_trim_lin
+    $_cc_val := real_to_int((?_w[$c]-0.0)*127.0/1.0)
+    if ($_cc_val>127)
+      $_cc_val := 127
+    else
+      if ($_cc_val<0)
+        $_cc_val := 0
+      end if
+    end if
+    set_controller(104+$c,$_cc_val)
+    inc($c)
+  end while
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($articulations)
+  call f__show_hide_panel
+  %p[$sp-2] := 1
+  %p[$sp-1] := get_ui_id($xy_pad)
+  call f__show_hide_panel
+end on
+
+on ui_control($articulations_swi_trem_bursts_cs)
+  %p[$sp-1] := 15
+  call f__select_multi_articulation
+  %xy_corner_art[$xy_corner_being_edited] := 15
+  $_i3 := 0
+  while ($_i3<4)
+    if (get_control_par(%ui_xy_corner_on_switches[$_i3],$CONTROL_PAR_VALUE)=1)
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT,!articulation_names[%xy_corner_art[$_i3]])
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,!articulation_names_short[%xy_corner_art[$_i3]])
+    else
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT," OFF")
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,"OFF")
+    end if
+    inc($_i3)
+  end while
+  $_any_harmonics := 0
+  $_any_normal := 0
+  $_i4 := 0
+  while ($_i4<4)
+    if (%xy_corner_art[$_i4]=19 or (%xy_corner_art[$_i4]=20))
+      $_any_harmonics := 1
+    else
+      $_any_normal := 1
+    end if
+    inc($_i4)
+  end while
+  if ($_any_normal=1)
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_DEFAULT)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  if ($_any_harmonics=1 and ($_any_normal=1))
+    $_i4 := 78
+    while ($_i4<=96)
+      set_key_color($_i4,$KEY_COLOR_MINT)
+      inc($_i4)
+    end while
+  else
+    if ($_any_harmonics=1)
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_GREEN)
+        inc($_i4)
+      end while
+    else
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_DEFAULT)
+        inc($_i4)
+      end while
+    end if
+  end if
+  if ($_any_harmonics=1)
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_GREEN)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  ~_half_pi := 1.5707963
+  ~_x := ?xy_pad_xypad[0]
+  ~_y := ?xy_pad_xypad[1]
+  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
+  ?_w_lin[1] := (1.0-~_x)*~_y
+  ?_w_lin[2] := ~_x*~_y
+  ?_w_lin[3] := ~_x*(1.0-~_y)
+  ?_w_pow[0] := cos(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  ?_w_pow[1] := cos(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[2] := sin(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[3] := sin(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  $c := 0
+  while ($c<4)
+    ?_w[$c] := ?_w_lin[$c]+(~_blend*(?_w_pow[$c]-?_w_lin[$c]))
+    select ($c)
+      case 0
+        $_trim_raw := $xy_pad_sli_trim_1
+      case 1
+        $_trim_raw := $xy_pad_sli_trim_2
+      case 2
+        $_trim_raw := $xy_pad_sli_trim_3
+      case 3
+        $_trim_raw := $xy_pad_sli_trim_4
+    end select
+    ~_trim_min_db := 0.0-~XY_TRIM_RANGE_DB
+    ~_trim_pct := int_to_real($_trim_raw)/1000000.0
+    ~_trim_range := 0.0-~_trim_min_db
+    ~_trim_db := ~_trim_pct*~_trim_range
+    ~_trim_db := ~_trim_db+~_trim_min_db
+    ~_trim_lin := pow(10.0,~_trim_db/20.0)
+    ?_w[$c] := ?_w[$c]*~_trim_lin
+    $_cc_val := real_to_int((?_w[$c]-0.0)*127.0/1.0)
+    if ($_cc_val>127)
+      $_cc_val := 127
+    else
+      if ($_cc_val<0)
+        $_cc_val := 0
+      end if
+    end if
+    set_controller(104+$c,$_cc_val)
+    inc($c)
+  end while
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($articulations)
+  call f__show_hide_panel
+  %p[$sp-2] := 1
+  %p[$sp-1] := get_ui_id($xy_pad)
+  call f__show_hide_panel
+end on
+
+on ui_control($articulations_swi_trem_bursts_norm)
+  %p[$sp-1] := 16
+  call f__select_multi_articulation
+  %xy_corner_art[$xy_corner_being_edited] := 16
+  $_i3 := 0
+  while ($_i3<4)
+    if (get_control_par(%ui_xy_corner_on_switches[$_i3],$CONTROL_PAR_VALUE)=1)
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT,!articulation_names[%xy_corner_art[$_i3]])
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,!articulation_names_short[%xy_corner_art[$_i3]])
+    else
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT," OFF")
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,"OFF")
+    end if
+    inc($_i3)
+  end while
+  $_any_harmonics := 0
+  $_any_normal := 0
+  $_i4 := 0
+  while ($_i4<4)
+    if (%xy_corner_art[$_i4]=19 or (%xy_corner_art[$_i4]=20))
+      $_any_harmonics := 1
+    else
+      $_any_normal := 1
+    end if
+    inc($_i4)
+  end while
+  if ($_any_normal=1)
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_DEFAULT)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  if ($_any_harmonics=1 and ($_any_normal=1))
+    $_i4 := 78
+    while ($_i4<=96)
+      set_key_color($_i4,$KEY_COLOR_MINT)
+      inc($_i4)
+    end while
+  else
+    if ($_any_harmonics=1)
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_GREEN)
+        inc($_i4)
+      end while
+    else
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_DEFAULT)
+        inc($_i4)
+      end while
+    end if
+  end if
+  if ($_any_harmonics=1)
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_GREEN)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  ~_half_pi := 1.5707963
+  ~_x := ?xy_pad_xypad[0]
+  ~_y := ?xy_pad_xypad[1]
+  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
+  ?_w_lin[1] := (1.0-~_x)*~_y
+  ?_w_lin[2] := ~_x*~_y
+  ?_w_lin[3] := ~_x*(1.0-~_y)
+  ?_w_pow[0] := cos(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  ?_w_pow[1] := cos(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[2] := sin(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[3] := sin(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  $c := 0
+  while ($c<4)
+    ?_w[$c] := ?_w_lin[$c]+(~_blend*(?_w_pow[$c]-?_w_lin[$c]))
+    select ($c)
+      case 0
+        $_trim_raw := $xy_pad_sli_trim_1
+      case 1
+        $_trim_raw := $xy_pad_sli_trim_2
+      case 2
+        $_trim_raw := $xy_pad_sli_trim_3
+      case 3
+        $_trim_raw := $xy_pad_sli_trim_4
+    end select
+    ~_trim_min_db := 0.0-~XY_TRIM_RANGE_DB
+    ~_trim_pct := int_to_real($_trim_raw)/1000000.0
+    ~_trim_range := 0.0-~_trim_min_db
+    ~_trim_db := ~_trim_pct*~_trim_range
+    ~_trim_db := ~_trim_db+~_trim_min_db
+    ~_trim_lin := pow(10.0,~_trim_db/20.0)
+    ?_w[$c] := ?_w[$c]*~_trim_lin
+    $_cc_val := real_to_int((?_w[$c]-0.0)*127.0/1.0)
+    if ($_cc_val>127)
+      $_cc_val := 127
+    else
+      if ($_cc_val<0)
+        $_cc_val := 0
+      end if
+    end if
+    set_controller(104+$c,$_cc_val)
+    inc($c)
+  end while
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($articulations)
+  call f__show_hide_panel
+  %p[$sp-2] := 1
+  %p[$sp-1] := get_ui_id($xy_pad)
+  call f__show_hide_panel
+end on
+
+on ui_control($articulations_swi_fluctuating_trem_cs)
+  %p[$sp-1] := 17
+  call f__select_multi_articulation
+  %xy_corner_art[$xy_corner_being_edited] := 17
+  $_i3 := 0
+  while ($_i3<4)
+    if (get_control_par(%ui_xy_corner_on_switches[$_i3],$CONTROL_PAR_VALUE)=1)
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT,!articulation_names[%xy_corner_art[$_i3]])
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,!articulation_names_short[%xy_corner_art[$_i3]])
+    else
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT," OFF")
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,"OFF")
+    end if
+    inc($_i3)
+  end while
+  $_any_harmonics := 0
+  $_any_normal := 0
+  $_i4 := 0
+  while ($_i4<4)
+    if (%xy_corner_art[$_i4]=19 or (%xy_corner_art[$_i4]=20))
+      $_any_harmonics := 1
+    else
+      $_any_normal := 1
+    end if
+    inc($_i4)
+  end while
+  if ($_any_normal=1)
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_DEFAULT)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  if ($_any_harmonics=1 and ($_any_normal=1))
+    $_i4 := 78
+    while ($_i4<=96)
+      set_key_color($_i4,$KEY_COLOR_MINT)
+      inc($_i4)
+    end while
+  else
+    if ($_any_harmonics=1)
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_GREEN)
+        inc($_i4)
+      end while
+    else
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_DEFAULT)
+        inc($_i4)
+      end while
+    end if
+  end if
+  if ($_any_harmonics=1)
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_GREEN)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  ~_half_pi := 1.5707963
+  ~_x := ?xy_pad_xypad[0]
+  ~_y := ?xy_pad_xypad[1]
+  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
+  ?_w_lin[1] := (1.0-~_x)*~_y
+  ?_w_lin[2] := ~_x*~_y
+  ?_w_lin[3] := ~_x*(1.0-~_y)
+  ?_w_pow[0] := cos(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  ?_w_pow[1] := cos(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[2] := sin(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[3] := sin(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  $c := 0
+  while ($c<4)
+    ?_w[$c] := ?_w_lin[$c]+(~_blend*(?_w_pow[$c]-?_w_lin[$c]))
+    select ($c)
+      case 0
+        $_trim_raw := $xy_pad_sli_trim_1
+      case 1
+        $_trim_raw := $xy_pad_sli_trim_2
+      case 2
+        $_trim_raw := $xy_pad_sli_trim_3
+      case 3
+        $_trim_raw := $xy_pad_sli_trim_4
+    end select
+    ~_trim_min_db := 0.0-~XY_TRIM_RANGE_DB
+    ~_trim_pct := int_to_real($_trim_raw)/1000000.0
+    ~_trim_range := 0.0-~_trim_min_db
+    ~_trim_db := ~_trim_pct*~_trim_range
+    ~_trim_db := ~_trim_db+~_trim_min_db
+    ~_trim_lin := pow(10.0,~_trim_db/20.0)
+    ?_w[$c] := ?_w[$c]*~_trim_lin
+    $_cc_val := real_to_int((?_w[$c]-0.0)*127.0/1.0)
+    if ($_cc_val>127)
+      $_cc_val := 127
+    else
+      if ($_cc_val<0)
+        $_cc_val := 0
+      end if
+    end if
+    set_controller(104+$c,$_cc_val)
+    inc($c)
+  end while
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($articulations)
+  call f__show_hide_panel
+  %p[$sp-2] := 1
+  %p[$sp-1] := get_ui_id($xy_pad)
+  call f__show_hide_panel
+end on
+
+on ui_control($articulations_swi_fluctuating_trem_norm)
+  %p[$sp-1] := 18
+  call f__select_multi_articulation
+  %xy_corner_art[$xy_corner_being_edited] := 18
+  $_i3 := 0
+  while ($_i3<4)
+    if (get_control_par(%ui_xy_corner_on_switches[$_i3],$CONTROL_PAR_VALUE)=1)
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT,!articulation_names[%xy_corner_art[$_i3]])
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,!articulation_names_short[%xy_corner_art[$_i3]])
+    else
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT," OFF")
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,"OFF")
+    end if
+    inc($_i3)
+  end while
+  $_any_harmonics := 0
+  $_any_normal := 0
+  $_i4 := 0
+  while ($_i4<4)
+    if (%xy_corner_art[$_i4]=19 or (%xy_corner_art[$_i4]=20))
+      $_any_harmonics := 1
+    else
+      $_any_normal := 1
+    end if
+    inc($_i4)
+  end while
+  if ($_any_normal=1)
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_DEFAULT)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  if ($_any_harmonics=1 and ($_any_normal=1))
+    $_i4 := 78
+    while ($_i4<=96)
+      set_key_color($_i4,$KEY_COLOR_MINT)
+      inc($_i4)
+    end while
+  else
+    if ($_any_harmonics=1)
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_GREEN)
+        inc($_i4)
+      end while
+    else
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_DEFAULT)
+        inc($_i4)
+      end while
+    end if
+  end if
+  if ($_any_harmonics=1)
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_GREEN)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  ~_half_pi := 1.5707963
+  ~_x := ?xy_pad_xypad[0]
+  ~_y := ?xy_pad_xypad[1]
+  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
+  ?_w_lin[1] := (1.0-~_x)*~_y
+  ?_w_lin[2] := ~_x*~_y
+  ?_w_lin[3] := ~_x*(1.0-~_y)
+  ?_w_pow[0] := cos(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  ?_w_pow[1] := cos(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[2] := sin(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[3] := sin(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  $c := 0
+  while ($c<4)
+    ?_w[$c] := ?_w_lin[$c]+(~_blend*(?_w_pow[$c]-?_w_lin[$c]))
+    select ($c)
+      case 0
+        $_trim_raw := $xy_pad_sli_trim_1
+      case 1
+        $_trim_raw := $xy_pad_sli_trim_2
+      case 2
+        $_trim_raw := $xy_pad_sli_trim_3
+      case 3
+        $_trim_raw := $xy_pad_sli_trim_4
+    end select
+    ~_trim_min_db := 0.0-~XY_TRIM_RANGE_DB
+    ~_trim_pct := int_to_real($_trim_raw)/1000000.0
+    ~_trim_range := 0.0-~_trim_min_db
+    ~_trim_db := ~_trim_pct*~_trim_range
+    ~_trim_db := ~_trim_db+~_trim_min_db
+    ~_trim_lin := pow(10.0,~_trim_db/20.0)
+    ?_w[$c] := ?_w[$c]*~_trim_lin
+    $_cc_val := real_to_int((?_w[$c]-0.0)*127.0/1.0)
+    if ($_cc_val>127)
+      $_cc_val := 127
+    else
+      if ($_cc_val<0)
+        $_cc_val := 0
+      end if
+    end if
+    set_controller(104+$c,$_cc_val)
+    inc($c)
+  end while
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($articulations)
+  call f__show_hide_panel
+  %p[$sp-2] := 1
+  %p[$sp-1] := get_ui_id($xy_pad)
+  call f__show_hide_panel
+end on
+
+on ui_control($articulations_swi_harmonics_cs)
+  %p[$sp-1] := 19
+  call f__select_multi_articulation
+  %xy_corner_art[$xy_corner_being_edited] := 19
+  $_i3 := 0
+  while ($_i3<4)
+    if (get_control_par(%ui_xy_corner_on_switches[$_i3],$CONTROL_PAR_VALUE)=1)
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT,!articulation_names[%xy_corner_art[$_i3]])
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,!articulation_names_short[%xy_corner_art[$_i3]])
+    else
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT," OFF")
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,"OFF")
+    end if
+    inc($_i3)
+  end while
+  $_any_harmonics := 0
+  $_any_normal := 0
+  $_i4 := 0
+  while ($_i4<4)
+    if (%xy_corner_art[$_i4]=19 or (%xy_corner_art[$_i4]=20))
+      $_any_harmonics := 1
+    else
+      $_any_normal := 1
+    end if
+    inc($_i4)
+  end while
+  if ($_any_normal=1)
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_DEFAULT)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  if ($_any_harmonics=1 and ($_any_normal=1))
+    $_i4 := 78
+    while ($_i4<=96)
+      set_key_color($_i4,$KEY_COLOR_MINT)
+      inc($_i4)
+    end while
+  else
+    if ($_any_harmonics=1)
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_GREEN)
+        inc($_i4)
+      end while
+    else
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_DEFAULT)
+        inc($_i4)
+      end while
+    end if
+  end if
+  if ($_any_harmonics=1)
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_GREEN)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  ~_half_pi := 1.5707963
+  ~_x := ?xy_pad_xypad[0]
+  ~_y := ?xy_pad_xypad[1]
+  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
+  ?_w_lin[1] := (1.0-~_x)*~_y
+  ?_w_lin[2] := ~_x*~_y
+  ?_w_lin[3] := ~_x*(1.0-~_y)
+  ?_w_pow[0] := cos(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  ?_w_pow[1] := cos(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[2] := sin(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[3] := sin(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  $c := 0
+  while ($c<4)
+    ?_w[$c] := ?_w_lin[$c]+(~_blend*(?_w_pow[$c]-?_w_lin[$c]))
+    select ($c)
+      case 0
+        $_trim_raw := $xy_pad_sli_trim_1
+      case 1
+        $_trim_raw := $xy_pad_sli_trim_2
+      case 2
+        $_trim_raw := $xy_pad_sli_trim_3
+      case 3
+        $_trim_raw := $xy_pad_sli_trim_4
+    end select
+    ~_trim_min_db := 0.0-~XY_TRIM_RANGE_DB
+    ~_trim_pct := int_to_real($_trim_raw)/1000000.0
+    ~_trim_range := 0.0-~_trim_min_db
+    ~_trim_db := ~_trim_pct*~_trim_range
+    ~_trim_db := ~_trim_db+~_trim_min_db
+    ~_trim_lin := pow(10.0,~_trim_db/20.0)
+    ?_w[$c] := ?_w[$c]*~_trim_lin
+    $_cc_val := real_to_int((?_w[$c]-0.0)*127.0/1.0)
+    if ($_cc_val>127)
+      $_cc_val := 127
+    else
+      if ($_cc_val<0)
+        $_cc_val := 0
+      end if
+    end if
+    set_controller(104+$c,$_cc_val)
+    inc($c)
+  end while
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($articulations)
+  call f__show_hide_panel
+  %p[$sp-2] := 1
+  %p[$sp-1] := get_ui_id($xy_pad)
+  call f__show_hide_panel
+end on
+
+on ui_control($articulations_swi_harmonics_norm)
+  %p[$sp-1] := 20
+  call f__select_multi_articulation
+  %xy_corner_art[$xy_corner_being_edited] := 20
+  $_i3 := 0
+  while ($_i3<4)
+    if (get_control_par(%ui_xy_corner_on_switches[$_i3],$CONTROL_PAR_VALUE)=1)
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT,!articulation_names[%xy_corner_art[$_i3]])
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,!articulation_names_short[%xy_corner_art[$_i3]])
+    else
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT," OFF")
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,"OFF")
+    end if
+    inc($_i3)
+  end while
+  $_any_harmonics := 0
+  $_any_normal := 0
+  $_i4 := 0
+  while ($_i4<4)
+    if (%xy_corner_art[$_i4]=19 or (%xy_corner_art[$_i4]=20))
+      $_any_harmonics := 1
+    else
+      $_any_normal := 1
+    end if
+    inc($_i4)
+  end while
+  if ($_any_normal=1)
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_DEFAULT)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  if ($_any_harmonics=1 and ($_any_normal=1))
+    $_i4 := 78
+    while ($_i4<=96)
+      set_key_color($_i4,$KEY_COLOR_MINT)
+      inc($_i4)
+    end while
+  else
+    if ($_any_harmonics=1)
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_GREEN)
+        inc($_i4)
+      end while
+    else
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_DEFAULT)
+        inc($_i4)
+      end while
+    end if
+  end if
+  if ($_any_harmonics=1)
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_GREEN)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  ~_half_pi := 1.5707963
+  ~_x := ?xy_pad_xypad[0]
+  ~_y := ?xy_pad_xypad[1]
+  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
+  ?_w_lin[1] := (1.0-~_x)*~_y
+  ?_w_lin[2] := ~_x*~_y
+  ?_w_lin[3] := ~_x*(1.0-~_y)
+  ?_w_pow[0] := cos(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  ?_w_pow[1] := cos(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[2] := sin(~_x*~_half_pi)*sin(~_y*~_half_pi)
+  ?_w_pow[3] := sin(~_x*~_half_pi)*cos(~_y*~_half_pi)
+  $c := 0
+  while ($c<4)
+    ?_w[$c] := ?_w_lin[$c]+(~_blend*(?_w_pow[$c]-?_w_lin[$c]))
+    select ($c)
+      case 0
+        $_trim_raw := $xy_pad_sli_trim_1
+      case 1
+        $_trim_raw := $xy_pad_sli_trim_2
+      case 2
+        $_trim_raw := $xy_pad_sli_trim_3
+      case 3
+        $_trim_raw := $xy_pad_sli_trim_4
+    end select
+    ~_trim_min_db := 0.0-~XY_TRIM_RANGE_DB
+    ~_trim_pct := int_to_real($_trim_raw)/1000000.0
+    ~_trim_range := 0.0-~_trim_min_db
+    ~_trim_db := ~_trim_pct*~_trim_range
+    ~_trim_db := ~_trim_db+~_trim_min_db
+    ~_trim_lin := pow(10.0,~_trim_db/20.0)
+    ?_w[$c] := ?_w[$c]*~_trim_lin
+    $_cc_val := real_to_int((?_w[$c]-0.0)*127.0/1.0)
+    if ($_cc_val>127)
+      $_cc_val := 127
+    else
+      if ($_cc_val<0)
+        $_cc_val := 0
+      end if
+    end if
+    set_controller(104+$c,$_cc_val)
+    inc($c)
+  end while
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($articulations)
+  call f__show_hide_panel
+  %p[$sp-2] := 1
+  %p[$sp-1] := get_ui_id($xy_pad)
+  call f__show_hide_panel
+end on
+
+on ui_control($xy_pad_btn_xy_art_1)
+  $xy_corner_being_edited := 0
+  %p[$sp-1] := 0
+  call f__highlight_corner_articulation
+  set_text($articulations_lbl_select_art,"SELECT ARTICULATION FOR CORNER " & ($xy_corner_being_edited+1))
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($xy_pad)
+  call f__show_hide_panel
+  %p[$sp-2] := 1
+  %p[$sp-1] := get_ui_id($articulations)
+  call f__show_hide_panel
+  $xy_pad_btn_xy_art_1 := 0
+end on
+
+on ui_control($xy_pad_btn_xy_art_2)
+  $xy_corner_being_edited := 1
+  %p[$sp-1] := 1
+  call f__highlight_corner_articulation
+  set_text($articulations_lbl_select_art,"SELECT ARTICULATION FOR CORNER " & ($xy_corner_being_edited+1))
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($xy_pad)
+  call f__show_hide_panel
+  %p[$sp-2] := 1
+  %p[$sp-1] := get_ui_id($articulations)
+  call f__show_hide_panel
+  $xy_pad_btn_xy_art_2 := 0
+end on
+
+on ui_control($xy_pad_btn_xy_art_3)
+  $xy_corner_being_edited := 2
+  %p[$sp-1] := 2
+  call f__highlight_corner_articulation
+  set_text($articulations_lbl_select_art,"SELECT ARTICULATION FOR CORNER " & ($xy_corner_being_edited+1))
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($xy_pad)
+  call f__show_hide_panel
+  %p[$sp-2] := 1
+  %p[$sp-1] := get_ui_id($articulations)
+  call f__show_hide_panel
+  $xy_pad_btn_xy_art_3 := 0
+end on
+
+on ui_control($xy_pad_btn_xy_art_4)
+  $xy_corner_being_edited := 3
+  %p[$sp-1] := 3
+  call f__highlight_corner_articulation
+  set_text($articulations_lbl_select_art,"SELECT ARTICULATION FOR CORNER " & ($xy_corner_being_edited+1))
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($xy_pad)
+  call f__show_hide_panel
+  %p[$sp-2] := 1
+  %p[$sp-1] := get_ui_id($articulations)
+  call f__show_hide_panel
+  $xy_pad_btn_xy_art_4 := 0
+end on
+
+on ui_control($xy_pad_swi_corner_on_1)
+  $_i3 := 0
+  while ($_i3<4)
+    if (get_control_par(%ui_xy_corner_on_switches[$_i3],$CONTROL_PAR_VALUE)=1)
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT,!articulation_names[%xy_corner_art[$_i3]])
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,!articulation_names_short[%xy_corner_art[$_i3]])
+    else
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT," OFF")
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,"OFF")
+    end if
+    inc($_i3)
+  end while
+end on
+
+on ui_control($xy_pad_swi_corner_on_2)
+  $_i3 := 0
+  while ($_i3<4)
+    if (get_control_par(%ui_xy_corner_on_switches[$_i3],$CONTROL_PAR_VALUE)=1)
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT,!articulation_names[%xy_corner_art[$_i3]])
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,!articulation_names_short[%xy_corner_art[$_i3]])
+    else
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT," OFF")
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,"OFF")
+    end if
+    inc($_i3)
+  end while
+end on
+
+on ui_control($xy_pad_swi_corner_on_3)
+  $_i3 := 0
+  while ($_i3<4)
+    if (get_control_par(%ui_xy_corner_on_switches[$_i3],$CONTROL_PAR_VALUE)=1)
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT,!articulation_names[%xy_corner_art[$_i3]])
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,!articulation_names_short[%xy_corner_art[$_i3]])
+    else
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT," OFF")
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,"OFF")
+    end if
+    inc($_i3)
+  end while
+end on
+
+on ui_control($xy_pad_swi_corner_on_4)
+  $_i3 := 0
+  while ($_i3<4)
+    if (get_control_par(%ui_xy_corner_on_switches[$_i3],$CONTROL_PAR_VALUE)=1)
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT,!articulation_names[%xy_corner_art[$_i3]])
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,!articulation_names_short[%xy_corner_art[$_i3]])
+    else
+      set_control_par_str(%ui_xy_art_buttons[$_i3],$CONTROL_PAR_TEXT," OFF")
+      set_control_par_str(%ui_xy_corner_labels[$_i3],$CONTROL_PAR_TEXT,"OFF")
+    end if
+    inc($_i3)
+  end while
+end on
+
+on ui_control($mic_positions_swi_solo_inside)
+  %solo_channels[0] := $mic_positions_swi_solo_inside
+  if (search(%solo_channels,1) # -1)
+    $solo_on_flag := 1
+  else
+    $solo_on_flag := 0
+  end if
+end on
+
+on ui_control($mic_positions_swi_solo_superclose)
+  %solo_channels[1] := $mic_positions_swi_solo_superclose
+  if (search(%solo_channels,1) # -1)
+    $solo_on_flag := 1
+  else
+    $solo_on_flag := 0
+  end if
+end on
+
+on ui_control($mic_positions_swi_solo_close)
+  %solo_channels[2] := $mic_positions_swi_solo_close
+  if (search(%solo_channels,1) # -1)
+    $solo_on_flag := 1
+  else
+    $solo_on_flag := 0
+  end if
+end on
+
+on ui_control($mic_positions_swi_solo_mid)
+  %solo_channels[3] := $mic_positions_swi_solo_mid
+  if (search(%solo_channels,1) # -1)
+    $solo_on_flag := 1
+  else
+    $solo_on_flag := 0
+  end if
+end on
+
+on ui_control($mic_positions_swi_solo_far)
+  %solo_channels[4] := $mic_positions_swi_solo_far
+  if (search(%solo_channels,1) # -1)
+    $solo_on_flag := 1
+  else
+    $solo_on_flag := 0
+  end if
+end on
+
+on ui_control($mic_positions_swi_inside_par)
+  %p[$sp-2] := $mic_positions_swi_inside_par
+  %p[$sp-1] := get_ui_id($mic_positions_panel_inside_par)
+  call f__show_hide_panel
+  $i := 0
+  while ($i<num_elements(%ui_swi_mic_par))
+    if (get_control_par(%ui_swi_mic_par[$i],$CONTROL_PAR_VALUE)=1 and ($i # 0))
+      %p[$sp-2] := 0
+      %p[$sp-1] := %ui_channel_panels[$i]
+      call f__show_hide_panel
+      set_control_par(%ui_swi_mic_par[$i],$CONTROL_PAR_VALUE,0)
+    end if
+    inc($i)
+  end while
+end on
+
+on ui_control($mic_positions_panel_inside_par_swi_close)
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($mic_positions_panel_inside_par)
+  call f__show_hide_panel
+  $mic_positions_swi_inside_par := 0
+end on
+
+on ui_control($mic_positions_panel_inside_par_sli_delay_send)
+  set_engine_par($ENGINE_PAR_SENDLEVEL_0,$mic_positions_panel_inside_par_sli_delay_send,-1,7,$NI_BUS_OFFSET)
+  %p[$sp-6] := 18
+  %p[$sp-5] := 18
+  %p[$sp-4] := $ENGINE_PAR_SENDLEVEL_0
+  %p[$sp-3] := -1
+  %p[$sp-2] := 7
+  %p[$sp-1] := $NI_BUS_OFFSET
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_inside_par_sli_reverb_send)
+  set_engine_par($ENGINE_PAR_SENDLEVEL_1,$mic_positions_panel_inside_par_sli_reverb_send,-1,7,$NI_BUS_OFFSET)
+  %p[$sp-6] := 23
+  %p[$sp-5] := 23
+  %p[$sp-4] := $ENGINE_PAR_SENDLEVEL_1
+  %p[$sp-3] := -1
+  %p[$sp-2] := 7
+  %p[$sp-1] := $NI_BUS_OFFSET
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_inside_par_sli_stereo_width)
+end on
+
+on ui_control($mic_positions_panel_inside_par_sli_pan)
+  set_engine_par($ENGINE_PAR_PAN,$mic_positions_panel_inside_par_sli_pan,-1,-1,$NI_BUS_OFFSET)
+  %p[$sp-6] := 44
+  %p[$sp-5] := 44
+  %p[$sp-4] := $ENGINE_PAR_PAN
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_BUS_OFFSET
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_inside_par_mnu_channel_output)
+  set_engine_par($ENGINE_PAR_OUTPUT_CHANNEL,$mic_positions_panel_inside_par_mnu_channel_output,-1,-1,$NI_BUS_OFFSET)
+  set_control_par_str(%ui_output_labels[0],$CONTROL_PAR_TEXT,get_menu_item_str(%ui_output_menus[0],get_control_par(%ui_output_menus[0],$CONTROL_PAR_VALUE)))
+end on
+
+on ui_control($mic_positions_swi_superclose_par)
+  %p[$sp-2] := $mic_positions_swi_superclose_par
+  %p[$sp-1] := get_ui_id($mic_positions_panel_superclose_par)
+  call f__show_hide_panel
+  $i := 0
+  while ($i<num_elements(%ui_swi_mic_par))
+    if (get_control_par(%ui_swi_mic_par[$i],$CONTROL_PAR_VALUE)=1 and ($i # 1))
+      %p[$sp-2] := 0
+      %p[$sp-1] := %ui_channel_panels[$i]
+      call f__show_hide_panel
+      set_control_par(%ui_swi_mic_par[$i],$CONTROL_PAR_VALUE,0)
+    end if
+    inc($i)
+  end while
+end on
+
+on ui_control($mic_positions_panel_superclose_par_swi_close)
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($mic_positions_panel_superclose_par)
+  call f__show_hide_panel
+  $mic_positions_swi_superclose_par := 0
+end on
+
+on ui_control($mic_positions_panel_superclose_par_sli_delay_send)
+  set_engine_par($ENGINE_PAR_SENDLEVEL_0,$mic_positions_panel_superclose_par_sli_delay_send,-1,7,$NI_BUS_OFFSET+1)
+  %p[$sp-6] := 19
+  %p[$sp-5] := 19
+  %p[$sp-4] := $ENGINE_PAR_SENDLEVEL_0
+  %p[$sp-3] := -1
+  %p[$sp-2] := 7
+  %p[$sp-1] := $NI_BUS_OFFSET+1
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_superclose_par_sli_reverb_send)
+  set_engine_par($ENGINE_PAR_SENDLEVEL_1,$mic_positions_panel_superclose_par_sli_reverb_send,-1,7,$NI_BUS_OFFSET+1)
+  %p[$sp-6] := 24
+  %p[$sp-5] := 24
+  %p[$sp-4] := $ENGINE_PAR_SENDLEVEL_1
+  %p[$sp-3] := -1
+  %p[$sp-2] := 7
+  %p[$sp-1] := $NI_BUS_OFFSET+1
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_superclose_par_sli_stereo_width)
+  set_engine_par($ENGINE_PAR_STEREO,$mic_positions_panel_superclose_par_sli_stereo_width,-1,0,$NI_BUS_OFFSET+1)
+  %p[$sp-6] := 13
+  %p[$sp-5] := 13
+  %p[$sp-4] := $ENGINE_PAR_STEREO
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_BUS_OFFSET+1
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_superclose_par_sli_pan)
+  set_engine_par($ENGINE_PAR_STEREO_PAN,$mic_positions_panel_superclose_par_sli_pan,-1,0,$NI_BUS_OFFSET+1)
+  %p[$sp-6] := 45
+  %p[$sp-5] := 45
+  %p[$sp-4] := $ENGINE_PAR_STEREO_PAN
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_BUS_OFFSET+1
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_superclose_par_mnu_channel_output)
+  set_engine_par($ENGINE_PAR_OUTPUT_CHANNEL,$mic_positions_panel_superclose_par_mnu_channel_output,-1,-1,$NI_BUS_OFFSET+1)
+  set_control_par_str(%ui_output_labels[1],$CONTROL_PAR_TEXT,get_menu_item_str(%ui_output_menus[1],get_control_par(%ui_output_menus[1],$CONTROL_PAR_VALUE)))
+end on
+
+on ui_control($mic_positions_swi_close_par)
+  %p[$sp-2] := $mic_positions_swi_close_par
+  %p[$sp-1] := get_ui_id($mic_positions_panel_close_par)
+  call f__show_hide_panel
+  $i := 0
+  while ($i<num_elements(%ui_swi_mic_par))
+    if (get_control_par(%ui_swi_mic_par[$i],$CONTROL_PAR_VALUE)=1 and ($i # 2))
+      %p[$sp-2] := 0
+      %p[$sp-1] := %ui_channel_panels[$i]
+      call f__show_hide_panel
+      set_control_par(%ui_swi_mic_par[$i],$CONTROL_PAR_VALUE,0)
+    end if
+    inc($i)
+  end while
+end on
+
+on ui_control($mic_positions_panel_close_par_swi_close)
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($mic_positions_panel_close_par)
+  call f__show_hide_panel
+  $mic_positions_swi_close_par := 0
+end on
+
+on ui_control($mic_positions_panel_close_par_sli_delay_send)
+  set_engine_par($ENGINE_PAR_SENDLEVEL_0,$mic_positions_panel_close_par_sli_delay_send,-1,7,$NI_BUS_OFFSET+2)
+  %p[$sp-6] := 20
+  %p[$sp-5] := 20
+  %p[$sp-4] := $ENGINE_PAR_SENDLEVEL_0
+  %p[$sp-3] := -1
+  %p[$sp-2] := 7
+  %p[$sp-1] := $NI_BUS_OFFSET+2
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_close_par_sli_reverb_send)
+  set_engine_par($ENGINE_PAR_SENDLEVEL_1,$mic_positions_panel_close_par_sli_reverb_send,-1,7,$NI_BUS_OFFSET+2)
+  %p[$sp-6] := 25
+  %p[$sp-5] := 25
+  %p[$sp-4] := $ENGINE_PAR_SENDLEVEL_1
+  %p[$sp-3] := -1
+  %p[$sp-2] := 7
+  %p[$sp-1] := $NI_BUS_OFFSET+2
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_close_par_sli_stereo_width)
+  set_engine_par($ENGINE_PAR_STEREO,$mic_positions_panel_close_par_sli_stereo_width,-1,0,$NI_BUS_OFFSET+2)
+  %p[$sp-6] := 14
+  %p[$sp-5] := 14
+  %p[$sp-4] := $ENGINE_PAR_STEREO
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_BUS_OFFSET+2
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_close_par_sli_pan)
+  set_engine_par($ENGINE_PAR_STEREO_PAN,$mic_positions_panel_close_par_sli_pan,-1,0,$NI_BUS_OFFSET+2)
+  %p[$sp-6] := 46
+  %p[$sp-5] := 46
+  %p[$sp-4] := $ENGINE_PAR_STEREO_PAN
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_BUS_OFFSET+2
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_close_par_mnu_channel_output)
+  set_engine_par($ENGINE_PAR_OUTPUT_CHANNEL,$mic_positions_panel_close_par_mnu_channel_output,-1,-1,$NI_BUS_OFFSET+2)
+  set_control_par_str(%ui_output_labels[2],$CONTROL_PAR_TEXT,get_menu_item_str(%ui_output_menus[2],get_control_par(%ui_output_menus[2],$CONTROL_PAR_VALUE)))
+end on
+
+on ui_control($mic_positions_swi_mid_par)
+  %p[$sp-2] := $mic_positions_swi_mid_par
+  %p[$sp-1] := get_ui_id($mic_positions_panel_mid_par)
+  call f__show_hide_panel
+  $i := 0
+  while ($i<num_elements(%ui_swi_mic_par))
+    if (get_control_par(%ui_swi_mic_par[$i],$CONTROL_PAR_VALUE)=1 and ($i # 3))
+      %p[$sp-2] := 0
+      %p[$sp-1] := %ui_channel_panels[$i]
+      call f__show_hide_panel
+      set_control_par(%ui_swi_mic_par[$i],$CONTROL_PAR_VALUE,0)
+    end if
+    inc($i)
+  end while
+end on
+
+on ui_control($mic_positions_panel_mid_par_swi_close)
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($mic_positions_panel_mid_par)
+  call f__show_hide_panel
+  $mic_positions_swi_mid_par := 0
+end on
+
+on ui_control($mic_positions_panel_mid_par_sli_delay_send)
+  set_engine_par($ENGINE_PAR_SENDLEVEL_0,$mic_positions_panel_mid_par_sli_delay_send,-1,7,$NI_BUS_OFFSET+3)
+  %p[$sp-6] := 21
+  %p[$sp-5] := 21
+  %p[$sp-4] := $ENGINE_PAR_SENDLEVEL_0
+  %p[$sp-3] := -1
+  %p[$sp-2] := 7
+  %p[$sp-1] := $NI_BUS_OFFSET+3
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_mid_par_sli_reverb_send)
+  set_engine_par($ENGINE_PAR_SENDLEVEL_1,$mic_positions_panel_mid_par_sli_reverb_send,-1,7,$NI_BUS_OFFSET+3)
+  %p[$sp-6] := 26
+  %p[$sp-5] := 26
+  %p[$sp-4] := $ENGINE_PAR_SENDLEVEL_1
+  %p[$sp-3] := -1
+  %p[$sp-2] := 7
+  %p[$sp-1] := $NI_BUS_OFFSET+3
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_mid_par_sli_stereo_width)
+  set_engine_par($ENGINE_PAR_STEREO,$mic_positions_panel_mid_par_sli_stereo_width,-1,0,$NI_BUS_OFFSET+3)
+  %p[$sp-6] := 15
+  %p[$sp-5] := 15
+  %p[$sp-4] := $ENGINE_PAR_STEREO
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_BUS_OFFSET+3
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_mid_par_sli_pan)
+  set_engine_par($ENGINE_PAR_STEREO_PAN,$mic_positions_panel_mid_par_sli_pan,-1,0,$NI_BUS_OFFSET+3)
+  %p[$sp-6] := 47
+  %p[$sp-5] := 47
+  %p[$sp-4] := $ENGINE_PAR_STEREO_PAN
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_BUS_OFFSET+3
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_mid_par_mnu_channel_output)
+  set_engine_par($ENGINE_PAR_OUTPUT_CHANNEL,$mic_positions_panel_mid_par_mnu_channel_output,-1,-1,$NI_BUS_OFFSET+3)
+  set_control_par_str(%ui_output_labels[3],$CONTROL_PAR_TEXT,get_menu_item_str(%ui_output_menus[3],get_control_par(%ui_output_menus[3],$CONTROL_PAR_VALUE)))
+end on
+
+on ui_control($mic_positions_swi_far_par)
+  %p[$sp-2] := $mic_positions_swi_far_par
+  %p[$sp-1] := get_ui_id($mic_positions_panel_far_par)
+  call f__show_hide_panel
+  $i := 0
+  while ($i<num_elements(%ui_swi_mic_par))
+    if (get_control_par(%ui_swi_mic_par[$i],$CONTROL_PAR_VALUE)=1 and ($i # 4))
+      %p[$sp-2] := 0
+      %p[$sp-1] := %ui_channel_panels[$i]
+      call f__show_hide_panel
+      set_control_par(%ui_swi_mic_par[$i],$CONTROL_PAR_VALUE,0)
+    end if
+    inc($i)
+  end while
+end on
+
+on ui_control($mic_positions_panel_far_par_swi_close)
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($mic_positions_panel_far_par)
+  call f__show_hide_panel
+  $mic_positions_swi_far_par := 0
+end on
+
+on ui_control($mic_positions_panel_far_par_sli_delay_send)
+  set_engine_par($ENGINE_PAR_SENDLEVEL_0,$mic_positions_panel_far_par_sli_delay_send,-1,7,$NI_BUS_OFFSET+4)
+  %p[$sp-6] := 22
+  %p[$sp-5] := 22
+  %p[$sp-4] := $ENGINE_PAR_SENDLEVEL_0
+  %p[$sp-3] := -1
+  %p[$sp-2] := 7
+  %p[$sp-1] := $NI_BUS_OFFSET+4
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_far_par_sli_reverb_send)
+  set_engine_par($ENGINE_PAR_SENDLEVEL_1,$mic_positions_panel_far_par_sli_reverb_send,-1,7,$NI_BUS_OFFSET+4)
+  %p[$sp-6] := 27
+  %p[$sp-5] := 27
+  %p[$sp-4] := $ENGINE_PAR_SENDLEVEL_1
+  %p[$sp-3] := -1
+  %p[$sp-2] := 7
+  %p[$sp-1] := $NI_BUS_OFFSET+4
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_far_par_sli_stereo_width)
+  set_engine_par($ENGINE_PAR_STEREO,$mic_positions_panel_far_par_sli_stereo_width,-1,0,$NI_BUS_OFFSET+4)
+  %p[$sp-6] := 16
+  %p[$sp-5] := 16
+  %p[$sp-4] := $ENGINE_PAR_STEREO
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_BUS_OFFSET+4
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_far_par_sli_pan)
+  set_engine_par($ENGINE_PAR_STEREO_PAN,$mic_positions_panel_far_par_sli_pan,-1,0,$NI_BUS_OFFSET+4)
+  %p[$sp-6] := 48
+  %p[$sp-5] := 48
+  %p[$sp-4] := $ENGINE_PAR_STEREO_PAN
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_BUS_OFFSET+4
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_far_par_mnu_channel_output)
+  set_engine_par($ENGINE_PAR_OUTPUT_CHANNEL,$mic_positions_panel_far_par_mnu_channel_output,-1,-1,$NI_BUS_OFFSET+4)
+  set_control_par_str(%ui_output_labels[4],$CONTROL_PAR_TEXT,get_menu_item_str(%ui_output_menus[4],get_control_par(%ui_output_menus[4],$CONTROL_PAR_VALUE)))
+end on
+

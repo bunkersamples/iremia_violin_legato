@@ -1,0 +1,19 @@
+# Audio / sample content - lives on disk only, never in git
+Samples/
+Resources/ir_samples/
+Resources/pictures/
+Resources/data/
+
+# Compiled/binary Kontakt artifacts
+# .nki files ARE tracked, as of 2026-11-23: they are small and they hold the group/zone/
+# mapping work that no script can regenerate. Two viola legato .nki files were lost on
+# 2026-11-23 with no copy anywhere, which is what this change prevents. .nkr/.nkc stay
+# out - those are the resource containers, rebuildable from Resources/pictures.
+*.nkr
+*.nkc
+
+# Docs / large binaries not part of the codebase
+*.pdf
+
+# macOS
+.DS_Store

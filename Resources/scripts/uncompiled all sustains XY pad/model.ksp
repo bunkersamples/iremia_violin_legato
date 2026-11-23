@@ -1,0 +1,493 @@
+{-----------------------------------------------------------------
+Title: Model
+File: Model.ksp
+Author: Nicolaj M Nielsen
+First written: 
+Current Version: 1.0
+Last Modified:
+-----------------------------------------------------------------}
+
+{******************************************************************************************
+* FUNCTIONS *
+******************************************************************************************}
+function f.purge_mic_channel(channel_num)
+	declare i
+	for c := 0 to NUM_XY_CORNERS-1
+		for i := 0 to NUM_ARTICULATIONS-1
+			if get_control_par(ui_channel_swi_mute[channel_num], CONTROL_PAR_VALUE) = 1 //if mute is ON, purge samples
+				purge_group(xy_corner_group_start[c] + channel_num + (NUM_MICS*i), 1)
+			else //mute is OFF, load samples
+				purge_group(xy_corner_group_start[c] + channel_num + (NUM_MICS*i), 0)
+			end if
+		end for
+	end for
+end function
+
+function f.update_xy_corner_labels() //set each xy-pad corner button AND its in-pad corner label to the name of that corner's assigned articulation, or "OFF" while the corner is switched off. Button gets the full name, label the shortened one.
+	declare i
+	for i := 0 to NUM_XY_CORNERS-1
+		if ui_xy_corner_on_switches[i] -> VALUE = 1
+			set_control_par_str(ui_xy_art_buttons[i], CONTROL_PAR_TEXT, !articulation_names[xy_corner_art[i]])
+			set_control_par_str(ui_xy_corner_labels[i], CONTROL_PAR_TEXT, !articulation_names_short[xy_corner_art[i]])
+		else
+			set_control_par_str(ui_xy_art_buttons[i], CONTROL_PAR_TEXT, " OFF") //xy_corner_art[i] is deliberately left alone, so the articulation comes back when the corner is switched on again
+			set_control_par_str(ui_xy_corner_labels[i], CONTROL_PAR_TEXT, "OFF")
+		end if
+	end for
+end function
+
+function f.update_xy_crossfade() //push each corner's current weight (blend of linear and equal-power, per $XY_pwr_blend) to its dead MIDI CC, which drives that corner's native Group Volume modulator (CC_VOLUME_CORNER_<n>)
+	declare ~x
+	declare ~y
+	declare ~half_pi := 1.5707963
+	declare ~blend //0.0-1.0 version of $XY_pwr_blend
+	declare ?w_lin[NUM_XY_CORNERS]
+	declare ?w_pow[NUM_XY_CORNERS]
+	declare ?w[NUM_XY_CORNERS]
+	declare trim_raw //raw 0-1000000 value of whichever corner's trim knob is current
+	declare ~trim_min_db
+	declare ~trim_pct
+	declare ~trim_range
+	declare ~trim_db
+	declare ~trim_lin
+	declare cc_val
+
+	~x := ?xy_pad_xypad[0] //ui_xy's native range is 0.0-1.0, no scaling needed
+	~y := ?xy_pad_xypad[1]
+	~blend := int_to_real($XY_pwr_blend) / 1000.0
+
+	//linear weights sum to exactly 1.0 everywhere (equal-gain, correct for correlated corner content); per-axis sin/cos weights multiplied together sum-of-squares to exactly 1.0 everywhere (equal-power, correct for decorrelated content). Real corner recordings sit somewhere between the two depending on how similar each corner pair sounds, so blend between them by ear via $XY_pwr_blend (TEMP dev knob, see config.ksp) rather than committing to one fixed law.
+	?w_lin[0] := (1.0-~x) * (1.0-~y) //corner 1: bottom-left
+	?w_lin[1] := (1.0-~x) * ~y       //corner 2: top-left
+	?w_lin[2] := ~x * ~y             //corner 3: top-right
+	?w_lin[3] := ~x * (1.0-~y)       //corner 4: bottom-right
+
+	?w_pow[0] := cos(~x*~half_pi) * cos(~y*~half_pi) //corner 1: bottom-left
+	?w_pow[1] := cos(~x*~half_pi) * sin(~y*~half_pi) //corner 2: top-left
+	?w_pow[2] := sin(~x*~half_pi) * sin(~y*~half_pi) //corner 3: top-right
+	?w_pow[3] := sin(~x*~half_pi) * cos(~y*~half_pi) //corner 4: bottom-right
+
+	for c := 0 to NUM_XY_CORNERS-1
+		?w[c] := ?w_lin[c] + ~blend*(?w_pow[c] - ?w_lin[c])
+
+		//per-corner trim ($xy_pad_sli_trim_1..4), 0-1000000 -> 0 to -XY_TRIM_RANGE_DB (cut only, see config.ksp) -> linear multiplier, folded into the weight BEFORE it becomes a single CC value - not a second modulator on the same Group Volume target, since Kontakt sums (not multiplies) multiple modulator assignments on one target. Same reasoning as the X*Y combination above.
+		select c
+			case 0
+				trim_raw := $xy_pad_sli_trim_1
+			case 1
+				trim_raw := $xy_pad_sli_trim_2
+			case 2
+				trim_raw := $xy_pad_sli_trim_3
+			case 3
+				trim_raw := $xy_pad_sli_trim_4
+		end select
+		//computed inline rather than via ui.remap_scale() - that function's return type checks inconsistently between a direct assignment and a nested call in this compiler, no cast combination satisfied both. One operation per line, chaining several binary operators in one statement also errored.
+		~trim_min_db := 0.0 - ~XY_TRIM_RANGE_DB
+		~trim_pct := int_to_real(trim_raw) / 1000000.0 //0.0-1.0
+		~trim_range := 0.0 - ~trim_min_db //positive width, e.g. 24.0
+		~trim_db := ~trim_pct * ~trim_range //0.0 to +range
+		~trim_db := ~trim_db + ~trim_min_db //shift down into -range..0
+		~trim_lin := pow(10.0, ~trim_db/20.0)
+		?w[c] := ?w[c] * ~trim_lin
+
+		cc_val := real_to_int(ui.remap_scale(?w[c], 0.0, 1.0, 0.0, 127.0)) //0.0-1.0 weight -> 0-127 MIDI CC range; real_to_int, not int() - matches the cast fn used everywhere else in this codebase
+
+		//ui.remap_scale doesn't clamp, and a corner at/near full weight plus a positive trim can push ?w[c] above 1.0 - clamp here so set_controller never receives an out-of-range CC value
+		if cc_val > 127
+			cc_val := 127
+		else if cc_val < 0
+			cc_val := 0
+		end if
+
+		set_controller(XY_CORNER_BASE_CC + c, cc_val)
+	end for
+end function
+
+function f.xy_cc_is_learnable(cc) -> return //1 only for CC numbers that actually appear in the assignment menus
+	declare j
+	return := 0
+	//CC_NUM does not only carry MIDI CCs - it also reports $VCC_PITCH_BEND and $VCC_MONO_AT, which sit outside 0-127 and must never be captured.
+	if cc >= 0 and cc <= 127
+		return := 1
+		//same exclusion list the menus are built from, so learn can never assign something the menu cannot display. This is also what makes the feature safe regardless of whether set_controller() re-enters this callback: the dead CCs 104-107 that f.update_xy_crossfade() writes are excluded, so nudging the pad while armed can never teach one.
+		for j := 0 to XY_CC_NUM_EXCLUDED-1
+			if cc = xy_cc_excluded[j]
+				return := 0
+			end if
+		end for
+	end if
+end function
+
+taskfunc f.xy_learn_blink(axis) //flash the armed learn switch until it is disarmed, either by capturing a CC or by being clicked again
+	declare local cb_state[2]
+	declare local lamp[2]
+
+	cb_state[axis] := NI_CALLBACK_ID //same "am I still the current task?" trick as f.update_label_specific(): a newer invocation overwrites this, so the task it replaced stops on its next tick instead of fighting it
+	lamp[axis] := 1
+
+	while xy_cc_learn_axis = axis and cb_state[axis] = NI_CALLBACK_ID
+		set_control_par(ui_xy_cc_learn_switches[axis], CONTROL_PAR_VALUE, lamp[axis])
+		lamp[axis] := 1 - lamp[axis]
+		tcm.wait(XY_LEARN_BLINK_TIME)
+	end while
+
+	if cb_state[axis] = NI_CALLBACK_ID //only the newest task clears the lamp, so a quick disarm-then-rearm doesn't get switched off by the task it replaced
+		set_control_par(ui_xy_cc_learn_switches[axis], CONTROL_PAR_VALUE, 0)
+	end if
+end taskfunc
+
+taskfunc f.update_xy_trim_label(corner_idx) //show the corner's current trim in dB, then revert to "TRIM" if untouched for LBL_WAIT_TIME - same show/revert debounce idiom as f.update_label_specific()
+	declare local cb_state[NUM_XY_CORNERS]
+	declare trim_raw
+	declare db_cut_x10
+
+	cb_state[corner_idx] := NI_CALLBACK_ID
+
+	select corner_idx
+		case 0
+			trim_raw := $xy_pad_sli_trim_1
+		case 1
+			trim_raw := $xy_pad_sli_trim_2
+		case 2
+			trim_raw := $xy_pad_sli_trim_3
+		case 3
+			trim_raw := $xy_pad_sli_trim_4
+	end select
+
+	//raw -> dB is LINEAR here (the pow()/log only enters in the gain path in f.update_xy_crossfade), so the dB display needs no real arithmetic at all - which is why this now shows dB rather than the % it used to. +500000 rounds to nearest tenth; max intermediate is 240500000, well inside KSP's signed 32-bit int range.
+	db_cut_x10 := XY_TRIM_RANGE_DB_X10 - (trim_raw*XY_TRIM_RANGE_DB_X10 + 500000)/1000000 //tenths of a dB of CUT, 240 (knob at 0) down to 0 (knob at max/neutral) - kept positive so the minus sign can be prepended as text, avoiding any reliance on how mod treats negatives
+
+	if db_cut_x10 = 0
+		@xy_trim_text := "0.0 dB"
+	else
+		@xy_trim_text := "-" & db_cut_x10/10 & "." & db_cut_x10 mod 10 & " dB" //same integer div + mod one-decimal idiom as the reverb lowcut/hicut labels in controller_all_sus.ksp
+	end if
+
+	select corner_idx
+		case 0
+			set_text($xy_pad_lbl_trim_1, @xy_trim_text)
+		case 1
+			set_text($xy_pad_lbl_trim_2, @xy_trim_text)
+		case 2
+			set_text($xy_pad_lbl_trim_3, @xy_trim_text)
+		case 3
+			set_text($xy_pad_lbl_trim_4, @xy_trim_text)
+	end select
+
+	tcm.wait(LBL_WAIT_TIME)
+
+	if cb_state[corner_idx] = NI_CALLBACK_ID //control hasn't been touched again, reset text
+		select corner_idx
+			case 0
+				set_text($xy_pad_lbl_trim_1, "TRIM")
+			case 1
+				set_text($xy_pad_lbl_trim_2, "TRIM")
+			case 2
+				set_text($xy_pad_lbl_trim_3, "TRIM")
+			case 3
+				set_text($xy_pad_lbl_trim_4, "TRIM")
+		end select
+	end if
+end taskfunc
+
+//superseded by the dead-CC version above, kept here for reference - this was the stopgap used before groups were duplicated 4x
+//function f.update_xy_crossfade_scripted_volume()
+//	declare ~x
+//	declare ~y
+//	declare ~w[NUM_XY_CORNERS]
+//	declare c
+//	declare a
+//	declare vol
+//
+//	~x := ?xy_pad_xypad[0] / 1000.0
+//	~y := ?xy_pad_xypad[1] / 1000.0
+//
+//	~w[0] := (1-~x) * (1-~y) //corner 1: bottom-left
+//	~w[1] := (1-~x) * ~y     //corner 2: top-left
+//	~w[2] := ~x * ~y         //corner 3: top-right
+//	~w[3] := ~x * (1-~y)     //corner 4: bottom-right
+//
+//	for c := 0 to NUM_XY_CORNERS-1
+//		vol := ~w[c] * 1000000 //ENGINE_PAR_VOLUME's raw range; NOT yet verified where 0dB/unity sits in it, see note to Nico
+//		for a := 0 to NUM_MICS-1
+//			set_engine_par(ENGINE_PAR_VOLUME, vol, xy_corner_art[c]*NUM_MICS + a, -1, -1)
+//		end for
+//	end for
+//end function
+
+taskfunc f.select_articulation(art_num)
+	declare i 
+	for i := 0 to num_elements(ui_art_switches)-1
+		set_control_par(ui_art_switches[i], CONTROL_PAR_VALUE, 0)
+	end for
+	set_control_par(ui_art_switches[art_num], CONTROL_PAR_VALUE, 1)
+	current_art := art_num
+
+		if current_art = HARMONICS_CS or current_art = HARMONICS_NORM 
+			harmonics_on := 1
+		else 
+			harmonics_on := 0
+		end if
+		f.color_keys()
+end taskfunc
+
+taskfunc f.select_multi_articulation(art_num)
+	declare i 
+	if get_control_par(ui_art_switches[art_num], CONTROL_PAR_KEY_SHIFT) = 0 //if shift was not held down when switch was pressed
+		for i := 0 to num_elements(ui_art_switches)-1
+			set_control_par(ui_art_switches[i], CONTROL_PAR_VALUE, 0) //turn all switches off
+			//set_control_par(ui_art_keyswitch_note_labels[i], CONTROL_PAR_FONT_TYPE, 23) //set keyswitch note number label font type to gray
+		end for
+	end if 
+	//set_control_par(ui_art_switches[art_num], CONTROL_PAR_VALUE, 1) //turn on clicked switch
+	set_control_par(ui_art_switches[art_num], CONTROL_PAR_VALUE, 1)
+	current_art := art_num
+	//set_control_par(ui_art_keyswitch_note_labels[art_num], CONTROL_PAR_FONT_TYPE, 24) //set keyswitch note number label font type to white
+		if current_art = HARMONICS_CS or current_art = HARMONICS_NORM 
+			harmonics_on := 1
+		else 
+			harmonics_on := 0
+		end if
+		f.color_keys()
+end taskfunc
+
+taskfunc f.highlight_corner_articulation(corner) //light up the picker switch for whatever articulation is already assigned to this corner
+	declare i
+	for i := 0 to num_elements(ui_art_switches)-1
+		set_control_par(ui_art_switches[i], CONTROL_PAR_VALUE, 0)
+	end for
+	set_control_par(ui_art_switches[xy_corner_art[corner]], CONTROL_PAR_VALUE, 1)
+end taskfunc
+
+//taskfunc f.show_keyswitch_notes(value)
+	//declare i
+		//for i := 0 to num_elements(ui_art_keyswitch_note_labels)-1
+			//if value = 1
+				//set_control_par(ui_art_keyswitch_note_labels[i], CONTROL_PAR_HIDE, HIDE_PART_NOTHING)
+				//set_control_par(ui_art_keyswitch_note_labels[i], CONTROL_PAR_HIDE, HIDE_PART_BG)
+			//else 
+				//set_control_par(ui_art_keyswitch_note_labels[i], CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL)
+			//end if 
+		//end for
+//end taskfunc
+
+
+taskfunc f.color_keys()
+	declare i
+	for i := 0 to 127
+		set_key_color(i, KEY_COLOR_INACTIVE)
+	end for
+
+	//for i := key_switches[0] to key_switches[0] + NUM_ARTICULATIONS -1 //color keyswitches
+		//set_key_color(i, KEY_COLOR_RED)
+	//end for
+
+	f.update_harmonics_green_keys() //paints all of LOWEST_NOTE_NORMAL..HIGHEST_NOTE_HARMONICS (55-108) itself, in every branch, so the wipe above only has to clear what lies outside the playable range
+end taskfunc
+
+function f.update_harmonics_green_keys() //colours the keyboard to match what the four xy-pad corners can actually sound. Three zones: LOWEST_NOTE_NORMAL..LOWEST_NOTE_HARMONICS-1 (55-77) only the normal articulations reach, LOWEST_NOTE_HARMONICS..HIGHEST_NOTE_NORMAL (78-96) both families share, and past HIGHEST_NOTE_NORMAL (97-108) only harmonics reach. Every zone is repainted on every call, never left alone - this runs standalone from init and from the art_switches picker macro, not only via f.color_keys(), so a stale colour would otherwise stick when a corner changes family. Deliberately ignores the per-corner on/off switches: a corner switched off still colours the keyboard, by choice
+	declare i
+	declare any_harmonics
+	declare any_normal
+	any_harmonics := 0
+	any_normal := 0
+
+	for i := 0 to NUM_XY_CORNERS-1
+		if xy_corner_art[i] = HARMONICS_CS or xy_corner_art[i] = HARMONICS_NORM
+			any_harmonics := 1
+		else
+			any_normal := 1
+		end if
+	end for
+
+	if any_normal = 1 //normal-only range: blue while any corner holds a normal articulation
+		for i := LOWEST_NOTE_NORMAL to LOWEST_NOTE_HARMONICS-1
+			set_key_color(i, KEY_COLOR_DEFAULT)
+		end for
+	else //every corner is harmonics, so nothing sounds down here - do not leave it blue promising notes it cannot play
+		for i := LOWEST_NOTE_NORMAL to LOWEST_NOTE_HARMONICS-1
+			set_key_color(i, KEY_COLOR_INACTIVE)
+		end for
+	end if
+
+	if any_harmonics = 1 and any_normal = 1 //the overlap, and genuinely shared: its own colour
+		for i := LOWEST_NOTE_HARMONICS to HIGHEST_NOTE_NORMAL
+			set_key_color(i, KEY_COLOR_MINT)
+		end for
+	else
+		if any_harmonics = 1 //all corners harmonics: this reads as harmonics range, not as an overlap
+			for i := LOWEST_NOTE_HARMONICS to HIGHEST_NOTE_NORMAL
+				set_key_color(i, KEY_COLOR_GREEN)
+			end for
+		else //no harmonics anywhere: plain normal range
+			for i := LOWEST_NOTE_HARMONICS to HIGHEST_NOTE_NORMAL
+				set_key_color(i, KEY_COLOR_DEFAULT)
+			end for
+		end if
+	end if
+
+	if any_harmonics = 1 //harmonics-only extension
+		for i := HIGHEST_NOTE_NORMAL+1 to HIGHEST_NOTE_HARMONICS
+			set_key_color(i, KEY_COLOR_GREEN)
+		end for
+	else
+		for i := HIGHEST_NOTE_NORMAL+1 to HIGHEST_NOTE_HARMONICS
+			set_key_color(i, KEY_COLOR_INACTIVE) //no corner uses harmonics, this extended range is out of reach again
+		end for
+	end if
+end function
+
+//taskfunc f.move_keyswitches(note)
+	//declare i 
+	//declare ii
+	//for i := 0 to 127 //set all keys to white
+		//set_key_color(i, KEY_COLOR_INACTIVE)
+	//end for 
+	
+	//if in_range(note, 0, HIGHEST_POSSIBLE_KEYSWITCH)
+		//for i := 0 to NUM_ARTICULATIONS-1 //update key switch array
+			//key_switches[i] := note + i
+		//end for
+	//end if
+
+		//for ii := key_switches[0] to key_switches[0] + NUM_ARTICULATIONS -1 //color keyswitches 
+			//set_key_color(ii, KEY_COLOR_RED)
+		//end for
+	
+		//for i := LOWEST_NOTE_NORMAL to HIGHEST_NOTE_NORMAL //normal range is always blue, regardless of harmonics
+			//set_key_color(i, KEY_COLOR_DEFAULT)
+		//end for
+
+		//f.update_harmonics_green_keys()
+//end taskfunc
+
+//taskfunc f.update_keyswitch_notes_label(note)
+	//declare i 
+	//if in_range(note, 0, HIGHEST_POSSIBLE_KEYSWITCH)
+		//for i := 0 to num_elements(ui_art_keyswitch_note_labels)-1
+			//set_control_par_str(ui_art_keyswitch_note_labels[i], CONTROL_PAR_TEXT, !note_names[note + i])
+			////set_control_par(ui_art_keyswitch_note_labels[i], CONTROL_PAR_FONT_TYPE, 23) //set keyswitch note number label font type to gray
+		//end for
+	//end if 
+		////set_control_par(ui_art_keyswitch_note_labels[current_art], CONTROL_PAR_FONT_TYPE, 24) //set keyswitch note number label font type to white
+//end taskfunc
+
+taskfunc f.update_label(label_num, parameter_num, parameter, group, slot, generic)
+	declare local cb_state[NUM_LABELS]
+
+	cb_state[label_num] := NI_CALLBACK_ID
+
+	ui_labels[label_num] -> text := (!label_units_pre[parameter_num] & get_engine_par_disp(parameter, group, slot, generic) & !label_units_post[parameter_num])
+
+	tcm.wait(LBL_WAIT_TIME)
+
+	if cb_state[label_num] = NI_CALLBACK_ID //control hasn't been touched, reset text
+		ui_labels[label_num] -> text := lbl_text[label_num]
+	end if 
+
+end taskfunc
+
+taskfunc f.update_label_specific(label_num, control_num)
+	declare local cb_state[NUM_LABELS]
+
+	cb_state[label_num] := NI_CALLBACK_ID
+
+	select control_num
+		case 0 //dynamics simulation
+			ui_labels[label_num] -> text := (!label_units_pre[label_num] & $ADSR_panel_dyn_par_sli_dyn_sim_int/100 & !label_units_post[label_num])
+		case 1 //dynamics range
+			ui_labels[label_num] -> text := (!label_units_pre[label_num] & $ADSR_panel_dyn_par_sli_dyn_range/10000 & !label_units_post[label_num])
+	end select
+
+
+	tcm.wait(LBL_WAIT_TIME)
+
+	if cb_state[label_num] = NI_CALLBACK_ID //control hasn't been touched, reset text
+		ui_labels[label_num] -> text := lbl_text[label_num]
+	end if 
+
+end taskfunc
+
+taskfunc f.show_hide_dynamic_settings(value)  //if value = 1 -> show panel
+	if value = 1
+		set_control_par(get_ui_id($ADSR_panel_dyn_par), CONTROL_PAR_HIDE, HIDE_PART_NOTHING)
+	else 
+		set_control_par(get_ui_id($ADSR_panel_dyn_par), CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL)
+	end if
+end taskfunc
+
+taskfunc f.show_hide_panel(value, panel) //if value = 1 -> show panel, else hide panel. Panel is ui_id 
+	if value = 1
+		set_control_par(panel, CONTROL_PAR_HIDE, HIDE_PART_NOTHING)
+	else 
+		set_control_par(panel, CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL)
+	end if
+end taskfunc
+
+taskfunc f.show_delay_controls(value)
+	declare i 
+	for i := 0 to num_elements(ui_delay_modern)-1
+		set_control_par(ui_delay_modern[i], CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL)
+		set_control_par(ui_delay_analogue[i], CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL)
+		set_control_par(ui_delay_tape[i], CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL)
+		set_control_par(ui_delay_vintage[i], CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL)
+		set_control_par(ui_delay_diffusion[i], CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL)
+
+		select value 
+			case 0 
+				set_control_par(ui_delay_modern[i], CONTROL_PAR_HIDE, HIDE_PART_NOTHING)
+				set_control_par(ui_delay_modern[1], CONTROL_PAR_HIDE, HIDE_PART_BG)
+				set_control_par(ui_delay_modern[3], CONTROL_PAR_HIDE, HIDE_PART_BG)
+				set_control_par(ui_delay_modern[5], CONTROL_PAR_HIDE, HIDE_PART_BG)
+			case 1 
+				set_control_par(ui_delay_analogue[i], CONTROL_PAR_HIDE, HIDE_PART_NOTHING)
+				set_control_par(ui_delay_analogue[1], CONTROL_PAR_HIDE, HIDE_PART_BG)
+				set_control_par(ui_delay_analogue[3], CONTROL_PAR_HIDE, HIDE_PART_BG)
+				set_control_par(ui_delay_analogue[5], CONTROL_PAR_HIDE, HIDE_PART_BG)
+			case 2 
+				set_control_par(ui_delay_tape[i], CONTROL_PAR_HIDE, HIDE_PART_NOTHING)
+				set_control_par(ui_delay_tape[1], CONTROL_PAR_HIDE, HIDE_PART_BG)
+				set_control_par(ui_delay_tape[3], CONTROL_PAR_HIDE, HIDE_PART_BG)
+				set_control_par(ui_delay_tape[5], CONTROL_PAR_HIDE, HIDE_PART_BG)
+			case 3 
+				set_control_par(ui_delay_vintage[i], CONTROL_PAR_HIDE, HIDE_PART_NOTHING)
+				set_control_par(ui_delay_vintage[1], CONTROL_PAR_HIDE, HIDE_PART_BG)
+				set_control_par(ui_delay_vintage[3], CONTROL_PAR_HIDE, HIDE_PART_BG)
+				set_control_par(ui_delay_vintage[5], CONTROL_PAR_HIDE, HIDE_PART_BG)
+			case 4 
+				set_control_par(ui_delay_diffusion[i], CONTROL_PAR_HIDE, HIDE_PART_NOTHING)
+				set_control_par(ui_delay_diffusion[1], CONTROL_PAR_HIDE, HIDE_PART_BG)
+				set_control_par(ui_delay_diffusion[3], CONTROL_PAR_HIDE, HIDE_PART_BG)
+				set_control_par(ui_delay_diffusion[5], CONTROL_PAR_HIDE, HIDE_PART_BG)
+		end select
+	end for 
+end taskfunc
+
+taskfunc f.update_delay_controls()
+	declare i 
+	for i := 0 to num_elements(delay_par) -1
+		set_control_par(delay_controls[i], CONTROL_PAR_VALUE, get_engine_par(delay_par[i], -1, SEND_DELAY_SLOT, NI_SEND_BUS))
+	end for
+end taskfunc
+
+taskfunc f.update_channel_controls()
+	declare i 
+	for i := 0 to num_elements(ui_delay_sends)-1
+		set_control_par(ui_delay_sends[i], CONTROL_PAR_VALUE, get_engine_par(ENGINE_PAR_SENDLEVEL_0, -1, SEND_SLOT, NI_BUS_OFFSET + i))
+		set_control_par(ui_reverb_sends[i], CONTROL_PAR_VALUE, get_engine_par(ENGINE_PAR_SENDLEVEL_1, -1, SEND_SLOT, NI_BUS_OFFSET + i))
+		set_control_par(ui_stereo_controls[i], CONTROL_PAR_VALUE, get_engine_par(ENGINE_PAR_STEREO, -1, STEREO_SLOT, NI_BUS_OFFSET + i))
+		if i = 0 //if inside mono mic
+			set_control_par(ui_pan_controls[i], CONTROL_PAR_VALUE, get_engine_par(ENGINE_PAR_PAN, -1, -1, NI_BUS_OFFSET + i))
+		else 
+			set_control_par(ui_pan_controls[i], CONTROL_PAR_VALUE, get_engine_par(ENGINE_PAR_STEREO_PAN, -1, STEREO_SLOT, NI_BUS_OFFSET + i))
+		end if
+	end for
+end taskfunc
+
+
+
+
+
+{******************************************************************************************
+* MACROS *
+******************************************************************************************}

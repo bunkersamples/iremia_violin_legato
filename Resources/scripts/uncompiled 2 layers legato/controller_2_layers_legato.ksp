@@ -1,0 +1,872 @@
+{-----------------------------------------------------------------
+Title: Controller
+File: controller.ksp
+Author: Nicolaj M Nielsen
+First written: 
+Current Version: 1.0
+Last Modified:
+-----------------------------------------------------------------}
+
+{******************************************************************************************
+* INCLUDES *
+******************************************************************************************}
+
+import "config.ksp"
+import "model.ksp"
+import "view.ksp"
+
+{******************************************************************************************
+* SYSTEM CALLBACKS *
+******************************************************************************************}
+
+on init 
+
+
+
+{* CONSTANTS *
+******************************************************************************************}
+
+{* VARIABLES *
+******************************************************************************************}
+
+{* CONSTANTS *
+******************************************************************************************}
+
+{* ARRAYS *
+******************************************************************************************}
+
+{* FAMILIES *
+******************************************************************************************}
+	import_nckp("../../performance_view/ivln_2_layers_legato.nckp")
+	tcm.init(50)
+	config.init("IV 2 layers", "ivln_2_layers_legato")
+	view.init()
+
+	{* PRAGMA - save to file in compile}
+	{#pragma save_compiled_source ../tab_1_ivln_2_layers_legato.txt}
+
+	
+
+	message ("")
+
+end on
+
+// ui.control_knobs_action($SEND_FX_sli_reverb_predelay)
+
+
+on pgs_changed
+	f.color_keys()
+	set_control_par(get_ui_id($ADSR_panel_dyn_par), CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL) //hides dynamic parameter controls
+	set_control_par(get_ui_id($mic_positions_panel_inside_par), CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL) //hide inside mic settings
+	set_control_par(get_ui_id($mic_positions_panel_superclose_par), CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL) //hide inside mic settings
+	set_control_par(get_ui_id($mic_positions_panel_close_par), CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL) //hide inside mic settings
+	set_control_par(get_ui_id($mic_positions_panel_mid_par), CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL) //hide inside mic settings
+	set_control_par(get_ui_id($mic_positions_panel_far_par), CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL) //hide inside mic settings
+
+	if $ADSR_swi_phase = 1
+		set_text($ADSR_lbl_phase, "ALIGN S.START OFF")	
+	else 
+		set_text($ADSR_lbl_phase, "ALIGN S.START ON")
+	end if
+
+	swi_main := 1
+	swi_fx := 0
+	set_control_par(get_ui_id($SEND_FX), CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL) //hide FX parameters
+	//set_control_par_str(get_ui_id($mic_positions_panel_far_par_lbl_channel_output), control_parameter, text)
+	set_control_par(get_ui_id($SEND_FX_lbl_sync_unit), CONTROL_PAR_PICTURE_STATE, $SEND_FX_mnu_sync_unit)
+	$SETTINGS -> hide := HIDE_WHOLE_CONTROL	
+
+	//update phase and output labels
+
+	for i := 0 to NUM_MICS-1
+		//if get_control_par(ui_swi_phase[i], CONTROL_PAR_VALUE) = 0
+		//	set_control_par_str(ui_lbl_phase[i], CONTROL_PAR_TEXT, "ON")
+		//else 
+		//	set_control_par_str(ui_lbl_phase[i], CONTROL_PAR_TEXT, "OFF")
+		//end if
+		 //update output menus
+	 	// f.purge_mic_channel(i)
+		 
+		 set_control_par_str(ui_output_labels[i], CONTROL_PAR_TEXT,  get_menu_item_str(ui_output_menus[i], get_control_par(ui_output_menus[i], CONTROL_PAR_VALUE)))
+		//set_control_par(ui_id, control_parameter, value)
+	end for
+
+	f.update_delay_controls()
+	f.update_channel_controls()
+	f.move_keyswitches($SETTINGS_sli_keyswitches)
+	// f.select_multi_articulation(current_art)
+	f.update_keyswitch_notes_label($SETTINGS_sli_keyswitches)
+	f.show_keyswitch_notes($SETTINGS_swi_show_keyswitch_notes)
+
+
+
+	
+	//set_knob_label($ADSR_A, get_engine_par_disp(ENGINE_PAR_ATTACK, 0, find_mod(0, "ENV_AHDSR"), find_target(0, find_mod(0, "ENV_AHDSR"), "ENV_AHDSR_VOLUME")))
+	//set_knob_label($ADSR_D, get_engine_par_disp(ENGINE_PAR_DECAY, 0, find_mod(0, "ENV_AHDSR"), find_target(0, find_mod(0, "ENV_AHDSR"), "ENV_AHDSR_VOLUME")))
+	//set_knob_label($ADSR_S, get_engine_par_disp(ENGINE_PAR_SUSTAIN, 0, find_mod(0, "ENV_AHDSR"), find_target(0, find_mod(0, "ENV_AHDSR"), "ENV_AHDSR_VOLUME")))
+	//set_knob_label($ADSR_R, get_engine_par_disp(ENGINE_PAR_RELEASE, 0, find_mod(0, "ENV_AHDSR"), find_target(0, find_mod(0, "ENV_AHDSR"), "ENV_AHDSR_VOLUME")))
+
+end on
+
+on async_complete
+    //if ($NI_ASYNC_ID = $load_ir_id)
+    //    $load_ir_id := -1
+    //    if ($NI_ASYNC_EXIT_STATUS = 0)
+    //        message("IR sample not found!")
+    //    else
+    //        message("IR sample loaded!")
+	//	end if 
+	//end if
+end on
+
+on persistence_changed 
+	for i := 0 to NUM_MICS-1
+		f.purge_mic_channel(i)
+	end for
+
+	//Restored switch value doesn't fire its own ui_control callback on load, so the label
+	//needs the same sync done manually here.
+	if $swi_legato_poly = 1
+		set_text($lbl_legato_poly, "LEGATO")
+	else
+		set_text($lbl_legato_poly, "POLYPHONIC")
+	end if
+end on
+
+on note 
+// message(EVENT_NOTE)
+	if search(key_switches, EVENT_NOTE) # -1 //a key switch was pressed
+		f.select_multi_articulation(search(key_switches, EVENT_NOTE))
+		// f.select_articulation(search(key_switches, EVENT_NOTE))
+	end if
+
+	disallow_group(ALL_GROUPS)
+
+	//LEGATO: decide which group SET this note plays through. Groups 0..119 are the normal
+	//samples; groups 120..239 (LGT_PHASE_GROUP_OFFSET higher) are an exact duplicate set whose
+	//zones have the per-mic phase-alignment correction (0/50/119/265/367 samples) baked directly
+	//into their own Sample Start. lgt_phase_grp_ofs is just added to every allow_group() index
+	//below so the SAME mic/layer logic naturally picks the right set - the legato engine itself
+	//never needs to know mics, layers or phase-alignment exist at all.
+	if $ADSR_swi_phase # 1  //phase-align is currently ON: use the phase-aligned duplicate group set
+		lgt_phase_grp_ofs := LGT_PHASE_GROUP_OFFSET
+	else
+		lgt_phase_grp_ofs := 0
+	end if
+
+	if current_art #-1
+		for a := 0 to NUM_MICS -1
+			if ui_channel_swi_mute[a] -> VALUE = 1  //if channel Nr i is not muted
+				if solo_on_flag = 0 //and no channels are solo'ed, allow the channel
+					for aa := 0 to NUM_LAYERS-1 //NUM_LAYERS could be variable with some_array[current_art]
+						allow_group(art_start_group[current_art] + a + aa*NUM_MICS + lgt_phase_grp_ofs)
+					end for 
+				else if solo_channels[a] = 1 //else allow only solo's channels
+					for aa := 0 to NUM_LAYERS-1 
+						allow_group(art_start_group[current_art] + a + aa*NUM_MICS + lgt_phase_grp_ofs)
+					end for 
+				end if
+			end if
+		end for
+	end if 
+
+	//LEGATO: harmonics use a different playable key range than the normal articulations
+	//(LOWEST/HIGHEST_NOTE_HARMONICS vs ...NORMAL, see config.ksp), so which range counts as
+	//"in range" for legato purposes follows the selected articulation. Unlike the all-sustains
+	//patch, on note here sounds ONE articulation (current_art drives art_start_group[]), so a
+	//single test is correct - there is no layered selection to take the union of.
+	if current_art = HARMONICS
+		lgt_note_lo := LOWEST_NOTE_HARMONICS
+		lgt_note_hi := HIGHEST_NOTE_HARMONICS
+	else
+		lgt_note_lo := LOWEST_NOTE_NORMAL
+		lgt_note_hi := HIGHEST_NOTE_NORMAL
+	end if
+
+	//LEGATO: hand this note off to the engine - but only if $swi_legato_poly is on, an
+	//articulation is actually selected, and this is a real playable note (not a keyswitch, and
+	//within whichever range applies above). When $swi_legato_poly is off, none of this runs and
+	//the note plays natively through whatever groups were allowed, as if the engine didn't exist.
+	//ignore_event() MUST be called here, directly in on note - it silently fails to suppress the
+	//native note if called from inside a function instead (see the ksp-sublimeksp-gotchas memory
+	//note). Once suppressed, f.lgt_process_note() decides whether this starts a new phrase or
+	//continues a legato transition.
+	if $swi_legato_poly = 1 and current_art # -1 and search(key_switches, EVENT_NOTE) = -1 and in_range(EVENT_NOTE, lgt_note_lo, lgt_note_hi)
+		ignore_event(EVENT_ID)
+		f.lgt_process_note()
+	end if 
+
+	// for a := 0 to NUM_MICS -1
+		// if ui_channel_swi_mute[a] -> VALUE = 1  //if channel Nr i is not muted
+			// if solo_on_flag = 0 //and no channels are solo'ed, allow the channel
+				// for b := 0 to num_elements(ui_art_switches)-1
+					// if get_control_par(ui_art_switches[b], CONTROL_PAR_VALUE) = 1
+						// allow_group(b*NUM_MICS + a)
+					// end if
+				// end for
+			// else if solo_channels[a] = 1 //else allow only solo's channels
+				// for b := 0 to num_elements(ui_art_switches)-1
+					// if get_control_par(ui_art_switches[b], CONTROL_PAR_VALUE) = 1
+						// allow_group(b*NUM_MICS + a)
+					// end if
+				// end for
+				// 
+			// end if
+		// end if
+	// end for
+
+
+end on
+
+on release 
+	//LEGATO: figure out whether this key-lift ends the current phrase, ends an early-released
+	//Old note, or (if the sustain pedal is down) just gets deferred - see f.lgt_release_note()
+	//in model.ksp for the actual logic. Skipped entirely when $swi_legato_poly is off.
+	if $swi_legato_poly = 1
+		f.lgt_release_note()
+	end if
+end on
+
+on controller
+	//LEGATO: track the sustain pedal (CC64) so held legato phrases don't cut off while it's down.
+	//When the pedal comes back up, f.lgt_test_pedal() finishes off anything that was deferred
+	//by f.lgt_release_note() while it was held. Skipped entirely when $swi_legato_poly is off.
+	if CC_NUM = 64 and $swi_legato_poly = 1 //sustain pedal
+		if CC[64] < 64
+			lgt.pedal_down := false
+			f.lgt_test_pedal()
+		else
+			lgt.pedal_down := true
+		end if
+	end if
+end on
+
+
+
+art_switches($articulations_swi_sus_cs_into_norm_ppp, 0)
+art_switches($articulations_swi_sus_cs_into_norm_pp, 1)
+art_switches($articulations_swi_sus_cs_into_norm_p, 2)
+art_switches($articulations_swi_sus_supercs_into_cs_ppp, 3)
+art_switches($articulations_swi_sus_supercs_into_cs_pp, 4)
+art_switches($articulations_swi_sus_supercs_into_cs_p, 5)
+art_switches($articulations_swi_bow_pulses_cs_norm, 6)
+art_switches($articulations_swi_vib_pulses_cs_norm, 7)
+art_switches($articulations_swi_rebow_cs_norm, 8)
+art_switches($articulations_swi_trem_bursts_cs_norm, 9)
+art_switches($articulations_swi_trem_fluct_cs_norm, 10)
+art_switches($articulations_swi_harmonics_cs_norm, 11) 
+
+
+solo_buttons($mic_positions_swi_solo_inside, 0)
+solo_buttons($mic_positions_swi_solo_superclose, 1)
+solo_buttons($mic_positions_swi_solo_close, 2)
+solo_buttons($mic_positions_swi_solo_mid, 3)
+solo_buttons($mic_positions_swi_solo_far, 4)
+
+//SHOW MIXER OR FX ****** SHOW MIXER OR FX ****** SHOW MIXER OR FX ****** SHOW MIXER OR FX ****** SHOW MIXER OR FX ****** SHOW MIXER OR FX ****** )
+
+on ui_control($swi_main)
+	$swi_main := 1
+	$swi_fx := 0
+	$swi_settings := 0
+	$mic_positions -> hide := HIDE_PART_NOTHING
+	$ADSR -> hide := HIDE_PART_NOTHING
+	$SEND_FX -> hide := HIDE_WHOLE_CONTROL
+	$SETTINGS -> hide := HIDE_WHOLE_CONTROL	
+end on
+
+on ui_control($swi_fx)
+	$swi_fx := 1
+	$swi_main := 0
+	$swi_settings := 0
+	$mic_positions -> hide := HIDE_WHOLE_CONTROL
+	$ADSR -> hide := HIDE_WHOLE_CONTROL
+	$SEND_FX -> hide := HIDE_PART_NOTHING	
+	$SETTINGS -> hide := HIDE_WHOLE_CONTROL	
+	f.show_delay_controls($SEND_FX_mnu_delay_mode)
+end on
+
+on ui_control($swi_settings) //show settings panel
+	$swi_settings := 1
+	$swi_main := 0
+	$swi_fx := 0
+	$SETTINGS -> hide := HIDE_PART_NOTHING	
+	$SEND_FX -> hide := HIDE_WHOLE_CONTROL	
+	$mic_positions -> hide := HIDE_WHOLE_CONTROL
+	$ADSR -> hide := HIDE_WHOLE_CONTROL
+	// $mic_positions -> hide := HIDE_WHOLE_CONTROL
+end on
+
+on ui_control($SETTINGS_sli_keyswitches) //move keyswitches
+	f.move_keyswitches($SETTINGS_sli_keyswitches)
+	f.update_keyswitch_notes_label($SETTINGS_sli_keyswitches)
+end on
+
+on ui_control($SETTINGS_swi_show_keyswitch_notes)
+	f.show_keyswitch_notes($SETTINGS_swi_show_keyswitch_notes)
+end on
+
+//MIC POSITIONS ***** MIC POSITIONS ***** MIC POSITIONS ***** MIC POSITIONS ***** MIC POSITIONS ***** MIC POSITIONS ***** MIC POSITIONS ***** 
+
+on ui_control($mic_positions_sli_inside)
+	for i := 0 to NUM_ARTICULATIONS * NUM_LAYERS-1
+		set_engine_par(ENGINE_PAR_VOLUME, $mic_positions_sli_inside, 0 + (NUM_MICS * i), -1, -1)
+		set_engine_par(ENGINE_PAR_VOLUME, $mic_positions_sli_inside, 0 + (NUM_MICS * i) + LGT_PHASE_GROUP_OFFSET, -1, -1)  //phase-aligned duplicate set - without this the slider does nothing while align sample start is ON, since those are the groups that actually sound	
+	end for
+	f.update_label(0, 0, ENGINE_PAR_VOLUME, 0, -1, -1)
+end on
+
+on ui_control($mic_positions_sli_superclose)
+	for i := 0 to NUM_ARTICULATIONS * NUM_LAYERS-1
+		set_engine_par(ENGINE_PAR_VOLUME, $mic_positions_sli_superclose, 1 + (NUM_MICS * i), -1, -1)
+		set_engine_par(ENGINE_PAR_VOLUME, $mic_positions_sli_superclose, 1 + (NUM_MICS * i) + LGT_PHASE_GROUP_OFFSET, -1, -1)  //phase-aligned duplicate set - without this the slider does nothing while align sample start is ON, since those are the groups that actually sound
+	end for
+	f.update_label(1,1, ENGINE_PAR_VOLUME, 1, -1, -1)
+end on
+
+on ui_control($mic_positions_sli_close)
+	for i := 0 to NUM_ARTICULATIONS * NUM_LAYERS-1
+		set_engine_par(ENGINE_PAR_VOLUME, $mic_positions_sli_close, 2 + (NUM_MICS * i), -1, -1)
+		set_engine_par(ENGINE_PAR_VOLUME, $mic_positions_sli_close, 2 + (NUM_MICS * i) + LGT_PHASE_GROUP_OFFSET, -1, -1)  //phase-aligned duplicate set - without this the slider does nothing while align sample start is ON, since those are the groups that actually sound
+	end for
+	f.update_label(2,2, ENGINE_PAR_VOLUME, 2, -1, -1)
+end on
+
+on ui_control($mic_positions_sli_mid)
+	for i := 0 to NUM_ARTICULATIONS * NUM_LAYERS-1
+		set_engine_par(ENGINE_PAR_VOLUME, $mic_positions_sli_mid, 3 + (NUM_MICS * i), -1, -1)
+		set_engine_par(ENGINE_PAR_VOLUME, $mic_positions_sli_mid, 3 + (NUM_MICS * i) + LGT_PHASE_GROUP_OFFSET, -1, -1)  //phase-aligned duplicate set - without this the slider does nothing while align sample start is ON, since those are the groups that actually sound
+	end for
+	f.update_label(3,3, ENGINE_PAR_VOLUME, 3, -1, -1)
+end on
+
+on ui_control($mic_positions_sli_far)
+	for i := 0 to NUM_ARTICULATIONS * NUM_LAYERS-1
+		set_engine_par(ENGINE_PAR_VOLUME, $mic_positions_sli_far, 4 + (NUM_MICS * i), -1, -1)
+		set_engine_par(ENGINE_PAR_VOLUME, $mic_positions_sli_far, 4 + (NUM_MICS * i) + LGT_PHASE_GROUP_OFFSET, -1, -1)  //phase-aligned duplicate set - without this the slider does nothing while align sample start is ON, since those are the groups that actually sound
+	end for
+	f.update_label(4,4, ENGINE_PAR_VOLUME, 4, -1, -1)
+end on
+
+on ui_control($mic_positions_swi_on_off_inside)
+	f.purge_mic_channel(0)
+end on
+
+on ui_control($mic_positions_swi_on_off_superclose)
+	f.purge_mic_channel(1)
+end on
+
+on ui_control($mic_positions_swi_on_off_close)
+	f.purge_mic_channel(2)
+end on
+
+on ui_control($mic_positions_swi_on_off_mid)
+	f.purge_mic_channel(3)
+end on
+
+on ui_control($mic_positions_swi_on_off_far)
+	f.purge_mic_channel(4)
+end on
+
+
+//ADSR **** MIC POSITIONS ***** MIC POSITIONS ***** MIC POSITIONS ***** MIC POSITIONS ***** MIC POSITIONS ***** MIC POSITIONS ***** MIC POSITIONS ***** 
+
+on ui_control($ADSR_A)
+	for i := 0 to NUM_GROUPS-1
+		set_engine_par(ENGINE_PAR_ATTACK, $ADSR_A, i, find_mod(i, "ENV_AHDSR"), find_target(i, find_mod(i, "ENV_AHDSR"), "ENV_AHDSR_VOLUME"))
+	end for
+	f.update_label(17, 5, ENGINE_PAR_ATTACK, 0, find_mod(0, "ENV_AHDSR"), find_target(0, find_mod(0, "ENV_AHDSR"), "ENV_AHDSR_VOLUME"))
+
+	//set_knob_label($ADSR_A, get_engine_par_disp(ENGINE_PAR_ATTACK, 0, find_mod(0, "ENV_AHDSR"), find_target(0, find_mod(0, "ENV_AHDSR"), "ENV_AHDSR_VOLUME")))
+end on
+
+on ui_control($ADSR_D)
+	for i := 0 to NUM_GROUPS-1
+		set_engine_par(ENGINE_PAR_DECAY, $ADSR_D, i, find_mod(i, "ENV_AHDSR"), find_target(i, find_mod(i, "ENV_AHDSR"), "ENV_AHDSR_VOLUME"))
+	end for
+	f.update_label(17, 6, ENGINE_PAR_DECAY, 0, find_mod(0, "ENV_AHDSR"), find_target(0, find_mod(0, "ENV_AHDSR"), "ENV_AHDSR_VOLUME"))
+	//set_knob_label($ADSR_D, get_engine_par_disp(ENGINE_PAR_DECAY, 0, find_mod(0, "ENV_AHDSR"), find_target(0, find_mod(0, "ENV_AHDSR"), "ENV_AHDSR_VOLUME")))
+end on
+
+on ui_control($ADSR_S)
+	for i := 0 to NUM_GROUPS-1
+		set_engine_par(ENGINE_PAR_SUSTAIN, $ADSR_S, i, find_mod(i, "ENV_AHDSR"), find_target(i, find_mod(i, "ENV_AHDSR"), "ENV_AHDSR_VOLUME"))
+	end for
+	f.update_label(17, 7, ENGINE_PAR_SUSTAIN, 0, find_mod(0, "ENV_AHDSR"), find_target(0, find_mod(0, "ENV_AHDSR"), "ENV_AHDSR_VOLUME"))
+	//set_knob_label($ADSR_S, get_engine_par_disp(ENGINE_PAR_SUSTAIN, 0, find_mod(0, "ENV_AHDSR"), find_target(0, find_mod(0, "ENV_AHDSR"), "ENV_AHDSR_VOLUME")))
+end on
+
+on ui_control($ADSR_R)
+	for i := 0 to NUM_GROUPS-1
+		set_engine_par(ENGINE_PAR_RELEASE, $ADSR_R, i, find_mod(i, "ENV_AHDSR"), find_target(i, find_mod(i, "ENV_AHDSR"), "ENV_AHDSR_VOLUME"))
+	end for
+	f.update_label(17, 8, ENGINE_PAR_RELEASE, 0, find_mod(0, "ENV_AHDSR"), find_target(0, find_mod(0, "ENV_AHDSR"), "ENV_AHDSR_VOLUME"))
+	//set_knob_label($ADSR_R, get_engine_par_disp(ENGINE_PAR_RELEASE, 0, find_mod(0, "ENV_AHDSR"), find_target(0, find_mod(0, "ENV_AHDSR"), "ENV_AHDSR_VOLUME")))
+end on
+
+//DYNAMICS SETTINGS ***** DYNAMICS SETTINGS ***** DYNAMICS SETTINGS ***** DYNAMICS SETTINGS ***** DYNAMICS SETTINGS ***** DYNAMICS SETTINGS ***** DYNAMICS SETTINGS ***** DYNAMICS SETTINGS ***** 
+
+on ui_control($ADSR_panel_dyn_par_sli_dyn_sim_int) //filter intensity
+	if $ADSR_panel_dyn_par_sli_dyn_sim_int > 0 
+		dyn_sim_moved_flag := 1
+	else if $ADSR_panel_dyn_par_sli_dyn_sim_int = 0 
+		dyn_sim_moved_flag := 0
+	end if 
+
+	dyn_sim_scaled := ($ADSR_panel_dyn_par_sli_dyn_sim_int - 0) * (7000 - 0) / (10000 - 0) + 0 
+	for i := 0 to NUM_GROUPS -1 
+		set_engine_par(ENGINE_PAR_MOD_TARGET_INTENSITY, dyn_sim_scaled * 100, i, find_mod(i, "EQ1_GAIN"), -1)
+		if dyn_sim_moved_flag = 1
+			set_engine_par(ENGINE_PAR_EFFECT_BYPASS, 0, i, 0, NI_INSERT_BUS)
+		else 
+			set_engine_par(ENGINE_PAR_EFFECT_BYPASS, 1, i, 0, NI_INSERT_BUS)
+		end if
+	end for
+	f.update_label_specific(9, 0)
+end on
+
+on ui_control($ADSR_panel_dyn_par_sli_dyn_range) //range of dynamics 
+	for i := 0 to NUM_GROUPS -1 
+		set_engine_par(ENGINE_PAR_MOD_TARGET_INTENSITY, $ADSR_panel_dyn_par_sli_dyn_range, i, find_mod(i, "CC->DYN_RANGE"), -1)
+	end for
+
+	f.update_label_specific(10, 1)
+end on
+
+//DYNAMICS AND EXPRESSION ***** DYNAMICS AND EXPRESSION ***** DYNAMICS AND EXPRESSION ***** DYNAMICS AND EXPRESSION ***** DYNAMICS AND EXPRESSION ***** 
+
+on ui_control($ADSR_sli_dyn) //dynamics slider
+	set_controller(102, $ADSR_sli_dyn) //send midi cc 102
+end on
+
+on ui_control($ADSR_sli_exp) //dynamics slider
+	set_controller(103, $ADSR_sli_exp) //send midi cc 102
+end on
+
+//on ui_control($ADSR_panel_dyn_par_swi_dyn_sim_on) //dynamics filter on/off
+//	for i := 0 to NUM_GROUPS -1
+//		if $ADSR_panel_dyn_par_swi_dyn_sim_on = 1 //if simulated dynamics on, turn 1 band EQ on/off
+//			set_engine_par(ENGINE_PAR_EFFECT_BYPASS, 0, i, 0, NI_INSERT_BUS)
+//		else //if off
+//			set_engine_par(ENGINE_PAR_EFFECT_BYPASS, 1, i, 0, NI_INSERT_BUS)	
+//		end if
+//	end for
+//	if $ADSR_panel_dyn_par_swi_dyn_sim_on = 0
+//		set_text($ADSR_panel_dyn_par_lbl_dyn_sim_int, "FILTER OFF")
+//		wait(LBL_WAIT_TIME)
+//		set_text($ADSR_panel_dyn_par_lbl_dyn_sim_int, "FILTER INTENSITY")
+//	else 
+//		set_text($ADSR_panel_dyn_par_lbl_dyn_sim_int, "FILTER ON")
+//		wait(LBL_WAIT_TIME)
+//		set_text($ADSR_panel_dyn_par_lbl_dyn_sim_int, "FILTER INTENSITY")
+//	end if
+//end on
+
+//velocity sensitivity slider
+on ui_control($ADSR_panel_dyn_par_sli_dyn_velocity)
+	for i := 0 to NUM_GROUPS-1 
+		set_engine_par(ENGINE_PAR_MOD_TARGET_INTENSITY, $ADSR_panel_dyn_par_sli_dyn_velocity, i, find_mod(i, "VEL->VOL"), -1)
+	end for
+	f.update_label(11, 11, ENGINE_PAR_MOD_TARGET_INTENSITY, 0, find_mod(0, "VEL->VOL"), -1)
+end on
+
+//show/hide dynamics parameters
+
+on ui_control($ADSR_swi_dyn_par) //show panel
+	f.show_hide_dynamic_settings($ADSR_swi_dyn_par)
+	//if any mic setting panels are open, close it
+	for i := 0 to num_elements(ui_swi_mic_par)-1
+		f.show_hide_panel(0, ui_channel_panels[i]) //hide all mic par panels
+		set_control_par(ui_swi_mic_par[i], CONTROL_PAR_VALUE, 0) //set mic par panel switches to 0
+	end for 
+end on
+
+on ui_control($ADSR_panel_dyn_par_swi_close_dyn_par) //close the panel, set other switch to 0
+	f.show_hide_dynamic_settings(0)
+	//set_control_par(get_ui_id($ADSR_panel_dyn_par), CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL)
+	$ADSR_swi_dyn_par := 0
+end on
+
+//global phase align
+
+on ui_control($ADSR_swi_phase)
+	{* Phase alignment is now handled by a duplicated set of groups with the phase correction baked
+	   into each zone's native Sample Start (not S.Mod/modulation). This switch is read directly in
+	   on note (lgt_phase_grp_ofs) to pick the normal or phase-aligned group set - it no longer
+	   drives any modulator.
+
+	   The two CONSTANT->SAMPLE_START modulator-intensity loops that used to live here were the
+	   earlier, abandoned approach, removed in the 2026-11-17 legato port: that modulator would
+	   fight the engine's own sample-start offset, since both would be sharing S.Mod. *}
+	if $ADSR_swi_phase = 1
+		set_text($ADSR_lbl_phase, "ALIGN S.START OFF")
+	else
+		set_text($ADSR_lbl_phase, "ALIGN S.START ON")
+	end if
+
+end on
+
+on ui_control($swi_legato_poly)
+	//Toggling legato off mid-phrase shouldn't leave a note hanging - cleanly end whatever the
+	//engine currently has in flight before the bypass in on note/on release takes over. Toggling
+	//back on needs no special handling: the next note-on just starts a fresh phrase normally.
+	if $swi_legato_poly = 0
+		f.lgt_end_phrase()
+	end if
+
+	if $swi_legato_poly = 1
+		set_text($lbl_legato_poly, "LEGATO")
+	else
+		set_text($lbl_legato_poly, "POLYPHONIC")
+	end if
+end on
+
+//LEGATO LABELS //LEGATO LABELS //LEGATO LABELS //LEGATO LABELS //LEGATO LABELS //LEGATO LABELS
+//Each knob just flashes its live value via f.lgt_update_label(label_num, control_num) - label_num
+//indexes lgt_ui_labels[]/lgt_lbl_text[] in view.ksp, control_num selects the formatting case in
+//f.lgt_update_label (model.ksp). No other logic lives here; the knob variables are read directly
+//by the engine wherever they're needed. The bend-enable switch deliberately has no label.
+
+on ui_control($SETTINGS_sli_legato_time)
+	f.lgt_update_label(0, 0)
+end on
+
+on ui_control($SETTINGS_sli_legato_attack)
+	f.lgt_update_label(1, 1)
+end on
+
+on ui_control($SETTINGS_sli_legato_offset_min)
+	f.lgt_update_label(2, 2)
+end on
+
+on ui_control($SETTINGS_sli_legato_offset_max)
+	f.lgt_update_label(3, 3)
+end on
+
+on ui_control($SETTINGS_sli_legato_portamento_time)
+	f.lgt_update_label(4, 4)
+end on
+
+on ui_control($SETTINGS_sli_legato_portamento_amount)
+	f.lgt_update_label(5, 5)
+end on
+
+//DELAY CONTROLS //DELAY CONTROLS //DELAY CONTROLS //DELAY CONTROLS //DELAY CONTROLS //DELAY CONTROLS //DELAY CONTROLS //DELAY CONTROLS //DELAY CONTROLS 
+
+on ui_control($SEND_FX_swi_delay_on)
+	set_engine_par(ENGINE_PAR_SEND_EFFECT_BYPASS, 1-$SEND_FX_swi_delay_on, -1, SEND_DELAY_SLOT, NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_mnu_delay_mode)
+	f.show_delay_controls($SEND_FX_mnu_delay_mode)
+	set_engine_par(ENGINE_PAR_RDL_TYPE, delay_modes[$SEND_FX_mnu_delay_mode], -1, SEND_DELAY_SLOT, NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_mnu_sync_unit)
+	set_control_par(get_ui_id($SEND_FX_lbl_sync_unit), CONTROL_PAR_PICTURE_STATE, $SEND_FX_mnu_sync_unit)
+	set_engine_par(ENGINE_PAR_RDL_TIME_UNIT, %sync_units[$SEND_FX_mnu_sync_unit], -1, SEND_DELAY_SLOT, NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_swi_delay_stereo)
+	set_engine_par(ENGINE_PAR_RDL_STEREO, $SEND_FX_swi_delay_stereo, -1, SEND_DELAY_SLOT, NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_swi_delay_noise)
+	set_engine_par(ENGINE_PAR_RDL_NOISE, $SEND_FX_swi_delay_noise, -1, SEND_DELAY_SLOT, NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_swi_delay_dense)
+	set_engine_par(ENGINE_PAR_RDL_DENSE, $SEND_FX_swi_delay_dense, -1, SEND_DELAY_SLOT, NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_swi_delay_pingpong)
+	set_engine_par(ENGINE_PAR_RDL_PINGPONG, $SEND_FX_swi_delay_pingpong, -1, SEND_DELAY_SLOT, NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_sli_delay_time)
+	set_engine_par(ENGINE_PAR_RDL_TIME, $SEND_FX_sli_delay_time, -1, SEND_DELAY_SLOT, NI_SEND_BUS)
+	f.update_label(28, 28, ENGINE_PAR_RDL_TIME, -1, SEND_DELAY_SLOT, NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_sli_delay_feedback)
+	set_engine_par(ENGINE_PAR_RDL_FEEDBACK, $SEND_FX_sli_delay_feedback, -1, SEND_DELAY_SLOT, NI_SEND_BUS)
+	f.update_label(29, 29, ENGINE_PAR_RDL_FEEDBACK, -1, SEND_DELAY_SLOT, NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_sli_delay_lowcut)
+	set_engine_par(ENGINE_PAR_RDL_LOWCUT, $SEND_FX_sli_delay_lowcut, -1, SEND_DELAY_SLOT, NI_SEND_BUS)
+	f.update_label(30, 30, ENGINE_PAR_RDL_LOWCUT, -1, SEND_DELAY_SLOT, NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_sli_delay_hicut)
+	set_engine_par(ENGINE_PAR_RDL_HIGHCUT, $SEND_FX_sli_delay_hicut, -1, SEND_DELAY_SLOT, NI_SEND_BUS)
+	f.update_label(31, 31, ENGINE_PAR_RDL_HIGHCUT, -1, SEND_DELAY_SLOT, NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_sli_delay_depth)
+	set_engine_par(ENGINE_PAR_RDL_DEPTH, $SEND_FX_sli_delay_depth, -1, SEND_DELAY_SLOT, NI_SEND_BUS)
+	f.update_label(32, 32, ENGINE_PAR_RDL_DEPTH, -1, SEND_DELAY_SLOT, NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_sli_delay_rate)
+	set_engine_par(ENGINE_PAR_RDL_RATE, $SEND_FX_sli_delay_rate, -1, SEND_DELAY_SLOT, NI_SEND_BUS)
+	f.update_label(33, 33, ENGINE_PAR_RDL_RATE, -1, SEND_DELAY_SLOT, NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_sli_delay_saturate)
+	set_engine_par(ENGINE_PAR_RDL_SATURATION, $SEND_FX_sli_delay_saturate, -1, SEND_DELAY_SLOT, NI_SEND_BUS)
+	f.update_label(34, 34, ENGINE_PAR_RDL_SATURATION, -1, SEND_DELAY_SLOT, NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_sli_delay_bbd)
+	set_engine_par(ENGINE_PAR_RDL_BBDTYPE, $SEND_FX_sli_delay_bbd, -1, SEND_DELAY_SLOT, NI_SEND_BUS)
+	f.update_label(35, 35, ENGINE_PAR_RDL_BBDTYPE, -1, SEND_DELAY_SLOT, NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_sli_delay_tapeage)
+	set_engine_par(ENGINE_PAR_RDL_TAPEAGE, $SEND_FX_sli_delay_tapeage, -1, SEND_DELAY_SLOT, NI_SEND_BUS)
+	f.update_label(36, 36, ENGINE_PAR_RDL_TAPEAGE, -1, SEND_DELAY_SLOT, NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_sli_delay_flutter)
+	set_engine_par(ENGINE_PAR_RDL_FLUTTER, $SEND_FX_sli_delay_flutter, -1, SEND_DELAY_SLOT, NI_SEND_BUS)
+	f.update_label(37, 37, ENGINE_PAR_RDL_FLUTTER, -1, SEND_DELAY_SLOT, NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_sli_delay_quality)
+	set_engine_par(ENGINE_PAR_RDL_QUALITY, $SEND_FX_sli_delay_quality, -1, SEND_DELAY_SLOT, NI_SEND_BUS)
+	f.update_label(38, 38, ENGINE_PAR_RDL_QUALITY, -1, SEND_DELAY_SLOT, NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_sli_delay_amount)
+	set_engine_par(ENGINE_PAR_RDL_AMOUNT, $SEND_FX_sli_delay_amount, -1, SEND_DELAY_SLOT, NI_SEND_BUS)
+	f.update_label(39, 39, ENGINE_PAR_RDL_AMOUNT, -1, SEND_DELAY_SLOT, NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_sli_delay_size)
+	set_engine_par(ENGINE_PAR_RDL_SIZE, $SEND_FX_sli_delay_size, -1, SEND_DELAY_SLOT, NI_SEND_BUS)
+	f.update_label(40, 40, ENGINE_PAR_RDL_SIZE, -1, SEND_DELAY_SLOT, NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_sli_delay_mod)
+	set_engine_par(ENGINE_PAR_RDL_MODULATION, $SEND_FX_sli_delay_mod, -1, SEND_DELAY_SLOT, NI_SEND_BUS)
+	f.update_label(41, 41, ENGINE_PAR_RDL_MODULATION, -1, SEND_DELAY_SLOT, NI_SEND_BUS)
+end on
+
+
+// REVERB CONTROLS **** REVERB CONTROLS **** REVERB CONTROLS **** REVERB CONTROLS **** REVERB CONTROLS **** REVERB CONTROLS **** 
+
+on ui_control($SEND_FX_swi_reverb_on)
+	set_engine_par(ENGINE_PAR_SEND_EFFECT_BYPASS, 1-$SEND_FX_swi_reverb_on, -1, SEND_REVERB_SLOT, NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_mnu_reverb_IR)
+	if $SEND_FX_mnu_reverb_IR # -1
+    	$load_ir_id := load_ir_sample(!IR_names[$SEND_FX_mnu_reverb_IR] , SEND_REVERB_SLOT, NI_SEND_BUS)
+    	current_ir := $SEND_FX_mnu_reverb_IR
+	else 
+		$SEND_FX_mnu_reverb_IR := current_ir
+ 	end if
+end on
+
+on ui_control($SEND_FX_sli_reverb_lowcut)
+
+	reverb_cb_state[0] := NI_CALLBACK_ID
+
+  	~val := int_to_real($SEND_FX_sli_reverb_lowcut) * 0.000001        { normalize to 0.0 ... 1.0 }
+    ~val := (~val * ~EQ_RANGE) + ~MIN_EQ_COEF    { linear interpolation between ~MIN_EQ_COEF and ~MAX_EQ_COEF }
+    ~val := pow(~NI_MATH_E, ~val)                { e^x }
+
+    $res := real_to_int(round(~val * 10.0))      { convert to integer with one "decimal" }
+
+    { take care of value display }
+    if ($res < 10000)
+        set_text($SEND_FX_lbl_reverb_lowcut, $res / 10 & "." & $res mod 10 & " Hz")
+    else
+        { add 500 to $res for rounding purposes - matches close to how the value is displayed in Kontakt }
+        set_text($SEND_FX_lbl_reverb_lowcut, $res / 10000 & "." & (($res + 500) / 1000) mod 10 & "k" & " Hz")
+    end if
+
+    set_engine_par(ENGINE_PAR_IRC_FREQ_HIGHPASS_ER, $SEND_FX_sli_reverb_lowcut, -1, SEND_REVERB_SLOT, NI_SEND_BUS)
+    set_engine_par(ENGINE_PAR_IRC_FREQ_HIGHPASS_LR, $SEND_FX_sli_reverb_lowcut, -1, SEND_REVERB_SLOT, NI_SEND_BUS)
+
+    wait(LBL_WAIT_TIME)
+
+    if reverb_cb_state[0] = NI_CALLBACK_ID
+    	set_text($SEND_FX_lbl_reverb_lowcut, "LOW CUT")
+    end if
+end on
+
+on ui_control($SEND_FX_sli_reverb_hicut)
+
+	reverb_cb_state[1] := NI_CALLBACK_ID
+
+  	~val := int_to_real($SEND_FX_sli_reverb_hicut) * 0.000001        { normalize to 0.0 ... 1.0 }
+    ~val := (~val * ~EQ_RANGE) + ~MIN_EQ_COEF    { linear interpolation between ~MIN_EQ_COEF and ~MAX_EQ_COEF }
+    ~val := pow(~NI_MATH_E, ~val)                { e^x }
+
+    $res := real_to_int(round(~val * 10.0))      { convert to integer with one "decimal" }
+
+    { take care of value display }
+    if ($res < 10000)
+        //set_knob_label($Freq, $res / 10 & "." & $res mod 10)
+        set_text($SEND_FX_lbl_reverb_hicut, $res / 10 & "." & $res mod 10 & " Hz")
+    else
+        { add 500 to $res for rounding purposes - matches close to how the value is displayed in Kontakt }
+        set_text($SEND_FX_lbl_reverb_hicut, $res / 10000 & "." & (($res + 500) / 1000) mod 10 & "k" & " Hz")
+    end if
+
+	set_engine_par(ENGINE_PAR_IRC_FREQ_LOWPASS_ER, $SEND_FX_sli_reverb_hicut, -1, SEND_REVERB_SLOT, NI_SEND_BUS)
+	set_engine_par(ENGINE_PAR_IRC_FREQ_LOWPASS_LR, $SEND_FX_sli_reverb_hicut, -1, SEND_REVERB_SLOT, NI_SEND_BUS)
+
+  	wait(LBL_WAIT_TIME)
+
+    if reverb_cb_state[1] = NI_CALLBACK_ID
+    	set_text($SEND_FX_lbl_reverb_hicut, "HIGH CUT")
+    end if
+end on
+
+on ui_control($SEND_FX_sli_reverb_predelay)
+
+	reverb_cb_state[2] := NI_CALLBACK_ID
+ 	~val := int_to_real($SEND_FX_sli_reverb_predelay) * 0.000001    { normalize to 0.0 ... 1.0 }
+    ~val := (~val * ~RANGE) + ~MIN_COEF          { linear interpolation between ~MIN_COEF and ~MAX_COEF }
+    ~val := pow(~NI_MATH_E, ~val) - ~OFFSET      { e^x - ~OFFSET }
+
+    $res := real_to_int(round(~val * 100.0))     { convert to integer with two "decimals" }
+
+    { take care of value display (optional, can always just print with one less decimal of precision, then it's simpler) }
+    if ($res < 10)
+        //set_knob_label($Predelay, $res / 100 & ".0" & $res mod 100)
+        set_text($SEND_FX_lbl_reverb_predelay, $res / 100 & ".0" & $res mod 100 & " ms")
+    else
+        if ($res < 100)
+            set_text($SEND_FX_lbl_reverb_predelay, $res / 100 & "." & $res mod 100 & " ms")
+        else      
+            set_text($SEND_FX_lbl_reverb_predelay,$res / 100 & "." & ($res / 10) mod 10 & " ms")
+        end if
+    end if
+
+    set_engine_par($ENGINE_PAR_IRC_PREDELAY, $SEND_FX_sli_reverb_predelay, -1,SEND_REVERB_SLOT, NI_SEND_BUS)
+
+  	wait(LBL_WAIT_TIME)
+
+    if reverb_cb_state[2] = NI_CALLBACK_ID
+    	set_text($SEND_FX_lbl_reverb_predelay, "PRE DELAY")
+    end if
+end on
+
+
+//mic channel parameters for 
+
+//on ui_control($mic_positions_swi_inside_par) //show settings panel
+//	 f.show_hide_panel($mic_positions_swi_inside_par, get_ui_id($mic_positions_panel_inside_par))
+//end on
+//
+//on ui_control($mic_positions_panel_inside_par_swi_close) //close button
+//	f.show_hide_panel(0, get_ui_id($mic_positions_panel_inside_par))
+//	$mic_positions_swi_inside_par := 0 //set show button to 0
+//end on
+//
+//on ui_control($mic_positions_panel_inside_par_swi_phase)
+//	if $mic_positions_panel_inside_par_swi_phase = 0
+//		set_text($mic_positions_panel_inside_par_lbl_phase_on, "ON")
+//	else 
+//		set_text($mic_positions_panel_inside_par_lbl_phase_on, "OFF")
+//	end if
+//end on
+
+mic_channel_setting($mic_positions_panel_inside_par, $mic_positions_swi_inside_par, $mic_positions_panel_inside_par_swi_close, $mic_positions_panel_inside_par_swi_phase, $mic_positions_panel_inside_par_lbl_phase_on, $mic_positions_panel_inside_par_sli_stereo_width, $mic_positions_panel_inside_par_lbl_stereo_width, 0, $mic_positions_panel_inside_par_mnu_channel_output, $mic_positions_panel_inside_par_sli_delay_send, $mic_positions_panel_inside_par_sli_reverb_send, $mic_positions_panel_inside_par_sli_pan)
+mic_channel_setting($mic_positions_panel_superclose_par, $mic_positions_swi_superclose_par, $mic_positions_panel_superclose_par_swi_close, $mic_positions_panel_superclose_par_swi_phase, $mic_positions_panel_superclose_par_lbl_phase_on, $mic_positions_panel_superclose_par_sli_stereo_width, $mic_positions_panel_superclose_par_lbl_stereo_width, 1, $mic_positions_panel_superclose_par_mnu_channel_output, $mic_positions_panel_superclose_par_sli_delay_send, $mic_positions_panel_superclose_par_sli_reverb_send, $mic_positions_panel_superclose_par_sli_pan)
+mic_channel_setting($mic_positions_panel_close_par, $mic_positions_swi_close_par, $mic_positions_panel_close_par_swi_close, $mic_positions_panel_close_par_swi_phase, $mic_positions_panel_close_par_lbl_phase_on, $mic_positions_panel_close_par_sli_stereo_width, $mic_positions_panel_close_par_lbl_stereo_width, 2, $mic_positions_panel_close_par_mnu_channel_output, $mic_positions_panel_close_par_sli_delay_send, $mic_positions_panel_close_par_sli_reverb_send, $mic_positions_panel_close_par_sli_pan)
+mic_channel_setting($mic_positions_panel_mid_par, $mic_positions_swi_mid_par, $mic_positions_panel_mid_par_swi_close, $mic_positions_panel_mid_par_swi_phase, $mic_positions_panel_mid_par_lbl_phase_on, $mic_positions_panel_mid_par_sli_stereo_width, $mic_positions_panel_mid_par_lbl_stereo_width, 3, $mic_positions_panel_mid_par_mnu_channel_output, $mic_positions_panel_mid_par_sli_delay_send, $mic_positions_panel_mid_par_sli_reverb_send, $mic_positions_panel_mid_par_sli_pan)
+mic_channel_setting($mic_positions_panel_far_par, $mic_positions_swi_far_par, $mic_positions_panel_far_par_swi_close, $mic_positions_panel_far_par_swi_phase, $mic_positions_panel_far_par_lbl_phase_on, $mic_positions_panel_far_par_sli_stereo_width, $mic_positions_panel_far_par_lbl_stereo_width, 4, $mic_positions_panel_far_par_mnu_channel_output, $mic_positions_panel_far_par_sli_delay_send, $mic_positions_panel_far_par_sli_reverb_send, $mic_positions_panel_far_par_sli_pan)
+{******************************************************************************************
+* UI CALLBACKS *
+******************************************************************************************}
+{ui.control_knobs_action(knb_control name)}
+
+macro mic_channel_setting(panel, swi_show, swi_close, swi_phase, lbl_phase, sli_stereo, lbl_stereo, num, output_menu, sli_delay, sli_reverb, sli_pan)
+//SHOW AND HIDE PANEL  	SHOW AND HIDE PANEL  	SHOW AND HIDE PANEL  	SHOW AND HIDE PANEL  	
+	on ui_control(swi_show)
+		f.show_hide_panel(swi_show, get_ui_id(panel))
+		//if other switches are 1, set that switch to 0 and call function agaon to close that panel
+		for i := 0 to num_elements(ui_swi_mic_par)-1
+			if get_control_par(ui_swi_mic_par[i], CONTROL_PAR_VALUE) = 1 and i # num //if panel is showing and not the switch the callback is coming from 
+				f.show_hide_panel(0, ui_channel_panels[i]) //hide the other open panels
+				set_control_par(ui_swi_mic_par[i], CONTROL_PAR_VALUE, 0) //set switch to 0
+			end if
+		end for
+	end on
+
+	on ui_control(swi_close)
+		f.show_hide_panel(0, get_ui_id(panel))
+		swi_show := 0
+	end on
+
+
+//SENDS ***** SENDS ***** SENDS ***** SENDS ***** SENDS ***** SENDS ***** SENDS ***** 
+	
+	on ui_control(sli_delay)
+		set_engine_par(ENGINE_PAR_SENDLEVEL_0, sli_delay, -1, SEND_SLOT, NI_BUS_OFFSET + num)
+		f.update_label(18 + num, 18 + num, ENGINE_PAR_SENDLEVEL_0, -1, SEND_SLOT, NI_BUS_OFFSET + num)
+	end on
+
+	on ui_control(sli_reverb)
+		set_engine_par(ENGINE_PAR_SENDLEVEL_1, sli_reverb, -1, SEND_SLOT, NI_BUS_OFFSET + num)
+		f.update_label(23 + num, 23 + num, ENGINE_PAR_SENDLEVEL_1, -1, SEND_SLOT, NI_BUS_OFFSET + num)
+	end on
+
+
+	on ui_control(sli_stereo)
+		if num # 0 //if not inside mic	
+			set_engine_par(ENGINE_PAR_STEREO, sli_stereo, -1, STEREO_SLOT, NI_BUS_OFFSET + num)
+			f.update_label(12 + num, 12 + num, ENGINE_PAR_STEREO, -1, STEREO_SLOT, NI_BUS_OFFSET + num)
+		end if
+	end on
+
+	on ui_control(sli_pan)
+		if num # 0 
+			set_engine_par(ENGINE_PAR_STEREO_PAN, sli_pan, -1, STEREO_SLOT, NI_BUS_OFFSET + num)
+			f.update_label(44 + num, 44 + num, ENGINE_PAR_STEREO_PAN, -1, STEREO_SLOT, NI_BUS_OFFSET + num)
+		else //inside mono mic
+			set_engine_par(ENGINE_PAR_PAN, sli_pan, -1, -1, NI_BUS_OFFSET + num)
+			f.update_label(44 + num, 44 + num, ENGINE_PAR_PAN, -1, STEREO_SLOT, NI_BUS_OFFSET + num)
+		end if
+	end on
+//OUTPUT CHANNEL     OUTPUT CHANNEL     OUTPUT CHANNEL     OUTPUT CHANNEL     OUTPUT CHANNEL     OUTPUT CHANNEL     
+	on ui_control(output_menu) //set the output of the busses
+		set_engine_par(ENGINE_PAR_OUTPUT_CHANNEL, output_menu, -1, -1, NI_BUS_OFFSET + num)		
+		set_control_par_str(ui_output_labels[num], CONTROL_PAR_TEXT,  get_menu_item_str(ui_output_menus[num], get_control_par(ui_output_menus[num], CONTROL_PAR_VALUE)))
+	end on
+
+end macro
+
+
+macro art_switches(artswitch, #n#)
+	on ui_control(artswitch)
+		f.select_articulation(#n#)
+		//artswitch := 1
+		//current_art := #n#
+//
+		//if current_art = HARMONICS
+		//	harmonics_on := 1
+		//else 
+		//	harmonics_on := 0
+		//end if
+		//f.color_keys()
+	end on
+end macro
+
+macro solo_buttons(swi_solo, #n#)
+	on ui_control(swi_solo)
+		solo_channels[#n#] := swi_solo
+		if (search(solo_channels, 1) # -1) //if any solo button is on
+			solo_on_flag := 1
+		else 
+			solo_on_flag := 0
+		end if
+	end on 
+end macro
+
+

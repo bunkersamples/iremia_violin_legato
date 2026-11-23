@@ -1,0 +1,498 @@
+{-----------------------------------------------------------------
+Title: Model
+File: Model.ksp
+Author: Nicolaj M Nielsen
+First written: 
+Current Version: 1.0
+Last Modified:
+-----------------------------------------------------------------}
+
+{******************************************************************************************
+* FUNCTIONS *
+******************************************************************************************}
+//taskfunc f.toggle_switches(switch_1, switch_2)
+//	 //if switch 1 is on, turn off switch 2
+//	set_control_par(switch_2, CONTROL_PAR_VALUE, 1- get_control_par(switch_1, CONTROL_PAR_VALUE))
+//end taskfunc
+
+function f.purge_mic_channel(channel_num)
+	declare i 
+	
+	{* Loop bound is NUM_ARTICULATIONS*NUM_LAYERS, not NUM_ARTICULATIONS: every articulation owns
+	   NUM_LAYERS*NUM_MICS groups here (see art_start_group[] in config.ksp), so one mic has 9
+	   slots across the original set, not 3. The old bound stopped at group 14 and left
+	   articulations 1-2 loaded for a muted mic - pre-existing, and unrelated to legato: purge is
+	   RAM only, on note decides what actually sounds. Second call covers the phase-aligned
+	   duplicate set, which is what sounds while align sample start is ON. *}
+	for i := 0 to (NUM_ARTICULATIONS*NUM_LAYERS)-1
+		if get_control_par(ui_channel_swi_mute[channel_num], CONTROL_PAR_VALUE) = 1 //if mute is ON, purge samples
+			purge_group(channel_num + (NUM_MICS*i), 1)
+			purge_group(channel_num + (NUM_MICS*i) + LGT_PHASE_GROUP_OFFSET, 1)  //phase-aligned duplicate set
+		else //mute is OFF, load samples
+			purge_group(channel_num + (NUM_MICS*i), 0)
+			purge_group(channel_num + (NUM_MICS*i) + LGT_PHASE_GROUP_OFFSET, 0)  //phase-aligned duplicate set
+		end if 
+	end for
+end function
+
+taskfunc f.update_keyswitch_notes_label(note)
+	declare i 
+	if in_range(note, 0, HIGHEST_POSSIBLE_KEYSWITCH_LOW) or in_range(note, HIGHEST_POSSIBLE_KEYSWITCH_HIGH, 127)
+		for i := 0 to num_elements(ui_art_keyswitch_note_labels)-1
+			set_control_par_str(ui_art_keyswitch_note_labels[i], CONTROL_PAR_TEXT, !note_names[note + i])
+			//set_control_par(ui_art_keyswitch_note_labels[i], CONTROL_PAR_FONT_TYPE, 23) //set keyswitch note number label font type to gray
+		end for
+	end if 
+		//set_control_par(ui_art_keyswitch_note_labels[current_art], CONTROL_PAR_FONT_TYPE, 24) //set keyswitch note number label font type to white
+end taskfunc
+
+taskfunc f.show_keyswitch_notes(value)
+	declare i
+		for i := 0 to num_elements(ui_art_keyswitch_note_labels)-1
+			if value = 1
+				set_control_par(ui_art_keyswitch_note_labels[i], CONTROL_PAR_HIDE, HIDE_PART_NOTHING)
+				set_control_par(ui_art_keyswitch_note_labels[i], CONTROL_PAR_HIDE, HIDE_PART_BG)
+			else 
+				set_control_par(ui_art_keyswitch_note_labels[i], CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL)
+			end if 
+		end for
+end taskfunc
+
+taskfunc f.move_keyswitches(note)
+
+	declare i 
+	declare ii
+	for i := 0 to 127 //set all keys to white
+		set_key_color(i, KEY_COLOR_INACTIVE)
+	end for 
+	
+	if in_range(note, 0, HIGHEST_POSSIBLE_KEYSWITCH_LOW) or in_range(note, HIGHEST_POSSIBLE_KEYSWITCH_HIGH, 127)
+		for i := 0 to NUM_ARTICULATIONS-1 //update key switch array
+			key_switches[i] := note + i
+		end for
+	end if
+
+		for ii := key_switches[0] to key_switches[0] + NUM_ARTICULATIONS-1 //color key switches
+			set_key_color(ii, KEY_COLOR_RED) 
+		end for
+
+	
+		if harmonics_on = 0 //Update all other key colors
+			for i := LOWEST_NOTE_NORMAL to HIGHEST_NOTE_NORMAL
+				set_key_color(i, KEY_COLOR_DEFAULT)
+			end for
+		else 
+			for i := LOWEST_NOTE_HARMONICS to HIGHEST_NOTE_HARMONICS
+				set_key_color(i, KEY_COLOR_DEFAULT)
+			end for
+		end if
+end taskfunc
+
+taskfunc f.select_articulation(art_num)
+	declare i 
+	for i := 0 to num_elements(ui_art_switches)-1
+		set_control_par(ui_art_switches[i], CONTROL_PAR_VALUE, 0)
+	end for
+	set_control_par(ui_art_switches[art_num], CONTROL_PAR_VALUE, 1)
+	current_art := art_num
+
+		if current_art = HARMONICS
+			harmonics_on := 1
+		else 
+			harmonics_on := 0
+		end if
+		f.color_keys()
+end taskfunc
+
+taskfunc f.color_keys()
+	declare i 
+	for i := 0 to 127
+		set_key_color(i, KEY_COLOR_INACTIVE)
+	end for 
+
+	for i := key_switches[0] to key_switches[0] + NUM_ARTICULATIONS -1 //color keyswitches
+		set_key_color(i, KEY_COLOR_RED)
+	end for
+
+	if harmonics_on = 0 //current articulation is not harmonics
+		for i := LOWEST_NOTE_NORMAL to HIGHEST_NOTE_NORMAL
+			set_key_color(i, KEY_COLOR_DEFAULT)
+		end for
+	else 
+		for i := LOWEST_NOTE_HARMONICS to HIGHEST_NOTE_HARMONICS
+			set_key_color(i, KEY_COLOR_DEFAULT)
+		end for
+	end if
+end taskfunc
+
+taskfunc f.update_label(label_num, parameter_num, parameter, group, slot, generic)
+	declare local cb_state[NUM_LABELS]
+
+	cb_state[label_num] := NI_CALLBACK_ID
+
+	ui_labels[label_num] -> text := (!label_units_pre[parameter_num] & get_engine_par_disp(parameter, group, slot, generic) & !label_units_post[parameter_num])
+
+	tcm.wait(LBL_WAIT_TIME)
+
+	if cb_state[label_num] = NI_CALLBACK_ID //control hasn't been touched, reset text
+		ui_labels[label_num] -> text := lbl_text[label_num]
+	end if 
+
+end taskfunc
+
+taskfunc f.update_label_specific(label_num, control_num)
+	declare local cb_state[NUM_LABELS]
+
+	cb_state[label_num] := NI_CALLBACK_ID
+
+	select control_num
+		case 0 //dynamics simulation
+			ui_labels[label_num] -> text := (!label_units_pre[label_num] & $ADSR_panel_dyn_par_sli_dyn_sim_int/100 & !label_units_post[label_num])
+		case 1 //dynamics range
+			ui_labels[label_num] -> text := (!label_units_pre[label_num] & $ADSR_panel_dyn_par_sli_dyn_range/10000 & !label_units_post[label_num])
+	end select
+
+
+	tcm.wait(LBL_WAIT_TIME)
+
+	if cb_state[label_num] = NI_CALLBACK_ID //control hasn't been touched, reset text
+		ui_labels[label_num] -> text := lbl_text[label_num]
+	end if 
+
+end taskfunc
+
+taskfunc f.show_hide_dynamic_settings(value)  //if value = 1 -> show panel
+	if value = 1
+		set_control_par(get_ui_id($ADSR_panel_dyn_par), CONTROL_PAR_HIDE, HIDE_PART_NOTHING)
+	else 
+		set_control_par(get_ui_id($ADSR_panel_dyn_par), CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL)
+	end if
+end taskfunc
+
+taskfunc f.show_hide_panel(value, panel) //if value = 1 -> show panel, else hide panel. Panel is ui_id 
+	if value = 1
+		set_control_par(panel, CONTROL_PAR_HIDE, HIDE_PART_NOTHING)
+	else 
+		set_control_par(panel, CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL)
+	end if
+end taskfunc
+
+taskfunc f.show_delay_controls(value)
+	declare i 
+	for i := 0 to num_elements(ui_delay_modern)-1
+		set_control_par(ui_delay_modern[i], CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL)
+		set_control_par(ui_delay_analogue[i], CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL)
+		set_control_par(ui_delay_tape[i], CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL)
+		set_control_par(ui_delay_vintage[i], CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL)
+		set_control_par(ui_delay_diffusion[i], CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL)
+
+		select value 
+			case 0 
+				set_control_par(ui_delay_modern[i], CONTROL_PAR_HIDE, HIDE_PART_NOTHING)
+				set_control_par(ui_delay_modern[1], CONTROL_PAR_HIDE, HIDE_PART_BG)
+				set_control_par(ui_delay_modern[3], CONTROL_PAR_HIDE, HIDE_PART_BG)
+				set_control_par(ui_delay_modern[5], CONTROL_PAR_HIDE, HIDE_PART_BG)
+			case 1 
+				set_control_par(ui_delay_analogue[i], CONTROL_PAR_HIDE, HIDE_PART_NOTHING)
+				set_control_par(ui_delay_analogue[1], CONTROL_PAR_HIDE, HIDE_PART_BG)
+				set_control_par(ui_delay_analogue[3], CONTROL_PAR_HIDE, HIDE_PART_BG)
+				set_control_par(ui_delay_analogue[5], CONTROL_PAR_HIDE, HIDE_PART_BG)
+			case 2 
+				set_control_par(ui_delay_tape[i], CONTROL_PAR_HIDE, HIDE_PART_NOTHING)
+				set_control_par(ui_delay_tape[1], CONTROL_PAR_HIDE, HIDE_PART_BG)
+				set_control_par(ui_delay_tape[3], CONTROL_PAR_HIDE, HIDE_PART_BG)
+				set_control_par(ui_delay_tape[5], CONTROL_PAR_HIDE, HIDE_PART_BG)
+			case 3 
+				set_control_par(ui_delay_vintage[i], CONTROL_PAR_HIDE, HIDE_PART_NOTHING)
+				set_control_par(ui_delay_vintage[1], CONTROL_PAR_HIDE, HIDE_PART_BG)
+				set_control_par(ui_delay_vintage[3], CONTROL_PAR_HIDE, HIDE_PART_BG)
+				set_control_par(ui_delay_vintage[5], CONTROL_PAR_HIDE, HIDE_PART_BG)
+			case 4 
+				set_control_par(ui_delay_diffusion[i], CONTROL_PAR_HIDE, HIDE_PART_NOTHING)
+				set_control_par(ui_delay_diffusion[1], CONTROL_PAR_HIDE, HIDE_PART_BG)
+				set_control_par(ui_delay_diffusion[3], CONTROL_PAR_HIDE, HIDE_PART_BG)
+				set_control_par(ui_delay_diffusion[5], CONTROL_PAR_HIDE, HIDE_PART_BG)
+		end select
+	end for 
+end taskfunc
+
+taskfunc f.update_delay_controls()
+	declare i 
+	for i := 0 to num_elements(delay_par) -1
+		set_control_par(delay_controls[i], CONTROL_PAR_VALUE, get_engine_par(delay_par[i], -1, SEND_DELAY_SLOT, NI_SEND_BUS))
+	end for
+end taskfunc
+
+taskfunc f.update_channel_controls()
+	declare i 
+	for i := 0 to num_elements(ui_delay_sends)-1
+		set_control_par(ui_delay_sends[i], CONTROL_PAR_VALUE, get_engine_par(ENGINE_PAR_SENDLEVEL_0, -1, SEND_SLOT, NI_BUS_OFFSET + i))
+		set_control_par(ui_reverb_sends[i], CONTROL_PAR_VALUE, get_engine_par(ENGINE_PAR_SENDLEVEL_1, -1, SEND_SLOT, NI_BUS_OFFSET + i))
+		set_control_par(ui_stereo_controls[i], CONTROL_PAR_VALUE, get_engine_par(ENGINE_PAR_STEREO, -1, STEREO_SLOT, NI_BUS_OFFSET + i))
+		if i = 0 //if inside mono mic
+			set_control_par(ui_pan_controls[i], CONTROL_PAR_VALUE, get_engine_par(ENGINE_PAR_PAN, -1, -1, NI_BUS_OFFSET + i))
+		else 
+			set_control_par(ui_pan_controls[i], CONTROL_PAR_VALUE, get_engine_par(ENGINE_PAR_STEREO_PAN, -1, STEREO_SLOT, NI_BUS_OFFSET + i))
+		end if
+	end for
+end taskfunc
+
+//LEGATO LIVE-VALUE LABEL (ported 2026-11-18 from the main legato patch, unchanged)
+//Deliberately a copy of the f.update_label_specific() debounce pattern: show the value,
+//tcm.wait(LBL_WAIT_TIME), then revert unless the control was touched again meanwhile.
+taskfunc f.lgt_update_label(label_num, control_num)
+	declare local cb_state[6]
+
+	cb_state[label_num] := NI_CALLBACK_ID
+
+	{* Every time-based knob here steps in exact multiples of 1000usec (and the bend-amount knob in
+	   exact multiples of 1000 millicents), so a plain integer /1000 always lands on a whole number —
+	   no rounding/precision loss — giving clean ms/cents instead of raw usec/millicents. *}
+	select control_num
+		case 0 //XTime
+			lgt_ui_labels[label_num] -> text := $SETTINGS_sli_legato_time/1000 & " ms"
+		case 1 //Attack
+			lgt_ui_labels[label_num] -> text := $SETTINGS_sli_legato_attack & " %"
+		case 2 //Offset Min
+			lgt_ui_labels[label_num] -> text := $SETTINGS_sli_legato_offset_min/1000 & " ms"
+		case 3 //Offset Max
+			lgt_ui_labels[label_num] -> text := $SETTINGS_sli_legato_offset_max/1000 & " ms"
+		case 4 //Portamento Time
+			lgt_ui_labels[label_num] -> text := $SETTINGS_sli_legato_portamento_time/1000 & " ms"
+		case 5 //Portamento Amount
+			lgt_ui_labels[label_num] -> text := $SETTINGS_sli_legato_portamento_amount/1000 & " cents"
+	end select
+
+	tcm.wait(LBL_WAIT_TIME)
+
+	if cb_state[label_num] = NI_CALLBACK_ID //control hasn't been touched, reset text
+		lgt_ui_labels[label_num] -> text := lgt_lbl_text[label_num]
+	end if
+
+end taskfunc
+
+
+{******************************************************************************************
+* LEGATO ENGINE (adapted from SIPS-Legato V2.05 by R.D. Villwock, aka 'Big Bob') *
+* Core two-voice crossfade/bend logic, stripped of SIPS's SAS/ISCS/user-preset machinery *
+*
+* HOW IT WORKS, IN ONE PARAGRAPH:
+* The engine only ever tracks two "slots" at a time — called New and Old — holding whichever
+* two notes are most recently involved in a legato transition. lgt.new_idx is 0 or 1 and says
+* which slot currently holds "New"; "Old" is always the other one (1 - lgt.new_idx). Every
+* array below (parent/child/note/vel/pedal/tune) is sized [2], one entry per slot. When a
+* fresh legato note comes in, the engine swaps which slot is "New" (lgt.new_idx := 1 - lgt.new_idx),
+* generates a child note into the new "New" slot, and crossfades it in while fading the old
+* "New" (now "Old") slot out. Nothing above two notes is ever tracked at once — that's why
+* this is a monophonic-style legato engine, not a full polyphonic voice manager.
+*
+* THE "PARENT" vs "CHILD" DISTINCTION:
+* "Parent" = the EVENT_ID of the actual key the player pressed (used later in on release to
+* figure out which physical key-lift corresponds to which slot). "Child" = the EVENT_ID of
+* the note WE generate via play_note() to actually make sound. We always ignore_event() the
+* real keypress and substitute our own play_note() call instead, so we have full control over
+* its sample-start offset, fade-in/out, and pitch — a real key-press note can't be modulated
+* like that after the fact.
+******************************************************************************************}
+
+function f.lgt_get_offset()  { Determine the sample-start offset (usec) for the next fade-in note, based on how fast the player is actually playing }
+	declare elapsed
+	{ Time since the previous note-on, converted from the engine's milliseconds (ENGINE_UPTIME)
+	  to microseconds (*1000) to match play_note()'s offset unit. Fast legato runs naturally
+	  produce a small "elapsed", slow/sustained legato produces a large one — so by using this
+	  directly as the offset, quick notes skip only a little of their own attack, while notes
+	  played with more time between them skip further in, matching how a real player's bow
+	  attack is proportionally less audible the longer a transition breathes. }
+	elapsed := (ENGINE_UPTIME - lgt.ref_time)*1000
+	if elapsed < $SETTINGS_sli_legato_offset_min  { Floor: never skip less than this, even on a very fast run — guards against the raw attack transient poking through the crossfade }
+		elapsed := $SETTINGS_sli_legato_offset_min
+	end if
+	if elapsed > $SETTINGS_sli_legato_offset_max  { Ceiling: never skip more than this, even on a slow/held transition — also must stay under each zone's S.Mod or Kontakt silently drops the offset entirely }
+		elapsed := $SETTINGS_sli_legato_offset_max
+	end if
+	lgt.offset := elapsed       { Stored for f.lgt_gen_note() to actually use in its play_note() call }
+	lgt.ref_time := ENGINE_UPTIME  { Reset the clock so the NEXT note's elapsed time is measured from right now }
+end function
+
+function f.lgt_gen_note()  { Record this note's info into the current "New" slot, then trigger the actual sounding note }
+	lgt.note[lgt.new_idx] := EVENT_NOTE       { MIDI note number, needed later by f.lgt_setup_xfade() to compute bend interval }
+	lgt.vel[lgt.new_idx] := EVENT_VELOCITY    { Velocity of the played note }
+	lgt.parent[lgt.new_idx] := EVENT_ID       { The real key-press event ID — used in on release to match a key-lift back to this slot }
+	lgt.pedal[lgt.new_idx] := false           { Reset: this slot's key hasn't been pedal-deferred (yet) }
+	lgt.tune[lgt.new_idx] := 0                { Reset the running pitch-bend offset for this slot (see f.lgt_do_bend) }
+	{ This is the one and only place a sounding note is actually triggered. lgt.offset (set by
+	  f.lgt_get_offset, or forced to 0 for a fresh phrase) becomes the sample-start offset —
+	  the mechanism that skips past some of the sample's own attack transient on a legato note. }
+	lgt.child[lgt.new_idx] := play_note(EVENT_NOTE, EVENT_VELOCITY, lgt.offset, 0)
+end function
+
+function f.lgt_end_old()  { Immediately kill the Old slot's note and mark its fade as finished }
+	if lgt.child[1 - lgt.new_idx] # LGT_NO_ID  { Only if there's actually a note there to stop }
+		note_off(lgt.child[1 - lgt.new_idx])
+	end if
+	lgt.pedal[1 - lgt.new_idx] := false   { Clear any pending pedal-hold on the slot we just killed }
+	lgt.fade_out_ticks := 0               { Tell f.lgt_xfade()'s loop the fade-out is done, so it won't try to end it again }
+end function
+
+function f.lgt_do_bend()  { Called once per tick during a crossfade: nudge Old/New pitch one step closer to their target blend, if bend is enabled }
+	declare old_tune
+	declare new_tune
+	{ bend_step is how much pitch changes per tick (computed once in f.lgt_setup_xfade); this
+	  just walks that ramp down to zero as bend_ticks counts down, so Old glides UP toward New's
+	  pitch and New glides DOWN from Old's pitch — meeting at the real target pitch exactly when
+	  bend_ticks reaches 0. The "+500)/1000" is simple rounding for the integer division. }
+	old_tune := lgt.bend_amount - (lgt.bend_step*lgt.bend_ticks + 500)/1000
+	new_tune := -(lgt.bend_step*lgt.bend_ticks + 500)/1000
+	{ change_tune() takes a DELTA from the note's current tuning, not an absolute value, so we
+	  always subtract off whatever we last applied (lgt.tune[...]) before applying the new amount —
+	  otherwise each tick would stack on top of the last instead of replacing it. }
+	change_tune(lgt.child[1 - lgt.new_idx], old_tune - lgt.tune[1 - lgt.new_idx], 1)
+	lgt.tune[1 - lgt.new_idx] := old_tune
+	change_tune(lgt.child[lgt.new_idx], new_tune - lgt.tune[lgt.new_idx], 1)
+	lgt.tune[lgt.new_idx] := new_tune
+end function
+
+function f.lgt_setup_xfade()  { Compute how many "ticks" (LGT_TICK-sized steps) the fade-out, fade-in, and pitch-bend should each run for, based on current knob/const settings }
+	declare interval
+	lgt.fade_out_ticks := $SETTINGS_sli_legato_time/LGT_TICK               { Total crossfade length, in ticks }
+	lgt.fade_in_ticks := lgt.fade_out_ticks*$SETTINGS_sli_legato_attack/100  { The FIRST (faster) segment of the fade-in, sized as a % of the total — Atk1% controls the shape of the attack curve, not just raw speed }
+	if $SETTINGS_sli_legato_attack = 100
+		lgt.seg2_ticks := 0   { No second segment needed — the whole fade-in is "segment 1" }
+	else
+		lgt.seg2_ticks := lgt.fade_out_ticks - lgt.fade_in_ticks  { Remainder becomes the second, slower fade-in segment, started later by f.lgt_xfade()'s loop }
+	end if
+	if $SETTINGS_swi_legato_bend_enable = 1
+		interval := abs(lgt.note[lgt.new_idx] - lgt.note[1 - lgt.new_idx])  { Semitone gap between Old and New notes — no gap means no bend needed at all }
+	else
+		interval := 0   { Bend globally disabled: force the "no bend" path below regardless of interval }
+	end if
+	if interval = 0
+		lgt.bend_ticks := 0
+	else
+		lgt.bend_ticks := $SETTINGS_sli_legato_portamento_time/LGT_TICK         { How many ticks the bend glide takes }
+		lgt.bend_amount := $SETTINGS_sli_legato_portamento_amount*interval  { Bigger melodic leaps get proportionally more pitch bend }
+		if lgt.note[lgt.new_idx] < lgt.note[1 - lgt.new_idx]
+			lgt.bend_amount := -lgt.bend_amount      { Descending interval: bend the other direction }
+		end if
+		lgt.bend_step := 1000*lgt.bend_amount/lgt.bend_ticks  { Pitch change applied per tick in f.lgt_do_bend() }
+	end if
+end function
+
+function f.lgt_stop_fade()  { Safely cancel any crossfade/bend currently in progress before starting a new one — called whenever a new legato note interrupts a previous transition mid-flight }
+	while lgt.busy = true  { Re-entrancy guard: if ANOTHER overlapping note is already in the middle of cancelling a fade, wait our turn rather than racing it }
+		wait(LGT_TICK)
+	end while
+	if lgt.active = true   { Only do anything if a crossfade is actually running right now }
+		if lgt.fade_out_ticks > 0
+			f.lgt_end_old()   { The interrupted Old note hasn't finished fading out yet — kill it immediately rather than leave it hanging }
+		end if
+		{ Zero out every active timer so f.lgt_xfade()'s while-loop (running in a DIFFERENT,
+		  still-executing call stack from the interrupted note) sees all its conditions become
+		  false and exits cleanly on its next tick, instead of fighting the new transition. }
+		lgt.fade_in_ticks := 0
+		lgt.seg2_ticks := 0
+		lgt.bend_ticks := 0
+		lgt.busy := true    { Lock out any other overlapping callers until the old loop has actually finished exiting }
+		while lgt.active = true
+			wait(LGT_TICK)   { Block here until f.lgt_xfade()'s loop notices the zeroed timers and sets lgt.active back to false }
+		end while
+		lgt.busy := false
+	end if
+end function
+
+function f.lgt_xfade()  { The actual crossfade: fade Old out, fade New in (in two segments), and glide pitch, tick by tick, until all three are done }
+	f.lgt_setup_xfade()
+	if $SETTINGS_sli_legato_time = 0
+		f.lgt_end_old()   { Crossfade time is zero — just cut over instantly instead of running a pointless zero-length fade }
+	else
+		fade_out(lgt.child[1 - lgt.new_idx], $SETTINGS_sli_legato_time, 0)              { Kontakt's native fade-out over the full crossfade time }
+		fade_in(lgt.child[lgt.new_idx], $SETTINGS_sli_legato_time*$SETTINGS_sli_legato_attack/100)     { Start the New note's fade-in at just the "segment 1" portion of the total time }
+		lgt.active := true   { Marks that a crossfade is now running, read by f.lgt_stop_fade() if this gets interrupted }
+		while lgt.fade_out_ticks > 0 or lgt.fade_in_ticks > 0 or lgt.bend_ticks > 0  { Keep looping until ALL THREE activities have finished }
+			dec(lgt.fade_out_ticks)
+			dec(lgt.fade_in_ticks)
+			dec(lgt.bend_ticks)
+			if lgt.fade_out_ticks = 0
+				f.lgt_end_old()   { Fade-out just finished this tick — retire the Old note now }
+			end if
+			if lgt.fade_in_ticks = 0 and lgt.seg2_ticks > 0
+				{ Segment 1 of the fade-in just finished and there's a segment 2 queued up —
+				  kick off the second (slower) fade-in stage now, reusing fade_in_ticks as the
+				  live countdown for it, and clear seg2_ticks so this only fires once. }
+				fade_in(lgt.child[lgt.new_idx], lgt.seg2_ticks*LGT_TICK)
+				lgt.fade_in_ticks := lgt.seg2_ticks
+				lgt.seg2_ticks := 0
+			end if
+			if lgt.bend_ticks >= 0 and $SETTINGS_swi_legato_bend_enable = 1   { >= 0 (not > 0) so the bend settles exactly on its target pitch with one final tick at zero, rather than stopping one tick short }
+				f.lgt_do_bend()
+			end if
+			wait(LGT_TICK)   { Pause for one tick before the next iteration — this is what makes the fade/bend happen gradually instead of all at once }
+		end while
+		lgt.active := false
+	end if
+end function
+
+function f.lgt_end_phrase()  { Fully end the current legato phrase: stop any in-flight fade and kill both notes, resetting state for a brand new phrase to start next time }
+	f.lgt_stop_fade()
+	if lgt.child[0] # LGT_NO_ID
+		note_off(lgt.child[0])
+	end if
+	if lgt.child[1] # LGT_NO_ID
+		note_off(lgt.child[1])
+	end if
+	lgt.child[0] := LGT_NO_ID
+	lgt.child[1] := LGT_NO_ID
+	lgt.parent[0] := LGT_NO_ID   { Setting both parents back to LGT_NO_ID is what f.lgt_process_note() checks to know "no phrase is currently in progress" }
+	lgt.parent[1] := LGT_NO_ID
+	lgt.new_idx := 0             { Reset to a known slot for the next phrase (arbitrary which one, just needs to be consistent) }
+end function
+
+function f.lgt_process_note()  { Entry point from on note: decides whether this is the start of a brand new phrase or a continuing legato transition. ignore_event(EVENT_ID) must be called by the caller in on note itself, not here — see the KSP gotchas memory note on why }
+	if lgt.parent[lgt.new_idx] = LGT_NO_ID  { LGT_NO_ID here means no note is currently being held — this key press is starting a fresh phrase, not continuing a legato run }
+		lgt.ref_time := ENGINE_UPTIME   { Start the "time since last note" clock fresh for this phrase }
+		lgt.offset := 0                 { First note of a phrase always plays from the true start — no legato skip, since there's no previous note to transition from }
+		f.lgt_gen_note()
+	else  { A note is already held — this is a real legato transition to a new pitch }
+		f.lgt_stop_fade()               { Cancel/settle whatever crossfade might already be running from a previous fast transition }
+		lgt.new_idx := 1 - lgt.new_idx  { Swap which slot is "New" — the previous "New" becomes "Old" and will now fade out }
+		f.lgt_get_offset()              { Compute this transition's sample-start offset based on playing speed }
+		f.lgt_gen_note()                { Trigger the new note into the (now) "New" slot }
+		f.lgt_xfade()                   { Run the actual crossfade/bend between Old and New }
+	end if
+end function
+
+function f.lgt_release_note()  { Entry point from on release: figures out which slot (if any) this key-lift belongs to, and whether to end it now or defer for the sustain pedal }
+	if EVENT_ID = lgt.parent[lgt.new_idx]  { The key that was just released is the CURRENTLY HELD ("New") note — releasing it normally means the whole phrase is over }
+		if lgt.pedal_down = false
+			f.lgt_end_phrase()
+		else
+			lgt.pedal[lgt.new_idx] := true  { Pedal is down: don't end the phrase yet — f.lgt_test_pedal() will finish this once the pedal comes up }
+		end if
+	else if EVENT_ID = lgt.parent[1 - lgt.new_idx]  { The released key is the PREVIOUS ("Old") note — this happens when the player lifts the first key of a legato pair quickly, before the crossfade has even finished }
+		if lgt.fade_out_ticks > 0  { Only relevant if that note is still actually fading out }
+			if lgt.pedal_down = false
+				f.lgt_end_old()   { No pedal: cut the Old note off right now instead of waiting for its natural fade-out to finish }
+			else
+				lgt.pedal[1 - lgt.new_idx] := true  { Pedal is down: defer ending it, same as above }
+			end if
+		end if
+	end if
+	{ If EVENT_ID matches neither parent, this key release isn't part of the tracked legato
+	  phrase at all (e.g. a note from a different articulation/mic path) — nothing to do. }
+end function
+
+function f.lgt_test_pedal()  { Called from on controller whenever the sustain pedal is released — finishes any notes that were deferred by f.lgt_release_note() while the pedal was held down }
+	if lgt.pedal[1 - lgt.new_idx] = true and lgt.fade_out_ticks > 0
+		f.lgt_end_old()        { The Old note's key was lifted while pedalled and it's still fading — end it now that the pedal's up }
+	end if
+	if lgt.pedal[lgt.new_idx] = true
+		lgt.pedal[lgt.new_idx] := false
+		f.lgt_end_phrase()     { The New (currently held) note's key was lifted while pedalled — the whole phrase can finally end now }
+	end if
+end function
+
+
+
+{******************************************************************************************
+* MACROS *
+******************************************************************************************}

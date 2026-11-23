@@ -1,0 +1,2759 @@
+{ Compiled on Mon Nov 23 23:39:59 2026 }
+on init
+  declare %p[32768]
+  declare $sp
+  $sp := 118
+  declare $fp
+  $fp := 118
+  declare $tx
+  declare %tstate__id[654]
+  declare %tstate__sp[654]
+  declare %tstate__fp[654]
+  declare %tstate__fs[654]
+  $tx := 0
+  while ($tx<654)
+    %tstate__fs[$tx] := 68+($tx*50)
+    inc($tx)
+  end while
+  $tx := 0
+  %tstate__id[0] := -1
+  pgs_create_key(TCM_EXCEPTION,5)
+  pgs_set_key_val(TCM_EXCEPTION,$CURRENT_SCRIPT_SLOT,0)
+  set_script_title("ivln_all_sus")
+  load_performance_view("ivln_all_sustains_legato")
+  declare $i
+  declare $a
+  declare $b
+  declare %key_switches[21] := (12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32)
+  make_persistent(%key_switches)
+  declare $current_art
+  make_persistent($current_art)
+  declare $solo_on_flag := 0
+  make_persistent($solo_on_flag)
+  declare %solo_channels[5] := (0)
+  make_persistent(%solo_channels)
+  declare $harmonics_on
+  make_persistent($harmonics_on)
+  declare $load_ir_id
+  declare $current_ir
+  make_persistent($current_ir)
+  declare %current_multi_arts[21] := (0)
+  make_persistent(%current_multi_arts)
+  declare %reverb_cb_state[3]
+  declare ~val
+  declare $res
+  declare !label_units_pre[49]
+  !label_units_pre[5] := " Attack "
+  !label_units_pre[6] := " Decay "
+  !label_units_pre[7] := " Sustain "
+  !label_units_pre[8] := " Release "
+  declare !label_units_post[49]
+  !label_units_post[0] := " dB"
+  !label_units_post[1] := " dB"
+  !label_units_post[2] := " dB"
+  !label_units_post[3] := " dB"
+  !label_units_post[4] := " dB"
+  !label_units_post[5] := " ms"
+  !label_units_post[6] := " ms"
+  !label_units_post[7] := " dB"
+  !label_units_post[8] := " ms"
+  !label_units_post[9] := " %"
+  !label_units_post[10] := " %"
+  !label_units_post[11] := " %"
+  !label_units_post[18] := " dB"
+  !label_units_post[19] := " dB"
+  !label_units_post[20] := " dB"
+  !label_units_post[21] := " dB"
+  !label_units_post[22] := " dB"
+  !label_units_post[23] := " dB"
+  !label_units_post[24] := " dB"
+  !label_units_post[25] := " dB"
+  !label_units_post[26] := " dB"
+  !label_units_post[27] := " dB"
+  !label_units_post[29] := " %"
+  !label_units_post[30] := " Hz"
+  !label_units_post[31] := " Hz"
+  !label_units_post[32] := " %"
+  !label_units_post[33] := " Hz"
+  !label_units_post[34] := " %"
+  !label_units_post[36] := " %"
+  !label_units_post[37] := " %"
+  !label_units_post[39] := " %"
+  !label_units_post[42] := " Hz"
+  !label_units_post[43] := " Hz"
+  declare $dyn_sim_scaled
+  declare $dyn_sim_moved_flag
+  declare %sync_units[15]
+  %sync_units[0] := $NI_SYNC_UNIT_ABS
+  %sync_units[1] := $NI_SYNC_UNIT_WHOLE
+  %sync_units[2] := $NI_SYNC_UNIT_WHOLE_TRIPLET
+  %sync_units[3] := $NI_SYNC_UNIT_HALF
+  %sync_units[4] := $NI_SYNC_UNIT_HALF_TRIPLET
+  %sync_units[5] := $NI_SYNC_UNIT_QUARTER
+  %sync_units[6] := $NI_SYNC_UNIT_QUARTER_TRIPLET
+  %sync_units[7] := $NI_SYNC_UNIT_8TH
+  %sync_units[8] := $NI_SYNC_UNIT_8TH_TRIPLET
+  %sync_units[9] := $NI_SYNC_UNIT_16TH
+  %sync_units[10] := $NI_SYNC_UNIT_16TH_TRIPLET
+  %sync_units[11] := $NI_SYNC_UNIT_32ND
+  %sync_units[12] := $NI_SYNC_UNIT_32ND_TRIPLET
+  %sync_units[13] := $NI_SYNC_UNIT_64TH
+  %sync_units[14] := $NI_SYNC_UNIT_64TH_TRIPLET
+  declare !sync_units_text[15]
+  !sync_units_text[0] := "ms"
+  !sync_units_text[1] := "1/1"
+  !sync_units_text[2] := "1/1 Triplet"
+  !sync_units_text[3] := "1/2"
+  !sync_units_text[4] := "1/2 Triplet"
+  !sync_units_text[5] := "1/4"
+  !sync_units_text[6] := "1/4 Triplet"
+  !sync_units_text[7] := "1/8"
+  !sync_units_text[8] := "1/8 Triplet"
+  !sync_units_text[9] := "1/16"
+  !sync_units_text[10] := "1/16 Triplet"
+  !sync_units_text[11] := "1/32"
+  !sync_units_text[12] := "1/32 Triplet"
+  !sync_units_text[13] := "1/64"
+  !sync_units_text[14] := "1/64 Triplet"
+  declare !delay_modes_names[5]
+  !delay_modes_names[0] := "MODE: MODERN"
+  !delay_modes_names[1] := "MODE: ANALOGUE"
+  !delay_modes_names[2] := "MODE: TAPE"
+  !delay_modes_names[3] := "MODE: VINTAGE"
+  !delay_modes_names[4] := "MODE: DIFFUSION"
+  declare %delay_modes[5] := ($NI_REPLIKA_TYPE_MODERN, $NI_REPLIKA_TYPE_ANALOGUE, $NI_REPLIKA_TYPE_TAPE, $NI_REPLIKA_TYPE_VINTAGE, $NI_REPLIKA_TYPE_DIFFUSION)
+  declare %delay_controls[18]
+  %delay_controls[0] := get_ui_id($SEND_FX_swi_delay_stereo)
+  %delay_controls[1] := get_ui_id($SEND_FX_swi_delay_noise)
+  %delay_controls[2] := get_ui_id($SEND_FX_swi_delay_dense)
+  %delay_controls[3] := get_ui_id($SEND_FX_swi_delay_pingpong)
+  %delay_controls[4] := get_ui_id($SEND_FX_sli_delay_time)
+  %delay_controls[5] := get_ui_id($SEND_FX_sli_delay_feedback)
+  %delay_controls[6] := get_ui_id($SEND_FX_sli_delay_lowcut)
+  %delay_controls[7] := get_ui_id($SEND_FX_sli_delay_hicut)
+  %delay_controls[8] := get_ui_id($SEND_FX_sli_delay_depth)
+  %delay_controls[9] := get_ui_id($SEND_FX_sli_delay_rate)
+  %delay_controls[10] := get_ui_id($SEND_FX_sli_delay_saturate)
+  %delay_controls[11] := get_ui_id($SEND_FX_sli_delay_bbd)
+  %delay_controls[12] := get_ui_id($SEND_FX_sli_delay_tapeage)
+  %delay_controls[13] := get_ui_id($SEND_FX_sli_delay_flutter)
+  %delay_controls[14] := get_ui_id($SEND_FX_sli_delay_quality)
+  %delay_controls[15] := get_ui_id($SEND_FX_sli_delay_amount)
+  %delay_controls[16] := get_ui_id($SEND_FX_sli_delay_size)
+  %delay_controls[17] := get_ui_id($SEND_FX_sli_delay_mod)
+  declare %delay_par[18]
+  %delay_par[0] := $ENGINE_PAR_RDL_STEREO
+  %delay_par[1] := $ENGINE_PAR_RDL_NOISE
+  %delay_par[2] := $ENGINE_PAR_RDL_DENSE
+  %delay_par[3] := $ENGINE_PAR_RDL_PINGPONG
+  %delay_par[4] := $ENGINE_PAR_RDL_TIME
+  %delay_par[5] := $ENGINE_PAR_RDL_FEEDBACK
+  %delay_par[6] := $ENGINE_PAR_RDL_LOWCUT
+  %delay_par[7] := $ENGINE_PAR_RDL_HIGHCUT
+  %delay_par[8] := $ENGINE_PAR_RDL_DEPTH
+  %delay_par[9] := $ENGINE_PAR_RDL_RATE
+  %delay_par[10] := $ENGINE_PAR_RDL_SATURATION
+  %delay_par[11] := $ENGINE_PAR_RDL_BBDTYPE
+  %delay_par[12] := $ENGINE_PAR_RDL_TAPEAGE
+  %delay_par[13] := $ENGINE_PAR_RDL_FLUTTER
+  %delay_par[14] := $ENGINE_PAR_RDL_QUALITY
+  %delay_par[15] := $ENGINE_PAR_RDL_AMOUNT
+  %delay_par[16] := $ENGINE_PAR_RDL_SIZE
+  %delay_par[17] := $ENGINE_PAR_RDL_MODULATION
+  declare !IR_names[31]
+  !IR_names[0] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/<<<K4IR.nkx>>>/K4 IR Samples/L96 Chamber Large A.wav"
+  !IR_names[1] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/<<<K4IR.nkx>>>/K4 IR Samples/BRT 7 Chamber Medium.wav"
+  !IR_names[2] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/<<<K4IR.nkx>>>/K4 IR Samples/BRT 7 Hall Large D.wav"
+  !IR_names[3] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/<<<K4IR.nkx>>>/K4 IR Samples/BRT 7 Hall Dense.wav"
+  !IR_names[4] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/<<<K4IR.nkx>>>/K4 IR Samples/L480 Factory Reverb Tail A.wav"
+  !IR_names[5] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/<<<K4IR.nkx>>>/K4 IR Samples/BRT 7 Location Vehicle Park.wav"
+  !IR_names[6] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/<<<K4IR.nkx>>>/K4 IR Samples/Inversed Room.wav"
+  !IR_names[7] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/<<<K4IR.nkx>>>/K4 IR Samples/E250 1.5s.wav"
+  !IR_names[8] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/<<<K4IR.nkx>>>/K4 IR Samples/E245 2.3s C.wav"
+  !IR_names[9] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/<<<K4IR.nkx>>>/K4 IR Samples/E245 3.2s B.wav"
+  !IR_names[10] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/<<<K4IR.nkx>>>/K4 IR Samples/E252 4.5s.wav"
+  !IR_names[11] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/<<<K4IR.nkx>>>/K4 IR Samples/E252 D-REV 5.0s.wav"
+  !IR_names[12] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/<<<K4IR.nkx>>>/K4 IR Samples/E252 D-REV 8.0s.wav"
+  !IR_names[13] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/<<<K4IR.nkx>>>/K4 IR Samples/E252 D-REV 10.0s.wav"
+  !IR_names[14] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/<<<K4IR.nkx>>>/K4 IR Samples/E252 D-REV 12.0s.wav"
+  !IR_names[15] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/<<<K4IR.nkx>>>/K4 IR Samples/E252 D-REV 16.0s.wav"
+  !IR_names[16] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/11 Unsusual Reverbs/IR Samples/Bubbly Freq Flange.wav"
+  !IR_names[17] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/11 Unsusual Reverbs/IR Samples/Zipper Up.wav"
+  !IR_names[18] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/11 Unsusual Reverbs/IR Samples/Crystal Caves.wav"
+  !IR_names[19] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/11 Unsusual Reverbs/IR Samples/CrystalGyroscope.wav"
+  !IR_names[20] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/15 Special Effects/Mix/IR Samples/Dry Ice.wav"
+  !IR_names[21] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/15 Special Effects/Mix/IR Samples/Delayed Reaction.wav"
+  !IR_names[22] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/15 Special Effects/Mix/IR Samples/Vinyl Liftoff.wav"
+  !IR_names[23] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/15 Special Effects/Mix/IR Samples/Node Unity.wav"
+  !IR_names[24] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/15 Special Effects/Mix/IR Samples/Jerry's Flashback.wav"
+  !IR_names[25] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/15 Special Effects/ModulatorsMedium/IR Samples/Retrovirus.wav"
+  !IR_names[26] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/15 Special Effects/ModulatorsShort/IR Samples/Charging Complete.wav"
+  !IR_names[27] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/15 Special Effects/Reverser/IR Samples/The Sound Of Cluelessness.wav"
+  !IR_names[28] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/15 Special Effects/Reverser/IR Samples/Masonry Bit.wav"
+  !IR_names[29] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/15 Special Effects/Reverser/IR Samples/Highly Corrosive.wav"
+  !IR_names[30] := get_folder($GET_FOLDER_FACTORY_DIR) & "presets/effects/convolution/15 Special Effects/Reverser/IR Samples/Opacity.wav"
+  declare !IR_menu_names[34]
+  !IR_menu_names[0] := "-- Spaces --"
+  !IR_menu_names[1] := "Chamber A"
+  !IR_menu_names[2] := "Chamber B"
+  !IR_menu_names[3] := "Hall A"
+  !IR_menu_names[4] := "Hall B"
+  !IR_menu_names[5] := "Factory"
+  !IR_menu_names[6] := "Car Park"
+  !IR_menu_names[7] := "Inv. Room"
+  !IR_menu_names[8] := "-- Plates --"
+  !IR_menu_names[9] := "1.5s Plate"
+  !IR_menu_names[10] := "2.3s Plate"
+  !IR_menu_names[11] := "3.2s Plate"
+  !IR_menu_names[12] := "4.5s Plate"
+  !IR_menu_names[13] := "5.0s Plate"
+  !IR_menu_names[14] := "8.0s Plate"
+  !IR_menu_names[15] := "10.0s Plate"
+  !IR_menu_names[16] := "12.0s Plate"
+  !IR_menu_names[17] := "16.0s Plate"
+  !IR_menu_names[18] := "-- FX --"
+  !IR_menu_names[19] := "Bubbly"
+  !IR_menu_names[20] := "Zipper Up"
+  !IR_menu_names[21] := "Crystal Cave"
+  !IR_menu_names[22] := "Crystal Gyro"
+  !IR_menu_names[23] := "Dry Ice"
+  !IR_menu_names[24] := "Dl. Reaction"
+  !IR_menu_names[25] := "Vinyl Liftoff"
+  !IR_menu_names[26] := "Unity"
+  !IR_menu_names[27] := "Flashback"
+  !IR_menu_names[28] := "Retrovirus"
+  !IR_menu_names[29] := "Charging"
+  !IR_menu_names[30] := "Clueless"
+  !IR_menu_names[31] := "Masonry Bit"
+  !IR_menu_names[32] := "Corrosive"
+  !IR_menu_names[33] := "Opacity"
+  declare %IR_index[34]
+  %IR_index[0] := -1
+  %IR_index[1] := 0
+  %IR_index[2] := 1
+  %IR_index[3] := 2
+  %IR_index[4] := 3
+  %IR_index[5] := 4
+  %IR_index[6] := 5
+  %IR_index[7] := 6
+  %IR_index[8] := -1
+  %IR_index[9] := 7
+  %IR_index[10] := 8
+  %IR_index[11] := 9
+  %IR_index[12] := 10
+  %IR_index[13] := 11
+  %IR_index[14] := 12
+  %IR_index[15] := 13
+  %IR_index[16] := 14
+  %IR_index[17] := 15
+  %IR_index[18] := -1
+  %IR_index[19] := 16
+  %IR_index[20] := 17
+  %IR_index[21] := 18
+  %IR_index[22] := 19
+  %IR_index[23] := 20
+  %IR_index[24] := 21
+  %IR_index[25] := 22
+  %IR_index[26] := 23
+  %IR_index[27] := 24
+  %IR_index[28] := 25
+  %IR_index[29] := 26
+  %IR_index[30] := 27
+  %IR_index[31] := 28
+  %IR_index[32] := 29
+  %IR_index[33] := 30
+  declare !notes[12]
+  !notes[0] := "C"
+  !notes[1] := "C#"
+  !notes[2] := "D"
+  !notes[3] := "D#"
+  !notes[4] := "E"
+  !notes[5] := "F"
+  !notes[6] := "F#"
+  !notes[7] := "G"
+  !notes[8] := "G#"
+  !notes[9] := "A"
+  !notes[10] := "A#"
+  !notes[11] := "B"
+  declare !note_names[128]
+  $i := 0
+  while ($i<num_elements(!note_names))
+    !note_names[$i] := !notes[$i mod 12] & ($i/12-2)
+    inc($i)
+  end while
+  declare $lgt_phase_grp_ofs
+  declare $lgt_note_lo
+  declare $lgt_note_hi
+  declare $any_harmonics_on
+  declare $any_normal_on
+  declare %lgt__parent[2]
+  declare %lgt__child[2]
+  declare %lgt__note[2]
+  declare %lgt__vel[2]
+  declare %lgt__pedal[2]
+  declare %lgt__tune[2]
+  declare $lgt__new_idx
+  declare $lgt__ref_time
+  declare $lgt__offset
+  declare $lgt__fade_out_ticks
+  declare $lgt__fade_in_ticks
+  declare $lgt__seg2_ticks
+  declare $lgt__bend_ticks
+  declare $lgt__bend_amount
+  declare $lgt__bend_step
+  declare $lgt__active
+  declare $lgt__busy
+  declare $lgt__pedal_down
+  %lgt__parent[0] := 0
+  %lgt__parent[1] := 0
+  $lgt__pedal_down := 0
+  declare %ui_art_switches[21]
+  %ui_art_switches[0] := get_ui_id($articulations_swi_sus_norm_ppp)
+  %ui_art_switches[1] := get_ui_id($articulations_swi_sus_norm_pp)
+  %ui_art_switches[2] := get_ui_id($articulations_swi_sus_norm_p)
+  %ui_art_switches[3] := get_ui_id($articulations_swi_sus_cs_ppp)
+  %ui_art_switches[4] := get_ui_id($articulations_swi_sus_cs_pp)
+  %ui_art_switches[5] := get_ui_id($articulations_swi_sus_cs_p)
+  %ui_art_switches[6] := get_ui_id($articulations_swi_sus_supercs_ppp)
+  %ui_art_switches[7] := get_ui_id($articulations_swi_sus_supercs_pp)
+  %ui_art_switches[8] := get_ui_id($articulations_swi_sus_supercs_p)
+  %ui_art_switches[9] := get_ui_id($articulations_swi_portato_cs)
+  %ui_art_switches[10] := get_ui_id($articulations_swi_portato_norm)
+  %ui_art_switches[11] := get_ui_id($articulations_swi_vib_pulses_cs)
+  %ui_art_switches[12] := get_ui_id($articulations_swi_vib_pulses_norm)
+  %ui_art_switches[13] := get_ui_id($articulations_swi_rebow_cs)
+  %ui_art_switches[14] := get_ui_id($articulations_swi_rebow_norm)
+  %ui_art_switches[15] := get_ui_id($articulations_swi_trem_bursts_cs)
+  %ui_art_switches[16] := get_ui_id($articulations_swi_trem_bursts_norm)
+  %ui_art_switches[17] := get_ui_id($articulations_swi_fluctuating_trem_cs)
+  %ui_art_switches[18] := get_ui_id($articulations_swi_fluctuating_trem_norm)
+  %ui_art_switches[19] := get_ui_id($articulations_swi_harmonics_cs)
+  %ui_art_switches[20] := get_ui_id($articulations_swi_harmonics_norm)
+  make_persistent($articulations_swi_sus_norm_ppp)
+  make_persistent($articulations_swi_sus_norm_pp)
+  make_persistent($articulations_swi_sus_norm_p)
+  make_persistent($articulations_swi_sus_cs_ppp)
+  make_persistent($articulations_swi_sus_cs_pp)
+  make_persistent($articulations_swi_sus_cs_p)
+  make_persistent($articulations_swi_sus_supercs_ppp)
+  make_persistent($articulations_swi_sus_supercs_pp)
+  make_persistent($articulations_swi_sus_supercs_p)
+  make_persistent($articulations_swi_portato_cs)
+  make_persistent($articulations_swi_portato_norm)
+  make_persistent($articulations_swi_vib_pulses_cs)
+  make_persistent($articulations_swi_vib_pulses_norm)
+  make_persistent($articulations_swi_rebow_cs)
+  make_persistent($articulations_swi_rebow_norm)
+  make_persistent($articulations_swi_trem_bursts_cs)
+  make_persistent($articulations_swi_trem_bursts_norm)
+  make_persistent($articulations_swi_fluctuating_trem_cs)
+  make_persistent($articulations_swi_fluctuating_trem_norm)
+  make_persistent($articulations_swi_harmonics_cs)
+  make_persistent($articulations_swi_harmonics_norm)
+  declare %ui_art_keyswitch_note_labels[21]
+  %ui_art_keyswitch_note_labels[0] := get_ui_id($articulations_lbl_art_keyswitch1)
+  %ui_art_keyswitch_note_labels[1] := get_ui_id($articulations_lbl_art_keyswitch2)
+  %ui_art_keyswitch_note_labels[2] := get_ui_id($articulations_lbl_art_keyswitch3)
+  %ui_art_keyswitch_note_labels[3] := get_ui_id($articulations_lbl_art_keyswitch4)
+  %ui_art_keyswitch_note_labels[4] := get_ui_id($articulations_lbl_art_keyswitch5)
+  %ui_art_keyswitch_note_labels[5] := get_ui_id($articulations_lbl_art_keyswitch6)
+  %ui_art_keyswitch_note_labels[6] := get_ui_id($articulations_lbl_art_keyswitch7)
+  %ui_art_keyswitch_note_labels[7] := get_ui_id($articulations_lbl_art_keyswitch8)
+  %ui_art_keyswitch_note_labels[8] := get_ui_id($articulations_lbl_art_keyswitch9)
+  %ui_art_keyswitch_note_labels[9] := get_ui_id($articulations_lbl_art_keyswitch10)
+  %ui_art_keyswitch_note_labels[10] := get_ui_id($articulations_lbl_art_keyswitch11)
+  %ui_art_keyswitch_note_labels[11] := get_ui_id($articulations_lbl_art_keyswitch12)
+  %ui_art_keyswitch_note_labels[12] := get_ui_id($articulations_lbl_art_keyswitch13)
+  %ui_art_keyswitch_note_labels[13] := get_ui_id($articulations_lbl_art_keyswitch14)
+  %ui_art_keyswitch_note_labels[14] := get_ui_id($articulations_lbl_art_keyswitch15)
+  %ui_art_keyswitch_note_labels[15] := get_ui_id($articulations_lbl_art_keyswitch16)
+  %ui_art_keyswitch_note_labels[16] := get_ui_id($articulations_lbl_art_keyswitch17)
+  %ui_art_keyswitch_note_labels[17] := get_ui_id($articulations_lbl_art_keyswitch18)
+  %ui_art_keyswitch_note_labels[18] := get_ui_id($articulations_lbl_art_keyswitch19)
+  %ui_art_keyswitch_note_labels[19] := get_ui_id($articulations_lbl_art_keyswitch20)
+  %ui_art_keyswitch_note_labels[20] := get_ui_id($articulations_lbl_art_keyswitch21)
+  $i := 0
+  while ($i<num_elements(%ui_art_keyswitch_note_labels))
+    set_control_par(%ui_art_keyswitch_note_labels[$i],$CONTROL_PAR_TEXT_ALIGNMENT,2)
+    set_control_par(%ui_art_keyswitch_note_labels[$i],$CONTROL_PAR_POS_Y,get_control_par(%ui_art_keyswitch_note_labels[$i],$CONTROL_PAR_POS_Y))
+    set_control_par(%ui_art_keyswitch_note_labels[$i],$CONTROL_PAR_POS_X,get_control_par(%ui_art_keyswitch_note_labels[$i],$CONTROL_PAR_POS_X))
+    set_control_par(%ui_art_keyswitch_note_labels[$i],$CONTROL_PAR_FONT_TYPE,24)
+    inc($i)
+  end while
+  make_persistent($SETTINGS_swi_show_keyswitch_notes)
+  make_persistent($SETTINGS_sli_keyswitches)
+  make_persistent($mic_positions_sli_inside)
+  make_persistent($mic_positions_sli_superclose)
+  make_persistent($mic_positions_sli_close)
+  make_persistent($mic_positions_sli_mid)
+  make_persistent($mic_positions_sli_far)
+  declare %ui_channel_swi_on_off[5]
+  %ui_channel_swi_on_off[0] := get_ui_id($mic_positions_swi_on_off_inside)
+  %ui_channel_swi_on_off[1] := get_ui_id($mic_positions_swi_on_off_superclose)
+  %ui_channel_swi_on_off[2] := get_ui_id($mic_positions_swi_on_off_close)
+  %ui_channel_swi_on_off[3] := get_ui_id($mic_positions_swi_on_off_mid)
+  %ui_channel_swi_on_off[4] := get_ui_id($mic_positions_swi_on_off_far)
+  make_persistent($mic_positions_swi_on_off_inside)
+  make_persistent($mic_positions_swi_on_off_superclose)
+  make_persistent($mic_positions_swi_on_off_close)
+  make_persistent($mic_positions_swi_on_off_mid)
+  make_persistent($mic_positions_swi_on_off_far)
+  declare %ui_channel_swi_solo[5]
+  %ui_channel_swi_solo[0] := get_ui_id($mic_positions_swi_solo_inside)
+  %ui_channel_swi_solo[1] := get_ui_id($mic_positions_swi_solo_superclose)
+  %ui_channel_swi_solo[2] := get_ui_id($mic_positions_swi_solo_close)
+  %ui_channel_swi_solo[3] := get_ui_id($mic_positions_swi_solo_mid)
+  %ui_channel_swi_solo[4] := get_ui_id($mic_positions_swi_solo_far)
+  make_persistent($mic_positions_swi_solo_inside)
+  make_persistent($mic_positions_swi_solo_superclose)
+  make_persistent($mic_positions_swi_solo_close)
+  make_persistent($mic_positions_swi_solo_mid)
+  make_persistent($mic_positions_swi_solo_far)
+  declare %ui_channel_swi_mute[5]
+  %ui_channel_swi_mute[0] := get_ui_id($mic_positions_swi_on_off_inside)
+  %ui_channel_swi_mute[1] := get_ui_id($mic_positions_swi_on_off_superclose)
+  %ui_channel_swi_mute[2] := get_ui_id($mic_positions_swi_on_off_close)
+  %ui_channel_swi_mute[3] := get_ui_id($mic_positions_swi_on_off_mid)
+  %ui_channel_swi_mute[4] := get_ui_id($mic_positions_swi_on_off_far)
+  $i := 0
+  while ($i<num_elements(%ui_channel_swi_mute))
+    set_control_par(%ui_channel_swi_mute[$i],$CONTROL_PAR_DEFAULT_VALUE,0)
+    inc($i)
+  end while
+  declare %ui_labels[49]
+  %ui_labels[0] := get_ui_id($mic_positions_lbl_inside)
+  %ui_labels[1] := get_ui_id($mic_positions_lbl_superclose_lower)
+  %ui_labels[2] := get_ui_id($mic_positions_lbl_close)
+  %ui_labels[3] := get_ui_id($mic_positions_lbl_mid)
+  %ui_labels[4] := get_ui_id($mic_positions_lbl_far)
+  %ui_labels[5] := get_ui_id($ADSR_lbl_a)
+  %ui_labels[6] := get_ui_id($ADSR_lbl_d)
+  %ui_labels[7] := get_ui_id($ADSR_lbl_s)
+  %ui_labels[8] := get_ui_id($ADSR_lbl_r)
+  %ui_labels[9] := get_ui_id($ADSR_panel_dyn_par_lbl_dyn_sim_int)
+  %ui_labels[10] := get_ui_id($ADSR_panel_dyn_par_lbl_dyn_range)
+  %ui_labels[11] := get_ui_id($ADSR_panel_dyn_par_lbl_dyn_velocity)
+  %ui_labels[12] := get_ui_id($mic_positions_panel_inside_par_lbl_stereo_width)
+  %ui_labels[13] := get_ui_id($mic_positions_panel_superclose_par_lbl_stereo_width)
+  %ui_labels[14] := get_ui_id($mic_positions_panel_close_par_lbl_stereo_width)
+  %ui_labels[15] := get_ui_id($mic_positions_panel_mid_par_lbl_stereo_width)
+  %ui_labels[16] := get_ui_id($mic_positions_panel_far_par_lbl_stereo_width)
+  %ui_labels[17] := get_ui_id($ADSR_lbl_adsr)
+  %ui_labels[18] := get_ui_id($mic_positions_panel_inside_par_lbl_delay_send)
+  %ui_labels[19] := get_ui_id($mic_positions_panel_superclose_par_lbl_delay_send)
+  %ui_labels[20] := get_ui_id($mic_positions_panel_close_par_lbl_delay_send)
+  %ui_labels[21] := get_ui_id($mic_positions_panel_mid_par_lbl_delay_send)
+  %ui_labels[22] := get_ui_id($mic_positions_panel_far_par_lbl_delay_send)
+  %ui_labels[23] := get_ui_id($mic_positions_panel_inside_par_lbl_reverb_send)
+  %ui_labels[24] := get_ui_id($mic_positions_panel_superclose_par_lbl_reverb_send)
+  %ui_labels[25] := get_ui_id($mic_positions_panel_close_par_lbl_reverb_send)
+  %ui_labels[26] := get_ui_id($mic_positions_panel_mid_par_lbl_reverb_send)
+  %ui_labels[27] := get_ui_id($mic_positions_panel_far_par_lbl_reverb_send)
+  %ui_labels[28] := get_ui_id($SEND_FX_lbl_delay_time)
+  %ui_labels[29] := get_ui_id($SEND_FX_lbl_delay_feedback)
+  %ui_labels[30] := get_ui_id($SEND_FX_lbl_delay_lowcut)
+  %ui_labels[31] := get_ui_id($SEND_FX_lbl_delay_hicut)
+  %ui_labels[32] := get_ui_id($SEND_FX_lbl_delay_depth)
+  %ui_labels[33] := get_ui_id($SEND_FX_lbl_delay_rate)
+  %ui_labels[34] := get_ui_id($SEND_FX_lbl_delay_saturate)
+  %ui_labels[35] := get_ui_id($SEND_FX_lbl_delay_bbd)
+  %ui_labels[36] := get_ui_id($SEND_FX_lbl_delay_tapeage)
+  %ui_labels[37] := get_ui_id($SEND_FX_lbl_delay_flutter)
+  %ui_labels[38] := get_ui_id($SEND_FX_lbl_delay_quality)
+  %ui_labels[39] := get_ui_id($SEND_FX_lbl_delay_amount)
+  %ui_labels[40] := get_ui_id($SEND_FX_lbl_delay_size)
+  %ui_labels[41] := get_ui_id($SEND_FX_lbl_delay_mod)
+  %ui_labels[42] := get_ui_id($SEND_FX_lbl_reverb_lowcut)
+  %ui_labels[43] := get_ui_id($SEND_FX_lbl_reverb_hicut)
+  %ui_labels[44] := get_ui_id($mic_positions_panel_inside_par_lbl_pan)
+  %ui_labels[45] := get_ui_id($mic_positions_panel_superclose_par_lbl_pan)
+  %ui_labels[46] := get_ui_id($mic_positions_panel_close_par_lbl_pan)
+  %ui_labels[47] := get_ui_id($mic_positions_panel_mid_par_lbl_pan)
+  %ui_labels[48] := get_ui_id($mic_positions_panel_far_par_lbl_pan)
+  declare !lbl_text[49]
+  !lbl_text[0] := "INSIDE"
+  !lbl_text[1] := "CLOSE"
+  !lbl_text[2] := "CLOSE"
+  !lbl_text[3] := "MID"
+  !lbl_text[4] := "FAR"
+  !lbl_text[5] := "A"
+  !lbl_text[6] := "D"
+  !lbl_text[7] := "S"
+  !lbl_text[8] := "R"
+  !lbl_text[9] := "HIGH BOOST/CUT"
+  !lbl_text[10] := "DYNAMIC RANGE"
+  !lbl_text[11] := "VELOCITY CONTROL"
+  !lbl_text[12] := "STEREO WIDTH"
+  !lbl_text[13] := "STEREO WIDTH"
+  !lbl_text[14] := "STEREO WIDTH"
+  !lbl_text[15] := "STEREO WIDTH"
+  !lbl_text[16] := "STEREO WIDTH"
+  !lbl_text[18] := "DELAY SEND"
+  !lbl_text[19] := "DELAY SEND"
+  !lbl_text[20] := "DELAY SEND"
+  !lbl_text[21] := "DELAY SEND"
+  !lbl_text[22] := "DELAY SEND"
+  !lbl_text[23] := "REVERB SEND"
+  !lbl_text[24] := "REVERB SEND"
+  !lbl_text[25] := "REVERB SEND"
+  !lbl_text[26] := "REVERB SEND"
+  !lbl_text[27] := "REVERB SEND"
+  !lbl_text[28] := "TIME"
+  !lbl_text[29] := "FEEDBACK"
+  !lbl_text[30] := "LOW CUT"
+  !lbl_text[31] := "HIGH CUT"
+  !lbl_text[32] := "DEPTH"
+  !lbl_text[33] := "RATE"
+  !lbl_text[34] := "SATURATE"
+  !lbl_text[35] := "BBD TYPE"
+  !lbl_text[36] := "TAPE AGE"
+  !lbl_text[37] := "FLUTTER"
+  !lbl_text[38] := "QUALITY"
+  !lbl_text[39] := "AMOUNT"
+  !lbl_text[40] := "SIZE"
+  !lbl_text[41] := "MOD"
+  !lbl_text[42] := "LOW CUT"
+  !lbl_text[43] := "HIGH CUT"
+  !lbl_text[44] := "PAN"
+  !lbl_text[45] := "PAN"
+  !lbl_text[46] := "PAN"
+  !lbl_text[47] := "PAN"
+  !lbl_text[48] := "PAN"
+  declare %lgt_ui_labels[6]
+  %lgt_ui_labels[0] := get_ui_id($SETTINGS_lbl_legato_time)
+  %lgt_ui_labels[1] := get_ui_id($SETTINGS_lbl_legato_attack)
+  %lgt_ui_labels[2] := get_ui_id($SETTINGS_lbl_legato_offset_min)
+  %lgt_ui_labels[3] := get_ui_id($SETTINGS_lbl_legato_offset_max)
+  %lgt_ui_labels[4] := get_ui_id($SETTINGS_lbl_legato_portamento_time)
+  %lgt_ui_labels[5] := get_ui_id($SETTINGS_lbl_legato_portamento_amount)
+  declare !lgt_lbl_text[6]
+  !lgt_lbl_text[0] := "LEG TIME"
+  !lgt_lbl_text[1] := "LEG ATTACK"
+  !lgt_lbl_text[2] := "OFFSET MIN"
+  !lgt_lbl_text[3] := "OFFSET MAX"
+  !lgt_lbl_text[4] := "TIME"
+  !lgt_lbl_text[5] := "AMOUNT"
+  make_persistent($SETTINGS_sli_legato_time)
+  make_persistent($SETTINGS_sli_legato_attack)
+  make_persistent($SETTINGS_sli_legato_offset_min)
+  make_persistent($SETTINGS_sli_legato_offset_max)
+  make_persistent($SETTINGS_sli_legato_portamento_time)
+  make_persistent($SETTINGS_sli_legato_portamento_amount)
+  make_persistent($SETTINGS_swi_legato_bend_enable)
+  make_persistent($swi_legato_poly)
+  make_persistent($lbl_legato_poly)
+  declare %lgt_ui_controls[7]
+  %lgt_ui_controls[0] := get_ui_id($SETTINGS_sli_legato_time)
+  %lgt_ui_controls[1] := get_ui_id($SETTINGS_sli_legato_attack)
+  %lgt_ui_controls[2] := get_ui_id($SETTINGS_sli_legato_offset_min)
+  %lgt_ui_controls[3] := get_ui_id($SETTINGS_sli_legato_offset_max)
+  %lgt_ui_controls[4] := get_ui_id($SETTINGS_sli_legato_portamento_time)
+  %lgt_ui_controls[5] := get_ui_id($SETTINGS_sli_legato_portamento_amount)
+  %lgt_ui_controls[6] := get_ui_id($SETTINGS_swi_legato_bend_enable)
+  $i := 0
+  while ($i<num_elements(%lgt_ui_controls))
+    set_control_par(%lgt_ui_controls[$i],$CONTROL_PAR_POS_X,get_control_par(%lgt_ui_controls[$i],$CONTROL_PAR_POS_X)-5)
+    set_control_par(%lgt_ui_controls[$i],$CONTROL_PAR_POS_Y,get_control_par(%lgt_ui_controls[$i],$CONTROL_PAR_POS_Y)-10)
+    inc($i)
+  end while
+  $i := 0
+  while ($i<num_elements(%lgt_ui_labels))
+    set_control_par(%lgt_ui_labels[$i],$CONTROL_PAR_POS_X,get_control_par(%lgt_ui_labels[$i],$CONTROL_PAR_POS_X)-3)
+    set_control_par(%lgt_ui_labels[$i],$CONTROL_PAR_POS_Y,get_control_par(%lgt_ui_labels[$i],$CONTROL_PAR_POS_Y)-10)
+    inc($i)
+  end while
+  move_control_px($SETTINGS_swi_legato_bend_enable,338,190)
+  declare %ui_adsr_controls[8]
+  %ui_adsr_controls[0] := get_ui_id($ADSR_A)
+  %ui_adsr_controls[1] := get_ui_id($ADSR_D)
+  %ui_adsr_controls[2] := get_ui_id($ADSR_S)
+  %ui_adsr_controls[3] := get_ui_id($ADSR_R)
+  %ui_adsr_controls[4] := get_ui_id($ADSR_lbl_a)
+  %ui_adsr_controls[5] := get_ui_id($ADSR_lbl_d)
+  %ui_adsr_controls[6] := get_ui_id($ADSR_lbl_s)
+  %ui_adsr_controls[7] := get_ui_id($ADSR_lbl_r)
+  make_persistent($ADSR_A)
+  make_persistent($ADSR_D)
+  make_persistent($ADSR_S)
+  make_persistent($ADSR_R)
+  $i := 0
+  while ($i<num_elements(%ui_adsr_controls))
+    set_control_par(%ui_adsr_controls[$i],$CONTROL_PAR_POS_X,get_control_par(%ui_adsr_controls[$i],$CONTROL_PAR_POS_X)-0)
+    inc($i)
+  end while
+  $i := 0
+  while ($i<num_elements(%ui_adsr_controls))
+    set_control_par(%ui_adsr_controls[$i],$CONTROL_PAR_POS_Y,get_control_par(%ui_adsr_controls[$i],$CONTROL_PAR_POS_Y)+30)
+    inc($i)
+  end while
+  make_persistent($ADSR_sli_dyn)
+  make_persistent($ADSR_sli_exp)
+  make_persistent($ADSR_panel_dyn_par_sli_dyn_sim_int)
+  make_persistent($ADSR_panel_dyn_par_sli_dyn_range)
+  make_persistent($ADSR_panel_dyn_par_sli_dyn_velocity)
+  make_persistent($ADSR_panel_dyn_par_sli_dyn_range)
+  make_persistent($mic_positions_panel_inside_par_lbl_phase_on)
+  make_persistent($mic_positions_panel_superclose_par_lbl_phase_on)
+  make_persistent($mic_positions_panel_close_par_lbl_phase_on)
+  make_persistent($mic_positions_panel_mid_par_lbl_phase_on)
+  make_persistent($mic_positions_panel_far_par_lbl_phase_on)
+  declare %ui_lbl_phase[5]
+  %ui_lbl_phase[0] := get_ui_id($mic_positions_panel_inside_par_lbl_phase_on)
+  %ui_lbl_phase[1] := get_ui_id($mic_positions_panel_superclose_par_lbl_phase_on)
+  %ui_lbl_phase[2] := get_ui_id($mic_positions_panel_close_par_lbl_phase_on)
+  %ui_lbl_phase[3] := get_ui_id($mic_positions_panel_mid_par_lbl_phase_on)
+  %ui_lbl_phase[4] := get_ui_id($mic_positions_panel_far_par_lbl_phase_on)
+  make_persistent($ADSR_swi_phase)
+  make_persistent($mic_positions_panel_inside_par_sli_stereo_width)
+  make_persistent($mic_positions_panel_superclose_par_sli_stereo_width)
+  make_persistent($mic_positions_panel_close_par_sli_stereo_width)
+  make_persistent($mic_positions_panel_mid_par_sli_stereo_width)
+  make_persistent($mic_positions_panel_far_par_sli_stereo_width)
+  declare %ui_stereo_controls[5]
+  %ui_stereo_controls[0] := get_ui_id($mic_positions_panel_inside_par_sli_stereo_width)
+  %ui_stereo_controls[1] := get_ui_id($mic_positions_panel_superclose_par_sli_stereo_width)
+  %ui_stereo_controls[2] := get_ui_id($mic_positions_panel_close_par_sli_stereo_width)
+  %ui_stereo_controls[3] := get_ui_id($mic_positions_panel_mid_par_sli_stereo_width)
+  %ui_stereo_controls[4] := get_ui_id($mic_positions_panel_far_par_sli_stereo_width)
+  make_persistent($mic_positions_panel_far_par_sli_delay_send)
+  make_persistent($mic_positions_panel_far_par_sli_reverb_send)
+  make_persistent($mic_positions_panel_mid_par_sli_delay_send)
+  make_persistent($mic_positions_panel_mid_par_sli_reverb_send)
+  make_persistent($mic_positions_panel_close_par_sli_delay_send)
+  make_persistent($mic_positions_panel_close_par_sli_reverb_send)
+  make_persistent($mic_positions_panel_superclose_par_sli_delay_send)
+  make_persistent($mic_positions_panel_superclose_par_sli_reverb_send)
+  make_persistent($mic_positions_panel_inside_par_sli_delay_send)
+  make_persistent($mic_positions_panel_inside_par_sli_reverb_send)
+  declare %ui_delay_sends[5]
+  %ui_delay_sends[0] := get_ui_id($mic_positions_panel_inside_par_sli_delay_send)
+  %ui_delay_sends[1] := get_ui_id($mic_positions_panel_superclose_par_sli_delay_send)
+  %ui_delay_sends[2] := get_ui_id($mic_positions_panel_close_par_sli_delay_send)
+  %ui_delay_sends[3] := get_ui_id($mic_positions_panel_mid_par_sli_delay_send)
+  %ui_delay_sends[4] := get_ui_id($mic_positions_panel_far_par_sli_delay_send)
+  declare %ui_reverb_sends[5]
+  %ui_reverb_sends[0] := get_ui_id($mic_positions_panel_inside_par_sli_reverb_send)
+  %ui_reverb_sends[1] := get_ui_id($mic_positions_panel_superclose_par_sli_reverb_send)
+  %ui_reverb_sends[2] := get_ui_id($mic_positions_panel_close_par_sli_reverb_send)
+  %ui_reverb_sends[3] := get_ui_id($mic_positions_panel_mid_par_sli_reverb_send)
+  %ui_reverb_sends[4] := get_ui_id($mic_positions_panel_far_par_sli_reverb_send)
+  make_persistent($mic_positions_panel_inside_par_sli_pan)
+  make_persistent($mic_positions_panel_superclose_par_sli_pan)
+  make_persistent($mic_positions_panel_close_par_sli_pan)
+  make_persistent($mic_positions_panel_mid_par_sli_pan)
+  make_persistent($mic_positions_panel_far_par_sli_pan)
+  declare %ui_pan_controls[5]
+  %ui_pan_controls[0] := get_ui_id($mic_positions_panel_inside_par_sli_pan)
+  %ui_pan_controls[1] := get_ui_id($mic_positions_panel_superclose_par_sli_pan)
+  %ui_pan_controls[2] := get_ui_id($mic_positions_panel_close_par_sli_pan)
+  %ui_pan_controls[3] := get_ui_id($mic_positions_panel_mid_par_sli_pan)
+  %ui_pan_controls[4] := get_ui_id($mic_positions_panel_far_par_sli_pan)
+  make_persistent($mic_positions_panel_inside_par_mnu_channel_output)
+  make_persistent($mic_positions_panel_superclose_par_mnu_channel_output)
+  make_persistent($mic_positions_panel_close_par_mnu_channel_output)
+  make_persistent($mic_positions_panel_mid_par_mnu_channel_output)
+  make_persistent($mic_positions_panel_far_par_mnu_channel_output)
+  add_menu_item($mic_positions_panel_inside_par_mnu_channel_output,"Default",-1)
+  add_menu_item($mic_positions_panel_superclose_par_mnu_channel_output,"Default",-1)
+  add_menu_item($mic_positions_panel_close_par_mnu_channel_output,"Default",-1)
+  add_menu_item($mic_positions_panel_mid_par_mnu_channel_output,"Default",-1)
+  add_menu_item($mic_positions_panel_far_par_mnu_channel_output,"Default",-1)
+  $i := 0
+  while ($i<$NUM_OUTPUT_CHANNELS)
+    add_menu_item($mic_positions_panel_inside_par_mnu_channel_output,output_channel_name($i),$i)
+    add_menu_item($mic_positions_panel_superclose_par_mnu_channel_output,output_channel_name($i),$i)
+    add_menu_item($mic_positions_panel_close_par_mnu_channel_output,output_channel_name($i),$i)
+    add_menu_item($mic_positions_panel_mid_par_mnu_channel_output,output_channel_name($i),$i)
+    add_menu_item($mic_positions_panel_far_par_mnu_channel_output,output_channel_name($i),$i)
+    inc($i)
+  end while
+  declare %ui_output_menus[5]
+  %ui_output_menus[0] := get_ui_id($mic_positions_panel_inside_par_mnu_channel_output)
+  %ui_output_menus[1] := get_ui_id($mic_positions_panel_superclose_par_mnu_channel_output)
+  %ui_output_menus[2] := get_ui_id($mic_positions_panel_close_par_mnu_channel_output)
+  %ui_output_menus[3] := get_ui_id($mic_positions_panel_mid_par_mnu_channel_output)
+  %ui_output_menus[4] := get_ui_id($mic_positions_panel_far_par_mnu_channel_output)
+  declare %ui_output_labels[5]
+  %ui_output_labels[0] := get_ui_id($mic_positions_panel_inside_par_lbl_channel_output)
+  %ui_output_labels[1] := get_ui_id($mic_positions_panel_superclose_par_lbl_channel_output)
+  %ui_output_labels[2] := get_ui_id($mic_positions_panel_close_par_lbl_channel_output)
+  %ui_output_labels[3] := get_ui_id($mic_positions_panel_mid_par_lbl_channel_output)
+  %ui_output_labels[4] := get_ui_id($mic_positions_panel_far_par_lbl_channel_output)
+  declare %ui_swi_mic_par[5]
+  %ui_swi_mic_par[0] := get_ui_id($mic_positions_swi_inside_par)
+  %ui_swi_mic_par[1] := get_ui_id($mic_positions_swi_superclose_par)
+  %ui_swi_mic_par[2] := get_ui_id($mic_positions_swi_close_par)
+  %ui_swi_mic_par[3] := get_ui_id($mic_positions_swi_mid_par)
+  %ui_swi_mic_par[4] := get_ui_id($mic_positions_swi_far_par)
+  declare %ui_channel_panels[5]
+  %ui_channel_panels[0] := get_ui_id($mic_positions_panel_inside_par)
+  %ui_channel_panels[1] := get_ui_id($mic_positions_panel_superclose_par)
+  %ui_channel_panels[2] := get_ui_id($mic_positions_panel_close_par)
+  %ui_channel_panels[3] := get_ui_id($mic_positions_panel_mid_par)
+  %ui_channel_panels[4] := get_ui_id($mic_positions_panel_far_par)
+  make_persistent($SEND_FX_swi_delay_on)
+  make_persistent($SEND_FX_mnu_delay_mode)
+  make_persistent($SEND_FX_swi_delay_stereo)
+  make_persistent($SEND_FX_swi_delay_noise)
+  make_persistent($SEND_FX_swi_delay_dense)
+  make_persistent($SEND_FX_swi_delay_pingpong)
+  make_persistent($SEND_FX_mnu_sync_unit)
+  make_persistent($SEND_FX_lbl_sync_unit)
+  make_persistent($SEND_FX_sli_delay_time)
+  make_persistent($SEND_FX_lbl_delay_time)
+  make_persistent($SEND_FX_sli_delay_feedback)
+  make_persistent($SEND_FX_lbl_delay_feedback)
+  make_persistent($SEND_FX_sli_delay_lowcut)
+  make_persistent($SEND_FX_lbl_delay_lowcut)
+  make_persistent($SEND_FX_sli_delay_hicut)
+  make_persistent($SEND_FX_lbl_delay_hicut)
+  make_persistent($SEND_FX_sli_delay_depth)
+  make_persistent($SEND_FX_lbl_delay_depth)
+  make_persistent($SEND_FX_sli_delay_rate)
+  make_persistent($SEND_FX_lbl_delay_rate)
+  make_persistent($SEND_FX_sli_delay_saturate)
+  make_persistent($SEND_FX_lbl_delay_saturate)
+  make_persistent($SEND_FX_sli_delay_bbd)
+  make_persistent($SEND_FX_lbl_delay_bbd)
+  make_persistent($SEND_FX_sli_delay_tapeage)
+  make_persistent($SEND_FX_lbl_delay_tapeage)
+  make_persistent($SEND_FX_sli_delay_flutter)
+  make_persistent($SEND_FX_lbl_delay_flutter)
+  make_persistent($SEND_FX_sli_delay_quality)
+  make_persistent($SEND_FX_lbl_delay_quality)
+  make_persistent($SEND_FX_sli_delay_amount)
+  make_persistent($SEND_FX_lbl_delay_amount)
+  make_persistent($SEND_FX_sli_delay_size)
+  make_persistent($SEND_FX_lbl_delay_size)
+  make_persistent($SEND_FX_sli_delay_mod)
+  make_persistent($SEND_FX_lbl_delay_mod)
+  declare %ui_delay_modern[7]
+  %ui_delay_modern[0] := get_ui_id($SEND_FX_sli_delay_depth)
+  %ui_delay_modern[1] := get_ui_id($SEND_FX_lbl_delay_depth)
+  %ui_delay_modern[2] := get_ui_id($SEND_FX_sli_delay_rate)
+  %ui_delay_modern[3] := get_ui_id($SEND_FX_lbl_delay_rate)
+  %ui_delay_modern[4] := get_ui_id($SEND_FX_sli_delay_saturate)
+  %ui_delay_modern[5] := get_ui_id($SEND_FX_lbl_delay_saturate)
+  %ui_delay_modern[6] := get_ui_id($SEND_FX_swi_delay_stereo)
+  declare %ui_delay_analogue[7]
+  %ui_delay_analogue[0] := get_ui_id($SEND_FX_sli_delay_depth)
+  %ui_delay_analogue[1] := get_ui_id($SEND_FX_lbl_delay_depth)
+  %ui_delay_analogue[2] := get_ui_id($SEND_FX_sli_delay_rate)
+  %ui_delay_analogue[3] := get_ui_id($SEND_FX_lbl_delay_rate)
+  %ui_delay_analogue[4] := get_ui_id($SEND_FX_sli_delay_bbd)
+  %ui_delay_analogue[5] := get_ui_id($SEND_FX_lbl_delay_bbd)
+  %ui_delay_analogue[6] := get_ui_id($SEND_FX_swi_delay_stereo)
+  declare %ui_delay_tape[7]
+  %ui_delay_tape[0] := get_ui_id($SEND_FX_sli_delay_tapeage)
+  %ui_delay_tape[1] := get_ui_id($SEND_FX_lbl_delay_tapeage)
+  %ui_delay_tape[2] := get_ui_id($SEND_FX_sli_delay_flutter)
+  %ui_delay_tape[3] := get_ui_id($SEND_FX_lbl_delay_flutter)
+  %ui_delay_tape[4] := get_ui_id($SEND_FX_sli_delay_saturate)
+  %ui_delay_tape[5] := get_ui_id($SEND_FX_lbl_delay_saturate)
+  %ui_delay_tape[6] := get_ui_id($SEND_FX_swi_delay_noise)
+  declare %ui_delay_vintage[7]
+  %ui_delay_vintage[0] := get_ui_id($SEND_FX_sli_delay_depth)
+  %ui_delay_vintage[1] := get_ui_id($SEND_FX_lbl_delay_depth)
+  %ui_delay_vintage[2] := get_ui_id($SEND_FX_sli_delay_rate)
+  %ui_delay_vintage[3] := get_ui_id($SEND_FX_lbl_delay_rate)
+  %ui_delay_vintage[4] := get_ui_id($SEND_FX_sli_delay_quality)
+  %ui_delay_vintage[5] := get_ui_id($SEND_FX_lbl_delay_quality)
+  %ui_delay_vintage[6] := get_ui_id($SEND_FX_swi_delay_stereo)
+  declare %ui_delay_diffusion[7]
+  %ui_delay_diffusion[0] := get_ui_id($SEND_FX_sli_delay_amount)
+  %ui_delay_diffusion[1] := get_ui_id($SEND_FX_lbl_delay_amount)
+  %ui_delay_diffusion[2] := get_ui_id($SEND_FX_sli_delay_size)
+  %ui_delay_diffusion[3] := get_ui_id($SEND_FX_lbl_delay_size)
+  %ui_delay_diffusion[4] := get_ui_id($SEND_FX_sli_delay_mod)
+  %ui_delay_diffusion[5] := get_ui_id($SEND_FX_lbl_delay_mod)
+  %ui_delay_diffusion[6] := get_ui_id($SEND_FX_swi_delay_dense)
+  $i := 0
+  while ($i<num_elements(!delay_modes_names))
+    add_menu_item($SEND_FX_mnu_delay_mode,!delay_modes_names[$i],$i)
+    inc($i)
+  end while
+  $i := 0
+  while ($i<num_elements(!sync_units_text))
+    add_menu_item($SEND_FX_mnu_sync_unit,!sync_units_text[$i],$i)
+    inc($i)
+  end while
+  make_persistent($SEND_FX_swi_reverb_on)
+  make_persistent($SEND_FX_mnu_reverb_IR)
+  make_persistent($SEND_FX_sli_reverb_lowcut)
+  make_persistent($SEND_FX_lbl_reverb_lowcut)
+  make_persistent($SEND_FX_sli_reverb_hicut)
+  make_persistent($SEND_FX_lbl_reverb_hicut)
+  $i := 0
+  while ($i<num_elements(!IR_menu_names))
+    add_menu_item($SEND_FX_mnu_reverb_IR,!IR_menu_names[$i],%IR_index[$i])
+    inc($i)
+  end while
+  message("")
+  set_control_par(get_ui_id($SETTINGS_sli_legato_offset_min),$CONTROL_PAR_WIDTH,200)
+  declare $_interval
+  declare $_old_tune
+  declare $_new_tune
+  declare $_elapsed
+  declare %_cb_state3[6]
+  declare %_cb_state2[49]
+  declare %_cb_state[49]
+  declare $_i4
+  declare $_i3
+  declare $_i2
+end on
+
+function f__update_delay_controls
+  %p[$sp-2] := $fp
+  $fp := $sp-2
+  $sp := $fp
+  %p[$fp+1] := 0
+  while (%p[$fp+1]<num_elements(%delay_par))
+    set_control_par(%delay_controls[%p[$fp+1]],$CONTROL_PAR_VALUE,get_engine_par(%delay_par[%p[$fp+1]],-1,0,$NI_SEND_BUS))
+    inc(%p[$fp+1])
+  end while
+  $sp := $fp
+  $fp := %p[$fp]
+  $sp := $sp+2
+end function
+
+function f__update_channel_controls
+  %p[$sp-2] := $fp
+  $fp := $sp-2
+  $sp := $fp
+  %p[$fp+1] := 0
+  while (%p[$fp+1]<num_elements(%ui_delay_sends))
+    set_control_par(%ui_delay_sends[%p[$fp+1]],$CONTROL_PAR_VALUE,get_engine_par($ENGINE_PAR_SENDLEVEL_0,-1,7,$NI_BUS_OFFSET+%p[$fp+1]))
+    set_control_par(%ui_reverb_sends[%p[$fp+1]],$CONTROL_PAR_VALUE,get_engine_par($ENGINE_PAR_SENDLEVEL_1,-1,7,$NI_BUS_OFFSET+%p[$fp+1]))
+    set_control_par(%ui_stereo_controls[%p[$fp+1]],$CONTROL_PAR_VALUE,get_engine_par($ENGINE_PAR_STEREO,-1,0,$NI_BUS_OFFSET+%p[$fp+1]))
+    if (%p[$fp+1]=0)
+      set_control_par(%ui_pan_controls[%p[$fp+1]],$CONTROL_PAR_VALUE,get_engine_par($ENGINE_PAR_PAN,-1,-1,$NI_BUS_OFFSET+%p[$fp+1]))
+    else
+      set_control_par(%ui_pan_controls[%p[$fp+1]],$CONTROL_PAR_VALUE,get_engine_par($ENGINE_PAR_STEREO_PAN,-1,0,$NI_BUS_OFFSET+%p[$fp+1]))
+    end if
+    inc(%p[$fp+1])
+  end while
+  $sp := $fp
+  $fp := %p[$fp]
+  $sp := $sp+2
+end function
+
+function _twait
+  %p[$sp-2] := search(%tstate__id,0)
+  if (%p[$sp-2]=-1)
+    pgs_set_key_val(TCM_EXCEPTION,$CURRENT_SCRIPT_SLOT,1)
+  else
+    %tstate__id[$tx] := $NI_CALLBACK_ID
+    %tstate__fp[$tx] := $fp
+    %tstate__sp[$tx] := $sp
+    $tx := %p[$sp-2]
+    %tstate__id[$tx] := -1
+    $fp := %tstate__fs[$tx]+50
+    %p[$fp-1] := %p[$sp-1]
+    $sp := $fp
+    wait(%p[$sp-1])
+    %tstate__id[$tx] := 0
+    $tx := search(%tstate__id,$NI_CALLBACK_ID)
+    %tstate__id[$tx] := -1
+    $fp := %tstate__fp[$tx]
+    $sp := %tstate__sp[$tx]
+  end if
+end function
+
+function f__update_label_specific
+  %p[$sp-3] := $fp
+  $fp := $sp-3
+  $sp := $fp
+  %_cb_state2[%p[$fp+1]] := $NI_CALLBACK_ID
+  select (%p[$fp+2])
+    case 0
+      set_control_par_str(%ui_labels[%p[$fp+1]],$CONTROL_PAR_TEXT,!label_units_pre[%p[$fp+1]] & ($ADSR_panel_dyn_par_sli_dyn_sim_int/100) & !label_units_post[%p[$fp+1]])
+    case 1
+      set_control_par_str(%ui_labels[%p[$fp+1]],$CONTROL_PAR_TEXT,!label_units_pre[%p[$fp+1]] & ($ADSR_panel_dyn_par_sli_dyn_range/10000) & !label_units_post[%p[$fp+1]])
+  end select
+  %p[$sp-1] := 2000000
+  call _twait
+  if (%_cb_state2[%p[$fp+1]]=$NI_CALLBACK_ID)
+    set_control_par_str(%ui_labels[%p[$fp+1]],$CONTROL_PAR_TEXT,!lbl_text[%p[$fp+1]])
+  end if
+  $sp := $fp
+  $fp := %p[$fp]
+  $sp := $sp+3
+end function
+
+function f__show_hide_dynamic_settings
+  %p[$sp-2] := $fp
+  $fp := $sp-2
+  $sp := $fp
+  if (%p[$fp+1]=1)
+    set_control_par(get_ui_id($ADSR_panel_dyn_par),$CONTROL_PAR_HIDE,$HIDE_PART_NOTHING)
+  else
+    set_control_par(get_ui_id($ADSR_panel_dyn_par),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+  end if
+  $sp := $fp
+  $fp := %p[$fp]
+  $sp := $sp+2
+end function
+
+function f__lgt_update_label
+  %p[$sp-3] := $fp
+  $fp := $sp-3
+  $sp := $fp
+  %_cb_state3[%p[$fp+1]] := $NI_CALLBACK_ID
+  select (%p[$fp+2])
+    case 0
+      set_control_par_str(%lgt_ui_labels[%p[$fp+1]],$CONTROL_PAR_TEXT,$SETTINGS_sli_legato_time/1000 & " ms")
+    case 1
+      set_control_par_str(%lgt_ui_labels[%p[$fp+1]],$CONTROL_PAR_TEXT,$SETTINGS_sli_legato_attack & " %")
+    case 2
+      set_control_par_str(%lgt_ui_labels[%p[$fp+1]],$CONTROL_PAR_TEXT,$SETTINGS_sli_legato_offset_min/1000 & " ms")
+    case 3
+      set_control_par_str(%lgt_ui_labels[%p[$fp+1]],$CONTROL_PAR_TEXT,$SETTINGS_sli_legato_offset_max/1000 & " ms")
+    case 4
+      set_control_par_str(%lgt_ui_labels[%p[$fp+1]],$CONTROL_PAR_TEXT,$SETTINGS_sli_legato_portamento_time/1000 & " ms")
+    case 5
+      set_control_par_str(%lgt_ui_labels[%p[$fp+1]],$CONTROL_PAR_TEXT,$SETTINGS_sli_legato_portamento_amount/1000 & " cents")
+  end select
+  %p[$sp-1] := 2000000
+  call _twait
+  if (%_cb_state3[%p[$fp+1]]=$NI_CALLBACK_ID)
+    set_control_par_str(%lgt_ui_labels[%p[$fp+1]],$CONTROL_PAR_TEXT,!lgt_lbl_text[%p[$fp+1]])
+  end if
+  $sp := $fp
+  $fp := %p[$fp]
+  $sp := $sp+3
+end function
+
+function f__show_delay_controls
+  %p[$sp-3] := $fp
+  $fp := $sp-3
+  $sp := $fp
+  %p[$fp+1] := 0
+  while (%p[$fp+1]<num_elements(%ui_delay_modern))
+    set_control_par(%ui_delay_modern[%p[$fp+1]],$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+    set_control_par(%ui_delay_analogue[%p[$fp+1]],$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+    set_control_par(%ui_delay_tape[%p[$fp+1]],$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+    set_control_par(%ui_delay_vintage[%p[$fp+1]],$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+    set_control_par(%ui_delay_diffusion[%p[$fp+1]],$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+    select (%p[$fp+2])
+      case 0
+        set_control_par(%ui_delay_modern[%p[$fp+1]],$CONTROL_PAR_HIDE,$HIDE_PART_NOTHING)
+        set_control_par(%ui_delay_modern[1],$CONTROL_PAR_HIDE,$HIDE_PART_BG)
+        set_control_par(%ui_delay_modern[3],$CONTROL_PAR_HIDE,$HIDE_PART_BG)
+        set_control_par(%ui_delay_modern[5],$CONTROL_PAR_HIDE,$HIDE_PART_BG)
+      case 1
+        set_control_par(%ui_delay_analogue[%p[$fp+1]],$CONTROL_PAR_HIDE,$HIDE_PART_NOTHING)
+        set_control_par(%ui_delay_analogue[1],$CONTROL_PAR_HIDE,$HIDE_PART_BG)
+        set_control_par(%ui_delay_analogue[3],$CONTROL_PAR_HIDE,$HIDE_PART_BG)
+        set_control_par(%ui_delay_analogue[5],$CONTROL_PAR_HIDE,$HIDE_PART_BG)
+      case 2
+        set_control_par(%ui_delay_tape[%p[$fp+1]],$CONTROL_PAR_HIDE,$HIDE_PART_NOTHING)
+        set_control_par(%ui_delay_tape[1],$CONTROL_PAR_HIDE,$HIDE_PART_BG)
+        set_control_par(%ui_delay_tape[3],$CONTROL_PAR_HIDE,$HIDE_PART_BG)
+        set_control_par(%ui_delay_tape[5],$CONTROL_PAR_HIDE,$HIDE_PART_BG)
+      case 3
+        set_control_par(%ui_delay_vintage[%p[$fp+1]],$CONTROL_PAR_HIDE,$HIDE_PART_NOTHING)
+        set_control_par(%ui_delay_vintage[1],$CONTROL_PAR_HIDE,$HIDE_PART_BG)
+        set_control_par(%ui_delay_vintage[3],$CONTROL_PAR_HIDE,$HIDE_PART_BG)
+        set_control_par(%ui_delay_vintage[5],$CONTROL_PAR_HIDE,$HIDE_PART_BG)
+      case 4
+        set_control_par(%ui_delay_diffusion[%p[$fp+1]],$CONTROL_PAR_HIDE,$HIDE_PART_NOTHING)
+        set_control_par(%ui_delay_diffusion[1],$CONTROL_PAR_HIDE,$HIDE_PART_BG)
+        set_control_par(%ui_delay_diffusion[3],$CONTROL_PAR_HIDE,$HIDE_PART_BG)
+        set_control_par(%ui_delay_diffusion[5],$CONTROL_PAR_HIDE,$HIDE_PART_BG)
+    end select
+    inc(%p[$fp+1])
+  end while
+  $sp := $fp
+  $fp := %p[$fp]
+  $sp := $sp+3
+end function
+
+function f__move_keyswitches
+  %p[$sp-4] := $fp
+  $fp := $sp-4
+  $sp := $fp
+  %p[$fp+1] := 0
+  while (%p[$fp+1]<=127)
+    set_key_color(%p[$fp+1],$KEY_COLOR_INACTIVE)
+    inc(%p[$fp+1])
+  end while
+  if (in_range(%p[$fp+3],0,34))
+    %p[$fp+1] := 0
+    while (%p[$fp+1]<21)
+      %key_switches[%p[$fp+1]] := %p[$fp+3]+%p[$fp+1]
+      inc(%p[$fp+1])
+    end while
+  end if
+  %p[$fp+2] := %key_switches[0]
+  while (%p[$fp+2]<(%key_switches[0]+21))
+    set_key_color(%p[$fp+2],$KEY_COLOR_RED)
+    inc(%p[$fp+2])
+  end while
+  $any_harmonics_on := 0
+  $any_normal_on := 0
+  $_i3 := 0
+  while ($_i3<num_elements(%ui_art_switches))
+    if (get_control_par(%ui_art_switches[$_i3],$CONTROL_PAR_VALUE)=1)
+      if ($_i3=19 or ($_i3=20))
+        $any_harmonics_on := 1
+      else
+        $any_normal_on := 1
+      end if
+    end if
+    inc($_i3)
+  end while
+  if ($any_normal_on=1)
+    $lgt_note_lo := 55
+  else
+    $lgt_note_lo := 78
+  end if
+  if ($any_harmonics_on=1)
+    $lgt_note_hi := 108
+  else
+    $lgt_note_hi := 96
+  end if
+  if ($any_normal_on=1)
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_DEFAULT)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  if ($any_harmonics_on=1 and ($any_normal_on=1))
+    $_i4 := 78
+    while ($_i4<=96)
+      set_key_color($_i4,$KEY_COLOR_MINT)
+      inc($_i4)
+    end while
+  else
+    if ($any_harmonics_on=1)
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_GREEN)
+        inc($_i4)
+      end while
+    else
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_DEFAULT)
+        inc($_i4)
+      end while
+    end if
+  end if
+  if ($any_harmonics_on=1)
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_GREEN)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  $sp := $fp
+  $fp := %p[$fp]
+  $sp := $sp+4
+end function
+
+function f__update_keyswitch_notes_label
+  %p[$sp-3] := $fp
+  $fp := $sp-3
+  $sp := $fp
+  if (in_range(%p[$fp+2],0,34))
+    %p[$fp+1] := 0
+    while (%p[$fp+1]<num_elements(%ui_art_keyswitch_note_labels))
+      set_control_par_str(%ui_art_keyswitch_note_labels[%p[$fp+1]],$CONTROL_PAR_TEXT,!note_names[%p[$fp+2]+%p[$fp+1]])
+      inc(%p[$fp+1])
+    end while
+  end if
+  $sp := $fp
+  $fp := %p[$fp]
+  $sp := $sp+3
+end function
+
+function f__show_keyswitch_notes
+  %p[$sp-3] := $fp
+  $fp := $sp-3
+  $sp := $fp
+  %p[$fp+1] := 0
+  while (%p[$fp+1]<num_elements(%ui_art_keyswitch_note_labels))
+    if (%p[$fp+2]=1)
+      set_control_par(%ui_art_keyswitch_note_labels[%p[$fp+1]],$CONTROL_PAR_HIDE,$HIDE_PART_NOTHING)
+      set_control_par(%ui_art_keyswitch_note_labels[%p[$fp+1]],$CONTROL_PAR_HIDE,$HIDE_PART_BG)
+    else
+      set_control_par(%ui_art_keyswitch_note_labels[%p[$fp+1]],$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+    end if
+    inc(%p[$fp+1])
+  end while
+  $sp := $fp
+  $fp := %p[$fp]
+  $sp := $sp+3
+end function
+
+function f__color_keys
+  %p[$sp-2] := $fp
+  $fp := $sp-2
+  $sp := $fp
+  %p[$fp+1] := 0
+  while (%p[$fp+1]<=127)
+    set_key_color(%p[$fp+1],$KEY_COLOR_INACTIVE)
+    inc(%p[$fp+1])
+  end while
+  %p[$fp+1] := %key_switches[0]
+  while (%p[$fp+1]<(%key_switches[0]+21))
+    set_key_color(%p[$fp+1],$KEY_COLOR_RED)
+    inc(%p[$fp+1])
+  end while
+  $any_harmonics_on := 0
+  $any_normal_on := 0
+  $_i3 := 0
+  while ($_i3<num_elements(%ui_art_switches))
+    if (get_control_par(%ui_art_switches[$_i3],$CONTROL_PAR_VALUE)=1)
+      if ($_i3=19 or ($_i3=20))
+        $any_harmonics_on := 1
+      else
+        $any_normal_on := 1
+      end if
+    end if
+    inc($_i3)
+  end while
+  if ($any_normal_on=1)
+    $lgt_note_lo := 55
+  else
+    $lgt_note_lo := 78
+  end if
+  if ($any_harmonics_on=1)
+    $lgt_note_hi := 108
+  else
+    $lgt_note_hi := 96
+  end if
+  if ($any_normal_on=1)
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_DEFAULT)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 55
+    while ($_i4<78)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  if ($any_harmonics_on=1 and ($any_normal_on=1))
+    $_i4 := 78
+    while ($_i4<=96)
+      set_key_color($_i4,$KEY_COLOR_MINT)
+      inc($_i4)
+    end while
+  else
+    if ($any_harmonics_on=1)
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_GREEN)
+        inc($_i4)
+      end while
+    else
+      $_i4 := 78
+      while ($_i4<=96)
+        set_key_color($_i4,$KEY_COLOR_DEFAULT)
+        inc($_i4)
+      end while
+    end if
+  end if
+  if ($any_harmonics_on=1)
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_GREEN)
+      inc($_i4)
+    end while
+  else
+    $_i4 := 97
+    while ($_i4<=108)
+      set_key_color($_i4,$KEY_COLOR_INACTIVE)
+      inc($_i4)
+    end while
+  end if
+  $sp := $fp
+  $fp := %p[$fp]
+  $sp := $sp+2
+end function
+
+function f__select_multi_articulation
+  %p[$sp-3] := $fp
+  $fp := $sp-3
+  $sp := $fp
+  if (get_control_par(%ui_art_switches[%p[$fp+2]],$CONTROL_PAR_KEY_SHIFT)=0)
+    %p[$fp+1] := 0
+    while (%p[$fp+1]<num_elements(%ui_art_switches))
+      set_control_par(%ui_art_switches[%p[$fp+1]],$CONTROL_PAR_VALUE,0)
+      inc(%p[$fp+1])
+    end while
+  end if
+  set_control_par(%ui_art_switches[%p[$fp+2]],$CONTROL_PAR_VALUE,1)
+  $current_art := %p[$fp+2]
+  if ($current_art=19 or ($current_art=20))
+    $harmonics_on := 1
+  else
+    $harmonics_on := 0
+  end if
+  call f__color_keys
+  $sp := $fp
+  $fp := %p[$fp]
+  $sp := $sp+3
+end function
+
+function f__show_hide_panel
+  %p[$sp-3] := $fp
+  $fp := $sp-3
+  $sp := $fp
+  if (%p[$fp+1]=1)
+    set_control_par(%p[$fp+2],$CONTROL_PAR_HIDE,$HIDE_PART_NOTHING)
+  else
+    set_control_par(%p[$fp+2],$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+  end if
+  $sp := $fp
+  $fp := %p[$fp]
+  $sp := $sp+3
+end function
+
+function f__update_label
+  %p[$sp-7] := $fp
+  $fp := $sp-7
+  $sp := $fp
+  %_cb_state[%p[$fp+1]] := $NI_CALLBACK_ID
+  set_control_par_str(%ui_labels[%p[$fp+1]],$CONTROL_PAR_TEXT,!label_units_pre[%p[$fp+2]] & get_engine_par_disp(%p[$fp+3],%p[$fp+4],%p[$fp+5],%p[$fp+6]) & !label_units_post[%p[$fp+2]])
+  %p[$sp-1] := 2000000
+  call _twait
+  if (%_cb_state[%p[$fp+1]]=$NI_CALLBACK_ID)
+    set_control_par_str(%ui_labels[%p[$fp+1]],$CONTROL_PAR_TEXT,!lbl_text[%p[$fp+1]])
+  end if
+  $sp := $fp
+  $fp := %p[$fp]
+  $sp := $sp+7
+end function
+
+on pgs_changed
+  call f__color_keys
+  set_control_par(get_ui_id($ADSR_panel_dyn_par),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+  set_control_par(get_ui_id($mic_positions_panel_inside_par),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+  set_control_par(get_ui_id($mic_positions_panel_superclose_par),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+  set_control_par(get_ui_id($mic_positions_panel_close_par),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+  set_control_par(get_ui_id($mic_positions_panel_mid_par),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+  set_control_par(get_ui_id($mic_positions_panel_far_par),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+  if ($ADSR_swi_phase=1)
+    set_text($ADSR_lbl_phase,"ALIGN S.START OFF")
+  else
+    set_text($ADSR_lbl_phase,"ALIGN S.START ON")
+  end if
+  $swi_main := 1
+  $swi_fx := 0
+  set_control_par(get_ui_id($SEND_FX),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+  set_control_par(get_ui_id($SEND_FX_lbl_sync_unit),$CONTROL_PAR_PICTURE_STATE,$SEND_FX_mnu_sync_unit)
+  set_control_par(get_ui_id($SETTINGS),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+  $i := 0
+  while ($i<5)
+    set_control_par_str(%ui_output_labels[$i],$CONTROL_PAR_TEXT,get_menu_item_str(%ui_output_menus[$i],get_control_par(%ui_output_menus[$i],$CONTROL_PAR_VALUE)))
+    inc($i)
+  end while
+  call f__update_delay_controls
+  call f__update_channel_controls
+  %p[$sp-1] := $SETTINGS_sli_keyswitches
+  call f__move_keyswitches
+  %p[$sp-1] := $current_art
+  call f__select_multi_articulation
+  %p[$sp-1] := $SETTINGS_sli_keyswitches
+  call f__update_keyswitch_notes_label
+  %p[$sp-1] := $SETTINGS_swi_show_keyswitch_notes
+  call f__show_keyswitch_notes
+end on
+
+on persistence_changed
+  $i := 0
+  while ($i<5)
+    $_i2 := 0
+    while ($_i2<21)
+      if (get_control_par(%ui_channel_swi_mute[$i],$CONTROL_PAR_VALUE)=1)
+        purge_group($i+(5*$_i2),1)
+        purge_group($i+(5*$_i2)+105,1)
+      else
+        purge_group($i+(5*$_i2),0)
+        purge_group($i+(5*$_i2)+105,0)
+      end if
+      inc($_i2)
+    end while
+    inc($i)
+  end while
+  if ($swi_legato_poly=1)
+    set_text($lbl_legato_poly,"LEGATO")
+  else
+    set_text($lbl_legato_poly,"POLYPHONIC")
+  end if
+end on
+
+on async_complete
+end on
+
+on note
+  if (search(%key_switches,$EVENT_NOTE) # -1)
+    %p[$sp-1] := search(%key_switches,$EVENT_NOTE)
+    call f__select_multi_articulation
+  end if
+  disallow_group($ALL_GROUPS)
+  if ($ADSR_swi_phase # 1)
+    $lgt_phase_grp_ofs := 105
+  else
+    $lgt_phase_grp_ofs := 0
+  end if
+  $a := 0
+  while ($a<5)
+    if (get_control_par(%ui_channel_swi_mute[$a],$CONTROL_PAR_VALUE)=1)
+      if ($solo_on_flag=0)
+        $b := 0
+        while ($b<num_elements(%ui_art_switches))
+          if (get_control_par(%ui_art_switches[$b],$CONTROL_PAR_VALUE)=1)
+            allow_group($b*5+$a+$lgt_phase_grp_ofs)
+          end if
+          inc($b)
+        end while
+      else
+        if (%solo_channels[$a]=1)
+          $b := 0
+          while ($b<num_elements(%ui_art_switches))
+            if (get_control_par(%ui_art_switches[$b],$CONTROL_PAR_VALUE)=1)
+              allow_group($b*5+$a+$lgt_phase_grp_ofs)
+            end if
+            inc($b)
+          end while
+        end if
+      end if
+    end if
+    inc($a)
+  end while
+  $any_harmonics_on := 0
+  $any_normal_on := 0
+  $_i3 := 0
+  while ($_i3<num_elements(%ui_art_switches))
+    if (get_control_par(%ui_art_switches[$_i3],$CONTROL_PAR_VALUE)=1)
+      if ($_i3=19 or ($_i3=20))
+        $any_harmonics_on := 1
+      else
+        $any_normal_on := 1
+      end if
+    end if
+    inc($_i3)
+  end while
+  if ($any_normal_on=1)
+    $lgt_note_lo := 55
+  else
+    $lgt_note_lo := 78
+  end if
+  if ($any_harmonics_on=1)
+    $lgt_note_hi := 108
+  else
+    $lgt_note_hi := 96
+  end if
+  if ($swi_legato_poly=1 and (search(%key_switches,$EVENT_NOTE)=-1) and in_range($EVENT_NOTE,$lgt_note_lo,$lgt_note_hi))
+    ignore_event($EVENT_ID)
+    if (%lgt__parent[$lgt__new_idx]=0)
+      $lgt__ref_time := $ENGINE_UPTIME
+      $lgt__offset := 0
+      %lgt__note[$lgt__new_idx] := $EVENT_NOTE
+      %lgt__vel[$lgt__new_idx] := $EVENT_VELOCITY
+      %lgt__parent[$lgt__new_idx] := $EVENT_ID
+      %lgt__pedal[$lgt__new_idx] := 0
+      %lgt__tune[$lgt__new_idx] := 0
+      %lgt__child[$lgt__new_idx] := play_note($EVENT_NOTE,$EVENT_VELOCITY,$lgt__offset,0)
+    else
+      while ($lgt__busy=1)
+        wait(100)
+      end while
+      if ($lgt__active=1)
+        if ($lgt__fade_out_ticks>0)
+          if (%lgt__child[1-$lgt__new_idx] # 0)
+            note_off(%lgt__child[1-$lgt__new_idx])
+          end if
+          %lgt__pedal[1-$lgt__new_idx] := 0
+          $lgt__fade_out_ticks := 0
+        end if
+        $lgt__fade_in_ticks := 0
+        $lgt__seg2_ticks := 0
+        $lgt__bend_ticks := 0
+        $lgt__busy := 1
+        while ($lgt__active=1)
+          wait(100)
+        end while
+        $lgt__busy := 0
+      end if
+      $lgt__new_idx := 1-$lgt__new_idx
+      $_elapsed := ($ENGINE_UPTIME-$lgt__ref_time)*1000
+      if ($_elapsed<$SETTINGS_sli_legato_offset_min)
+        $_elapsed := $SETTINGS_sli_legato_offset_min
+      end if
+      if ($_elapsed>$SETTINGS_sli_legato_offset_max)
+        $_elapsed := $SETTINGS_sli_legato_offset_max
+      end if
+      $lgt__offset := $_elapsed
+      $lgt__ref_time := $ENGINE_UPTIME
+      %lgt__note[$lgt__new_idx] := $EVENT_NOTE
+      %lgt__vel[$lgt__new_idx] := $EVENT_VELOCITY
+      %lgt__parent[$lgt__new_idx] := $EVENT_ID
+      %lgt__pedal[$lgt__new_idx] := 0
+      %lgt__tune[$lgt__new_idx] := 0
+      %lgt__child[$lgt__new_idx] := play_note($EVENT_NOTE,$EVENT_VELOCITY,$lgt__offset,0)
+      $lgt__fade_out_ticks := $SETTINGS_sli_legato_time/100
+      $lgt__fade_in_ticks := $lgt__fade_out_ticks*$SETTINGS_sli_legato_attack/100
+      if ($SETTINGS_sli_legato_attack=100)
+        $lgt__seg2_ticks := 0
+      else
+        $lgt__seg2_ticks := $lgt__fade_out_ticks-$lgt__fade_in_ticks
+      end if
+      if ($SETTINGS_swi_legato_bend_enable=1)
+        $_interval := abs(%lgt__note[$lgt__new_idx]-%lgt__note[1-$lgt__new_idx])
+      else
+        $_interval := 0
+      end if
+      if ($_interval=0)
+        $lgt__bend_ticks := 0
+      else
+        $lgt__bend_ticks := $SETTINGS_sli_legato_portamento_time/100
+        $lgt__bend_amount := $SETTINGS_sli_legato_portamento_amount*$_interval
+        if (%lgt__note[$lgt__new_idx]<%lgt__note[1-$lgt__new_idx])
+          $lgt__bend_amount := -$lgt__bend_amount
+        end if
+        $lgt__bend_step := 1000*$lgt__bend_amount/$lgt__bend_ticks
+      end if
+      if ($SETTINGS_sli_legato_time=0)
+        if (%lgt__child[1-$lgt__new_idx] # 0)
+          note_off(%lgt__child[1-$lgt__new_idx])
+        end if
+        %lgt__pedal[1-$lgt__new_idx] := 0
+        $lgt__fade_out_ticks := 0
+      else
+        fade_out(%lgt__child[1-$lgt__new_idx],$SETTINGS_sli_legato_time,0)
+        fade_in(%lgt__child[$lgt__new_idx],$SETTINGS_sli_legato_time*$SETTINGS_sli_legato_attack/100)
+        $lgt__active := 1
+        while ($lgt__fade_out_ticks>0 or ($lgt__fade_in_ticks>0) or ($lgt__bend_ticks>0))
+          dec($lgt__fade_out_ticks)
+          dec($lgt__fade_in_ticks)
+          dec($lgt__bend_ticks)
+          if ($lgt__fade_out_ticks=0)
+            if (%lgt__child[1-$lgt__new_idx] # 0)
+              note_off(%lgt__child[1-$lgt__new_idx])
+            end if
+            %lgt__pedal[1-$lgt__new_idx] := 0
+            $lgt__fade_out_ticks := 0
+          end if
+          if ($lgt__fade_in_ticks=0 and ($lgt__seg2_ticks>0))
+            fade_in(%lgt__child[$lgt__new_idx],$lgt__seg2_ticks*100)
+            $lgt__fade_in_ticks := $lgt__seg2_ticks
+            $lgt__seg2_ticks := 0
+          end if
+          if ($lgt__bend_ticks>=0 and ($SETTINGS_swi_legato_bend_enable=1))
+            $_old_tune := $lgt__bend_amount-(($lgt__bend_step*$lgt__bend_ticks+500)/1000)
+            $_new_tune := -($lgt__bend_step*$lgt__bend_ticks+500)/1000
+            change_tune(%lgt__child[1-$lgt__new_idx],$_old_tune-%lgt__tune[1-$lgt__new_idx],1)
+            %lgt__tune[1-$lgt__new_idx] := $_old_tune
+            change_tune(%lgt__child[$lgt__new_idx],$_new_tune-%lgt__tune[$lgt__new_idx],1)
+            %lgt__tune[$lgt__new_idx] := $_new_tune
+          end if
+          wait(100)
+        end while
+        $lgt__active := 0
+      end if
+    end if
+  end if
+end on
+
+on release
+  if ($swi_legato_poly=1)
+    if ($EVENT_ID=%lgt__parent[$lgt__new_idx])
+      if ($lgt__pedal_down=0)
+        while ($lgt__busy=1)
+          wait(100)
+        end while
+        if ($lgt__active=1)
+          if ($lgt__fade_out_ticks>0)
+            if (%lgt__child[1-$lgt__new_idx] # 0)
+              note_off(%lgt__child[1-$lgt__new_idx])
+            end if
+            %lgt__pedal[1-$lgt__new_idx] := 0
+            $lgt__fade_out_ticks := 0
+          end if
+          $lgt__fade_in_ticks := 0
+          $lgt__seg2_ticks := 0
+          $lgt__bend_ticks := 0
+          $lgt__busy := 1
+          while ($lgt__active=1)
+            wait(100)
+          end while
+          $lgt__busy := 0
+        end if
+        if (%lgt__child[0] # 0)
+          note_off(%lgt__child[0])
+        end if
+        if (%lgt__child[1] # 0)
+          note_off(%lgt__child[1])
+        end if
+        %lgt__child[0] := 0
+        %lgt__child[1] := 0
+        %lgt__parent[0] := 0
+        %lgt__parent[1] := 0
+        $lgt__new_idx := 0
+      else
+        %lgt__pedal[$lgt__new_idx] := 1
+      end if
+    else
+      if ($EVENT_ID=%lgt__parent[1-$lgt__new_idx])
+        if ($lgt__fade_out_ticks>0)
+          if ($lgt__pedal_down=0)
+            if (%lgt__child[1-$lgt__new_idx] # 0)
+              note_off(%lgt__child[1-$lgt__new_idx])
+            end if
+            %lgt__pedal[1-$lgt__new_idx] := 0
+            $lgt__fade_out_ticks := 0
+          else
+            %lgt__pedal[1-$lgt__new_idx] := 1
+          end if
+        end if
+      end if
+    end if
+  end if
+end on
+
+on controller
+  if ($CC_NUM=64 and ($swi_legato_poly=1))
+    if (%CC[64]<64)
+      $lgt__pedal_down := 0
+      if (%lgt__pedal[1-$lgt__new_idx]=1 and ($lgt__fade_out_ticks>0))
+        if (%lgt__child[1-$lgt__new_idx] # 0)
+          note_off(%lgt__child[1-$lgt__new_idx])
+        end if
+        %lgt__pedal[1-$lgt__new_idx] := 0
+        $lgt__fade_out_ticks := 0
+      end if
+      if (%lgt__pedal[$lgt__new_idx]=1)
+        %lgt__pedal[$lgt__new_idx] := 0
+        while ($lgt__busy=1)
+          wait(100)
+        end while
+        if ($lgt__active=1)
+          if ($lgt__fade_out_ticks>0)
+            if (%lgt__child[1-$lgt__new_idx] # 0)
+              note_off(%lgt__child[1-$lgt__new_idx])
+            end if
+            %lgt__pedal[1-$lgt__new_idx] := 0
+            $lgt__fade_out_ticks := 0
+          end if
+          $lgt__fade_in_ticks := 0
+          $lgt__seg2_ticks := 0
+          $lgt__bend_ticks := 0
+          $lgt__busy := 1
+          while ($lgt__active=1)
+            wait(100)
+          end while
+          $lgt__busy := 0
+        end if
+        if (%lgt__child[0] # 0)
+          note_off(%lgt__child[0])
+        end if
+        if (%lgt__child[1] # 0)
+          note_off(%lgt__child[1])
+        end if
+        %lgt__child[0] := 0
+        %lgt__child[1] := 0
+        %lgt__parent[0] := 0
+        %lgt__parent[1] := 0
+        $lgt__new_idx := 0
+      end if
+    else
+      $lgt__pedal_down := 1
+    end if
+  end if
+end on
+
+on ui_control($swi_main)
+  $swi_main := 1
+  $swi_fx := 0
+  $swi_settings := 0
+  set_control_par(get_ui_id($mic_positions),$CONTROL_PAR_HIDE,$HIDE_PART_NOTHING)
+  set_control_par(get_ui_id($ADSR),$CONTROL_PAR_HIDE,$HIDE_PART_NOTHING)
+  set_control_par(get_ui_id($SEND_FX),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+  set_control_par(get_ui_id($SETTINGS),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+end on
+
+on ui_control($swi_fx)
+  $swi_fx := 1
+  $swi_main := 0
+  $swi_settings := 0
+  set_control_par(get_ui_id($mic_positions),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+  set_control_par(get_ui_id($ADSR),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+  set_control_par(get_ui_id($SEND_FX),$CONTROL_PAR_HIDE,$HIDE_PART_NOTHING)
+  set_control_par(get_ui_id($SETTINGS),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+  %p[$sp-1] := $SEND_FX_mnu_delay_mode
+  call f__show_delay_controls
+end on
+
+on ui_control($swi_settings)
+  $swi_settings := 1
+  $swi_main := 0
+  $swi_fx := 0
+  set_control_par(get_ui_id($SETTINGS),$CONTROL_PAR_HIDE,$HIDE_PART_NOTHING)
+  set_control_par(get_ui_id($SEND_FX),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+  set_control_par(get_ui_id($mic_positions),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+  set_control_par(get_ui_id($ADSR),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
+end on
+
+on ui_control($mic_positions_sli_inside)
+  $i := 0
+  while ($i<21)
+    set_engine_par($ENGINE_PAR_VOLUME,$mic_positions_sli_inside,5*$i,-1,-1)
+    set_engine_par($ENGINE_PAR_VOLUME,$mic_positions_sli_inside,5*$i+105,-1,-1)
+    inc($i)
+  end while
+  %p[$sp-6] := 0
+  %p[$sp-5] := 0
+  %p[$sp-4] := $ENGINE_PAR_VOLUME
+  %p[$sp-3] := 0
+  %p[$sp-2] := -1
+  %p[$sp-1] := -1
+  call f__update_label
+end on
+
+on ui_control($mic_positions_sli_superclose)
+  $i := 0
+  while ($i<21)
+    set_engine_par($ENGINE_PAR_VOLUME,$mic_positions_sli_superclose,1+(5*$i),-1,-1)
+    set_engine_par($ENGINE_PAR_VOLUME,$mic_positions_sli_superclose,1+(5*$i)+105,-1,-1)
+    inc($i)
+  end while
+  %p[$sp-6] := 1
+  %p[$sp-5] := 1
+  %p[$sp-4] := $ENGINE_PAR_VOLUME
+  %p[$sp-3] := 1
+  %p[$sp-2] := -1
+  %p[$sp-1] := -1
+  call f__update_label
+end on
+
+on ui_control($mic_positions_sli_close)
+  $i := 0
+  while ($i<21)
+    set_engine_par($ENGINE_PAR_VOLUME,$mic_positions_sli_close,2+(5*$i),-1,-1)
+    set_engine_par($ENGINE_PAR_VOLUME,$mic_positions_sli_close,2+(5*$i)+105,-1,-1)
+    inc($i)
+  end while
+  %p[$sp-6] := 2
+  %p[$sp-5] := 2
+  %p[$sp-4] := $ENGINE_PAR_VOLUME
+  %p[$sp-3] := 2
+  %p[$sp-2] := -1
+  %p[$sp-1] := -1
+  call f__update_label
+end on
+
+on ui_control($mic_positions_sli_mid)
+  $i := 0
+  while ($i<21)
+    set_engine_par($ENGINE_PAR_VOLUME,$mic_positions_sli_mid,3+(5*$i),-1,-1)
+    set_engine_par($ENGINE_PAR_VOLUME,$mic_positions_sli_mid,3+(5*$i)+105,-1,-1)
+    inc($i)
+  end while
+  %p[$sp-6] := 3
+  %p[$sp-5] := 3
+  %p[$sp-4] := $ENGINE_PAR_VOLUME
+  %p[$sp-3] := 3
+  %p[$sp-2] := -1
+  %p[$sp-1] := -1
+  call f__update_label
+end on
+
+on ui_control($mic_positions_sli_far)
+  $i := 0
+  while ($i<21)
+    set_engine_par($ENGINE_PAR_VOLUME,$mic_positions_sli_far,4+(5*$i),-1,-1)
+    set_engine_par($ENGINE_PAR_VOLUME,$mic_positions_sli_far,4+(5*$i)+105,-1,-1)
+    inc($i)
+  end while
+  %p[$sp-6] := 4
+  %p[$sp-5] := 4
+  %p[$sp-4] := $ENGINE_PAR_VOLUME
+  %p[$sp-3] := 4
+  %p[$sp-2] := -1
+  %p[$sp-1] := -1
+  call f__update_label
+end on
+
+on ui_control($mic_positions_swi_on_off_inside)
+  $_i2 := 0
+  while ($_i2<21)
+    if (get_control_par(%ui_channel_swi_mute[0],$CONTROL_PAR_VALUE)=1)
+      purge_group(5*$_i2,1)
+      purge_group(5*$_i2+105,1)
+    else
+      purge_group(5*$_i2,0)
+      purge_group(5*$_i2+105,0)
+    end if
+    inc($_i2)
+  end while
+end on
+
+on ui_control($mic_positions_swi_on_off_superclose)
+  $_i2 := 0
+  while ($_i2<21)
+    if (get_control_par(%ui_channel_swi_mute[1],$CONTROL_PAR_VALUE)=1)
+      purge_group(1+(5*$_i2),1)
+      purge_group(1+(5*$_i2)+105,1)
+    else
+      purge_group(1+(5*$_i2),0)
+      purge_group(1+(5*$_i2)+105,0)
+    end if
+    inc($_i2)
+  end while
+end on
+
+on ui_control($mic_positions_swi_on_off_close)
+  $_i2 := 0
+  while ($_i2<21)
+    if (get_control_par(%ui_channel_swi_mute[2],$CONTROL_PAR_VALUE)=1)
+      purge_group(2+(5*$_i2),1)
+      purge_group(2+(5*$_i2)+105,1)
+    else
+      purge_group(2+(5*$_i2),0)
+      purge_group(2+(5*$_i2)+105,0)
+    end if
+    inc($_i2)
+  end while
+end on
+
+on ui_control($mic_positions_swi_on_off_mid)
+  $_i2 := 0
+  while ($_i2<21)
+    if (get_control_par(%ui_channel_swi_mute[3],$CONTROL_PAR_VALUE)=1)
+      purge_group(3+(5*$_i2),1)
+      purge_group(3+(5*$_i2)+105,1)
+    else
+      purge_group(3+(5*$_i2),0)
+      purge_group(3+(5*$_i2)+105,0)
+    end if
+    inc($_i2)
+  end while
+end on
+
+on ui_control($mic_positions_swi_on_off_far)
+  $_i2 := 0
+  while ($_i2<21)
+    if (get_control_par(%ui_channel_swi_mute[4],$CONTROL_PAR_VALUE)=1)
+      purge_group(4+(5*$_i2),1)
+      purge_group(4+(5*$_i2)+105,1)
+    else
+      purge_group(4+(5*$_i2),0)
+      purge_group(4+(5*$_i2)+105,0)
+    end if
+    inc($_i2)
+  end while
+end on
+
+on ui_control($ADSR_A)
+  $i := 0
+  while ($i<$NUM_GROUPS)
+    set_engine_par($ENGINE_PAR_ATTACK,$ADSR_A,$i,find_mod($i,"ENV_AHDSR"),find_target($i,find_mod($i,"ENV_AHDSR"),"ENV_AHDSR_VOLUME"))
+    inc($i)
+  end while
+  %p[$sp-6] := 17
+  %p[$sp-5] := 5
+  %p[$sp-4] := $ENGINE_PAR_ATTACK
+  %p[$sp-3] := 0
+  %p[$sp-2] := find_mod(0,"ENV_AHDSR")
+  %p[$sp-1] := find_target(0,find_mod(0,"ENV_AHDSR"),"ENV_AHDSR_VOLUME")
+  call f__update_label
+end on
+
+on ui_control($ADSR_D)
+  $i := 0
+  while ($i<$NUM_GROUPS)
+    set_engine_par($ENGINE_PAR_DECAY,$ADSR_D,$i,find_mod($i,"ENV_AHDSR"),find_target($i,find_mod($i,"ENV_AHDSR"),"ENV_AHDSR_VOLUME"))
+    inc($i)
+  end while
+  %p[$sp-6] := 17
+  %p[$sp-5] := 6
+  %p[$sp-4] := $ENGINE_PAR_DECAY
+  %p[$sp-3] := 0
+  %p[$sp-2] := find_mod(0,"ENV_AHDSR")
+  %p[$sp-1] := find_target(0,find_mod(0,"ENV_AHDSR"),"ENV_AHDSR_VOLUME")
+  call f__update_label
+end on
+
+on ui_control($ADSR_S)
+  $i := 0
+  while ($i<$NUM_GROUPS)
+    set_engine_par($ENGINE_PAR_SUSTAIN,$ADSR_S,$i,find_mod($i,"ENV_AHDSR"),find_target($i,find_mod($i,"ENV_AHDSR"),"ENV_AHDSR_VOLUME"))
+    inc($i)
+  end while
+  %p[$sp-6] := 17
+  %p[$sp-5] := 7
+  %p[$sp-4] := $ENGINE_PAR_SUSTAIN
+  %p[$sp-3] := 0
+  %p[$sp-2] := find_mod(0,"ENV_AHDSR")
+  %p[$sp-1] := find_target(0,find_mod(0,"ENV_AHDSR"),"ENV_AHDSR_VOLUME")
+  call f__update_label
+end on
+
+on ui_control($ADSR_R)
+  $i := 0
+  while ($i<$NUM_GROUPS)
+    set_engine_par($ENGINE_PAR_RELEASE,$ADSR_R,$i,find_mod($i,"ENV_AHDSR"),find_target($i,find_mod($i,"ENV_AHDSR"),"ENV_AHDSR_VOLUME"))
+    inc($i)
+  end while
+  %p[$sp-6] := 17
+  %p[$sp-5] := 8
+  %p[$sp-4] := $ENGINE_PAR_RELEASE
+  %p[$sp-3] := 0
+  %p[$sp-2] := find_mod(0,"ENV_AHDSR")
+  %p[$sp-1] := find_target(0,find_mod(0,"ENV_AHDSR"),"ENV_AHDSR_VOLUME")
+  call f__update_label
+end on
+
+on ui_control($ADSR_panel_dyn_par_sli_dyn_sim_int)
+  if ($ADSR_panel_dyn_par_sli_dyn_sim_int>0)
+    $dyn_sim_moved_flag := 1
+  else
+    if ($ADSR_panel_dyn_par_sli_dyn_sim_int=0)
+      $dyn_sim_moved_flag := 0
+    end if
+  end if
+  $dyn_sim_scaled := ($ADSR_panel_dyn_par_sli_dyn_sim_int-0)*7000/10000
+  $i := 0
+  while ($i<$NUM_GROUPS)
+    set_engine_par($ENGINE_PAR_MOD_TARGET_INTENSITY,$dyn_sim_scaled*100,$i,find_mod($i,"EQ1_GAIN"),-1)
+    if ($dyn_sim_moved_flag=1)
+      set_engine_par($ENGINE_PAR_EFFECT_BYPASS,0,$i,0,$NI_INSERT_BUS)
+    else
+      set_engine_par($ENGINE_PAR_EFFECT_BYPASS,1,$i,0,$NI_INSERT_BUS)
+    end if
+    inc($i)
+  end while
+  %p[$sp-2] := 9
+  %p[$sp-1] := 0
+  call f__update_label_specific
+end on
+
+on ui_control($ADSR_panel_dyn_par_sli_dyn_range)
+  $i := 0
+  while ($i<$NUM_GROUPS)
+    set_engine_par($ENGINE_PAR_MOD_TARGET_INTENSITY,$ADSR_panel_dyn_par_sli_dyn_range,$i,find_mod($i,"CC->DYN_RANGE"),-1)
+    inc($i)
+  end while
+  %p[$sp-2] := 10
+  %p[$sp-1] := 1
+  call f__update_label_specific
+end on
+
+on ui_control($ADSR_sli_dyn)
+  set_controller(102,$ADSR_sli_dyn)
+end on
+
+on ui_control($ADSR_sli_exp)
+  set_controller(103,$ADSR_sli_exp)
+end on
+
+on ui_control($ADSR_panel_dyn_par_sli_dyn_velocity)
+  $i := 0
+  while ($i<$NUM_GROUPS)
+    set_engine_par($ENGINE_PAR_MOD_TARGET_INTENSITY,$ADSR_panel_dyn_par_sli_dyn_velocity,$i,find_mod($i,"VEL->VOL"),-1)
+    inc($i)
+  end while
+  %p[$sp-6] := 11
+  %p[$sp-5] := 11
+  %p[$sp-4] := $ENGINE_PAR_MOD_TARGET_INTENSITY
+  %p[$sp-3] := 0
+  %p[$sp-2] := find_mod(0,"VEL->VOL")
+  %p[$sp-1] := -1
+  call f__update_label
+end on
+
+on ui_control($ADSR_swi_dyn_par)
+  %p[$sp-1] := $ADSR_swi_dyn_par
+  call f__show_hide_dynamic_settings
+  $i := 0
+  while ($i<num_elements(%ui_swi_mic_par))
+    %p[$sp-2] := 0
+    %p[$sp-1] := %ui_channel_panels[$i]
+    call f__show_hide_panel
+    set_control_par(%ui_swi_mic_par[$i],$CONTROL_PAR_VALUE,0)
+    inc($i)
+  end while
+end on
+
+on ui_control($ADSR_panel_dyn_par_swi_close_dyn_par)
+  %p[$sp-1] := 0
+  call f__show_hide_dynamic_settings
+  $ADSR_swi_dyn_par := 0
+end on
+
+on ui_control($ADSR_swi_phase)
+  if ($ADSR_swi_phase=1)
+    set_text($ADSR_lbl_phase,"ALIGN S.START OFF")
+  else
+    set_text($ADSR_lbl_phase,"ALIGN S.START ON")
+  end if
+end on
+
+on ui_control($swi_legato_poly)
+  if ($swi_legato_poly=0)
+    while ($lgt__busy=1)
+      wait(100)
+    end while
+    if ($lgt__active=1)
+      if ($lgt__fade_out_ticks>0)
+        if (%lgt__child[1-$lgt__new_idx] # 0)
+          note_off(%lgt__child[1-$lgt__new_idx])
+        end if
+        %lgt__pedal[1-$lgt__new_idx] := 0
+        $lgt__fade_out_ticks := 0
+      end if
+      $lgt__fade_in_ticks := 0
+      $lgt__seg2_ticks := 0
+      $lgt__bend_ticks := 0
+      $lgt__busy := 1
+      while ($lgt__active=1)
+        wait(100)
+      end while
+      $lgt__busy := 0
+    end if
+    if (%lgt__child[0] # 0)
+      note_off(%lgt__child[0])
+    end if
+    if (%lgt__child[1] # 0)
+      note_off(%lgt__child[1])
+    end if
+    %lgt__child[0] := 0
+    %lgt__child[1] := 0
+    %lgt__parent[0] := 0
+    %lgt__parent[1] := 0
+    $lgt__new_idx := 0
+  end if
+  if ($swi_legato_poly=1)
+    set_text($lbl_legato_poly,"LEGATO")
+  else
+    set_text($lbl_legato_poly,"POLYPHONIC")
+  end if
+end on
+
+on ui_control($SETTINGS_sli_legato_time)
+  %p[$sp-2] := 0
+  %p[$sp-1] := 0
+  call f__lgt_update_label
+end on
+
+on ui_control($SETTINGS_sli_legato_attack)
+  %p[$sp-2] := 1
+  %p[$sp-1] := 1
+  call f__lgt_update_label
+end on
+
+on ui_control($SETTINGS_sli_legato_offset_min)
+  %p[$sp-2] := 2
+  %p[$sp-1] := 2
+  call f__lgt_update_label
+end on
+
+on ui_control($SETTINGS_sli_legato_offset_max)
+  %p[$sp-2] := 3
+  %p[$sp-1] := 3
+  call f__lgt_update_label
+end on
+
+on ui_control($SETTINGS_sli_legato_portamento_time)
+  %p[$sp-2] := 4
+  %p[$sp-1] := 4
+  call f__lgt_update_label
+end on
+
+on ui_control($SETTINGS_sli_legato_portamento_amount)
+  %p[$sp-2] := 5
+  %p[$sp-1] := 5
+  call f__lgt_update_label
+end on
+
+on ui_control($SEND_FX_swi_delay_on)
+  set_engine_par($ENGINE_PAR_SEND_EFFECT_BYPASS,1-$SEND_FX_swi_delay_on,-1,0,$NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_mnu_delay_mode)
+  %p[$sp-1] := $SEND_FX_mnu_delay_mode
+  call f__show_delay_controls
+  set_engine_par($ENGINE_PAR_RDL_TYPE,%delay_modes[$SEND_FX_mnu_delay_mode],-1,0,$NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_mnu_sync_unit)
+  set_control_par(get_ui_id($SEND_FX_lbl_sync_unit),$CONTROL_PAR_PICTURE_STATE,$SEND_FX_mnu_sync_unit)
+  set_engine_par($ENGINE_PAR_RDL_TIME_UNIT,%sync_units[$SEND_FX_mnu_sync_unit],-1,0,$NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_swi_delay_stereo)
+  set_engine_par($ENGINE_PAR_RDL_STEREO,$SEND_FX_swi_delay_stereo,-1,0,$NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_swi_delay_noise)
+  set_engine_par($ENGINE_PAR_RDL_NOISE,$SEND_FX_swi_delay_noise,-1,0,$NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_swi_delay_dense)
+  set_engine_par($ENGINE_PAR_RDL_DENSE,$SEND_FX_swi_delay_dense,-1,0,$NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_swi_delay_pingpong)
+  set_engine_par($ENGINE_PAR_RDL_PINGPONG,$SEND_FX_swi_delay_pingpong,-1,0,$NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_sli_delay_time)
+  set_engine_par($ENGINE_PAR_RDL_TIME,$SEND_FX_sli_delay_time,-1,0,$NI_SEND_BUS)
+  %p[$sp-6] := 28
+  %p[$sp-5] := 28
+  %p[$sp-4] := $ENGINE_PAR_RDL_TIME
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_SEND_BUS
+  call f__update_label
+end on
+
+on ui_control($SEND_FX_sli_delay_feedback)
+  set_engine_par($ENGINE_PAR_RDL_FEEDBACK,$SEND_FX_sli_delay_feedback,-1,0,$NI_SEND_BUS)
+  %p[$sp-6] := 29
+  %p[$sp-5] := 29
+  %p[$sp-4] := $ENGINE_PAR_RDL_FEEDBACK
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_SEND_BUS
+  call f__update_label
+end on
+
+on ui_control($SEND_FX_sli_delay_lowcut)
+  set_engine_par($ENGINE_PAR_RDL_LOWCUT,$SEND_FX_sli_delay_lowcut,-1,0,$NI_SEND_BUS)
+  %p[$sp-6] := 30
+  %p[$sp-5] := 30
+  %p[$sp-4] := $ENGINE_PAR_RDL_LOWCUT
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_SEND_BUS
+  call f__update_label
+end on
+
+on ui_control($SEND_FX_sli_delay_hicut)
+  set_engine_par($ENGINE_PAR_RDL_HIGHCUT,$SEND_FX_sli_delay_hicut,-1,0,$NI_SEND_BUS)
+  %p[$sp-6] := 31
+  %p[$sp-5] := 31
+  %p[$sp-4] := $ENGINE_PAR_RDL_HIGHCUT
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_SEND_BUS
+  call f__update_label
+end on
+
+on ui_control($SEND_FX_sli_delay_depth)
+  set_engine_par($ENGINE_PAR_RDL_DEPTH,$SEND_FX_sli_delay_depth,-1,0,$NI_SEND_BUS)
+  %p[$sp-6] := 32
+  %p[$sp-5] := 32
+  %p[$sp-4] := $ENGINE_PAR_RDL_DEPTH
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_SEND_BUS
+  call f__update_label
+end on
+
+on ui_control($SEND_FX_sli_delay_rate)
+  set_engine_par($ENGINE_PAR_RDL_RATE,$SEND_FX_sli_delay_rate,-1,0,$NI_SEND_BUS)
+  %p[$sp-6] := 33
+  %p[$sp-5] := 33
+  %p[$sp-4] := $ENGINE_PAR_RDL_RATE
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_SEND_BUS
+  call f__update_label
+end on
+
+on ui_control($SEND_FX_sli_delay_saturate)
+  set_engine_par($ENGINE_PAR_RDL_SATURATION,$SEND_FX_sli_delay_saturate,-1,0,$NI_SEND_BUS)
+  %p[$sp-6] := 34
+  %p[$sp-5] := 34
+  %p[$sp-4] := $ENGINE_PAR_RDL_SATURATION
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_SEND_BUS
+  call f__update_label
+end on
+
+on ui_control($SEND_FX_sli_delay_bbd)
+  set_engine_par($ENGINE_PAR_RDL_BBDTYPE,$SEND_FX_sli_delay_bbd,-1,0,$NI_SEND_BUS)
+  %p[$sp-6] := 35
+  %p[$sp-5] := 35
+  %p[$sp-4] := $ENGINE_PAR_RDL_BBDTYPE
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_SEND_BUS
+  call f__update_label
+end on
+
+on ui_control($SEND_FX_sli_delay_tapeage)
+  set_engine_par($ENGINE_PAR_RDL_TAPEAGE,$SEND_FX_sli_delay_tapeage,-1,0,$NI_SEND_BUS)
+  %p[$sp-6] := 36
+  %p[$sp-5] := 36
+  %p[$sp-4] := $ENGINE_PAR_RDL_TAPEAGE
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_SEND_BUS
+  call f__update_label
+end on
+
+on ui_control($SEND_FX_sli_delay_flutter)
+  set_engine_par($ENGINE_PAR_RDL_FLUTTER,$SEND_FX_sli_delay_flutter,-1,0,$NI_SEND_BUS)
+  %p[$sp-6] := 37
+  %p[$sp-5] := 37
+  %p[$sp-4] := $ENGINE_PAR_RDL_FLUTTER
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_SEND_BUS
+  call f__update_label
+end on
+
+on ui_control($SEND_FX_sli_delay_quality)
+  set_engine_par($ENGINE_PAR_RDL_QUALITY,$SEND_FX_sli_delay_quality,-1,0,$NI_SEND_BUS)
+  %p[$sp-6] := 38
+  %p[$sp-5] := 38
+  %p[$sp-4] := $ENGINE_PAR_RDL_QUALITY
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_SEND_BUS
+  call f__update_label
+end on
+
+on ui_control($SEND_FX_sli_delay_amount)
+  set_engine_par($ENGINE_PAR_RDL_AMOUNT,$SEND_FX_sli_delay_amount,-1,0,$NI_SEND_BUS)
+  %p[$sp-6] := 39
+  %p[$sp-5] := 39
+  %p[$sp-4] := $ENGINE_PAR_RDL_AMOUNT
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_SEND_BUS
+  call f__update_label
+end on
+
+on ui_control($SEND_FX_sli_delay_size)
+  set_engine_par($ENGINE_PAR_RDL_SIZE,$SEND_FX_sli_delay_size,-1,0,$NI_SEND_BUS)
+  %p[$sp-6] := 40
+  %p[$sp-5] := 40
+  %p[$sp-4] := $ENGINE_PAR_RDL_SIZE
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_SEND_BUS
+  call f__update_label
+end on
+
+on ui_control($SEND_FX_sli_delay_mod)
+  set_engine_par($ENGINE_PAR_RDL_MODULATION,$SEND_FX_sli_delay_mod,-1,0,$NI_SEND_BUS)
+  %p[$sp-6] := 41
+  %p[$sp-5] := 41
+  %p[$sp-4] := $ENGINE_PAR_RDL_MODULATION
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_SEND_BUS
+  call f__update_label
+end on
+
+on ui_control($SEND_FX_swi_reverb_on)
+  set_engine_par($ENGINE_PAR_SEND_EFFECT_BYPASS,1-$SEND_FX_swi_reverb_on,-1,1,$NI_SEND_BUS)
+end on
+
+on ui_control($SEND_FX_mnu_reverb_IR)
+  if ($SEND_FX_mnu_reverb_IR # -1)
+    $load_ir_id := load_ir_sample(!IR_names[$SEND_FX_mnu_reverb_IR],1,$NI_SEND_BUS)
+    $current_ir := $SEND_FX_mnu_reverb_IR
+  else
+    $SEND_FX_mnu_reverb_IR := $current_ir
+  end if
+end on
+
+on ui_control($SEND_FX_sli_reverb_lowcut)
+  %reverb_cb_state[0] := $NI_CALLBACK_ID
+  ~val := int_to_real($SEND_FX_sli_reverb_lowcut)*0.000001
+  ~val := ~val*6.90775527898213+2.99573227355399
+  ~val := pow(~NI_MATH_E,~val)
+  $res := real_to_int(round(~val*10.0))
+  if ($res<10000)
+    set_text($SEND_FX_lbl_reverb_lowcut,$res/10 & "." & ($res mod 10) & " Hz")
+  else
+    set_text($SEND_FX_lbl_reverb_lowcut,$res/10000 & "." & (($res+500)/1000 mod 10) & "k" & " Hz")
+  end if
+  set_engine_par($ENGINE_PAR_IRC_FREQ_HIGHPASS_ER,$SEND_FX_sli_reverb_lowcut,-1,1,$NI_SEND_BUS)
+  set_engine_par($ENGINE_PAR_IRC_FREQ_HIGHPASS_LR,$SEND_FX_sli_reverb_lowcut,-1,1,$NI_SEND_BUS)
+  wait(2000000)
+  if (%reverb_cb_state[0]=$NI_CALLBACK_ID)
+    set_text($SEND_FX_lbl_reverb_lowcut,"LOW CUT")
+  end if
+end on
+
+on ui_control($SEND_FX_sli_reverb_hicut)
+  %reverb_cb_state[1] := $NI_CALLBACK_ID
+  ~val := int_to_real($SEND_FX_sli_reverb_hicut)*0.000001
+  ~val := ~val*6.90775527898213+2.99573227355399
+  ~val := pow(~NI_MATH_E,~val)
+  $res := real_to_int(round(~val*10.0))
+  if ($res<10000)
+    set_text($SEND_FX_lbl_reverb_hicut,$res/10 & "." & ($res mod 10) & " Hz")
+  else
+    set_text($SEND_FX_lbl_reverb_hicut,$res/10000 & "." & (($res+500)/1000 mod 10) & "k" & " Hz")
+  end if
+  set_engine_par($ENGINE_PAR_IRC_FREQ_LOWPASS_ER,$SEND_FX_sli_reverb_hicut,-1,1,$NI_SEND_BUS)
+  set_engine_par($ENGINE_PAR_IRC_FREQ_LOWPASS_LR,$SEND_FX_sli_reverb_hicut,-1,1,$NI_SEND_BUS)
+  wait(2000000)
+  if (%reverb_cb_state[1]=$NI_CALLBACK_ID)
+    set_text($SEND_FX_lbl_reverb_hicut,"HIGH CUT")
+  end if
+end on
+
+on ui_control($SEND_FX_sli_reverb_predelay)
+  %reverb_cb_state[2] := $NI_CALLBACK_ID
+  ~val := int_to_real($SEND_FX_sli_reverb_predelay)*0.000001
+  ~val := ~val*5.017279836814924+0.6931471805599453
+  ~val := pow(~NI_MATH_E,~val)-2.0
+  $res := real_to_int(round(~val*100.0))
+  if ($res<10)
+    set_text($SEND_FX_lbl_reverb_predelay,$res/100 & ".0" & ($res mod 100) & " ms")
+  else
+    if ($res<100)
+      set_text($SEND_FX_lbl_reverb_predelay,$res/100 & "." & ($res mod 100) & " ms")
+    else
+      set_text($SEND_FX_lbl_reverb_predelay,$res/100 & "." & ($res/10 mod 10) & " ms")
+    end if
+  end if
+  set_engine_par($ENGINE_PAR_IRC_PREDELAY,$SEND_FX_sli_reverb_predelay,-1,1,$NI_SEND_BUS)
+  wait(2000000)
+  if (%reverb_cb_state[2]=$NI_CALLBACK_ID)
+    set_text($SEND_FX_lbl_reverb_predelay,"PRE DELAY")
+  end if
+end on
+
+on ui_control($SETTINGS_sli_keyswitches)
+  %p[$sp-1] := $SETTINGS_sli_keyswitches
+  call f__move_keyswitches
+  %p[$sp-1] := $SETTINGS_sli_keyswitches
+  call f__update_keyswitch_notes_label
+end on
+
+on ui_control($SETTINGS_swi_show_keyswitch_notes)
+  %p[$sp-1] := $SETTINGS_swi_show_keyswitch_notes
+  call f__show_keyswitch_notes
+end on
+
+on ui_control($articulations_swi_sus_norm_ppp)
+  %p[$sp-1] := 0
+  call f__select_multi_articulation
+end on
+
+on ui_control($articulations_swi_sus_norm_pp)
+  %p[$sp-1] := 1
+  call f__select_multi_articulation
+end on
+
+on ui_control($articulations_swi_sus_norm_p)
+  %p[$sp-1] := 2
+  call f__select_multi_articulation
+end on
+
+on ui_control($articulations_swi_sus_cs_ppp)
+  %p[$sp-1] := 3
+  call f__select_multi_articulation
+end on
+
+on ui_control($articulations_swi_sus_cs_pp)
+  %p[$sp-1] := 4
+  call f__select_multi_articulation
+end on
+
+on ui_control($articulations_swi_sus_cs_p)
+  %p[$sp-1] := 5
+  call f__select_multi_articulation
+end on
+
+on ui_control($articulations_swi_sus_supercs_ppp)
+  %p[$sp-1] := 6
+  call f__select_multi_articulation
+end on
+
+on ui_control($articulations_swi_sus_supercs_pp)
+  %p[$sp-1] := 7
+  call f__select_multi_articulation
+end on
+
+on ui_control($articulations_swi_sus_supercs_p)
+  %p[$sp-1] := 8
+  call f__select_multi_articulation
+end on
+
+on ui_control($articulations_swi_portato_cs)
+  %p[$sp-1] := 9
+  call f__select_multi_articulation
+end on
+
+on ui_control($articulations_swi_portato_norm)
+  %p[$sp-1] := 10
+  call f__select_multi_articulation
+end on
+
+on ui_control($articulations_swi_vib_pulses_cs)
+  %p[$sp-1] := 11
+  call f__select_multi_articulation
+end on
+
+on ui_control($articulations_swi_vib_pulses_norm)
+  %p[$sp-1] := 12
+  call f__select_multi_articulation
+end on
+
+on ui_control($articulations_swi_rebow_cs)
+  %p[$sp-1] := 13
+  call f__select_multi_articulation
+end on
+
+on ui_control($articulations_swi_rebow_norm)
+  %p[$sp-1] := 14
+  call f__select_multi_articulation
+end on
+
+on ui_control($articulations_swi_trem_bursts_cs)
+  %p[$sp-1] := 15
+  call f__select_multi_articulation
+end on
+
+on ui_control($articulations_swi_trem_bursts_norm)
+  %p[$sp-1] := 16
+  call f__select_multi_articulation
+end on
+
+on ui_control($articulations_swi_fluctuating_trem_cs)
+  %p[$sp-1] := 17
+  call f__select_multi_articulation
+end on
+
+on ui_control($articulations_swi_fluctuating_trem_norm)
+  %p[$sp-1] := 18
+  call f__select_multi_articulation
+end on
+
+on ui_control($articulations_swi_harmonics_cs)
+  %p[$sp-1] := 19
+  call f__select_multi_articulation
+end on
+
+on ui_control($articulations_swi_harmonics_norm)
+  %p[$sp-1] := 20
+  call f__select_multi_articulation
+end on
+
+on ui_control($mic_positions_swi_solo_inside)
+  %solo_channels[0] := $mic_positions_swi_solo_inside
+  if (search(%solo_channels,1) # -1)
+    $solo_on_flag := 1
+  else
+    $solo_on_flag := 0
+  end if
+end on
+
+on ui_control($mic_positions_swi_solo_superclose)
+  %solo_channels[1] := $mic_positions_swi_solo_superclose
+  if (search(%solo_channels,1) # -1)
+    $solo_on_flag := 1
+  else
+    $solo_on_flag := 0
+  end if
+end on
+
+on ui_control($mic_positions_swi_solo_close)
+  %solo_channels[2] := $mic_positions_swi_solo_close
+  if (search(%solo_channels,1) # -1)
+    $solo_on_flag := 1
+  else
+    $solo_on_flag := 0
+  end if
+end on
+
+on ui_control($mic_positions_swi_solo_mid)
+  %solo_channels[3] := $mic_positions_swi_solo_mid
+  if (search(%solo_channels,1) # -1)
+    $solo_on_flag := 1
+  else
+    $solo_on_flag := 0
+  end if
+end on
+
+on ui_control($mic_positions_swi_solo_far)
+  %solo_channels[4] := $mic_positions_swi_solo_far
+  if (search(%solo_channels,1) # -1)
+    $solo_on_flag := 1
+  else
+    $solo_on_flag := 0
+  end if
+end on
+
+on ui_control($mic_positions_swi_inside_par)
+  %p[$sp-2] := $mic_positions_swi_inside_par
+  %p[$sp-1] := get_ui_id($mic_positions_panel_inside_par)
+  call f__show_hide_panel
+  $i := 0
+  while ($i<num_elements(%ui_swi_mic_par))
+    if (get_control_par(%ui_swi_mic_par[$i],$CONTROL_PAR_VALUE)=1 and ($i # 0))
+      %p[$sp-2] := 0
+      %p[$sp-1] := %ui_channel_panels[$i]
+      call f__show_hide_panel
+      set_control_par(%ui_swi_mic_par[$i],$CONTROL_PAR_VALUE,0)
+    end if
+    inc($i)
+  end while
+end on
+
+on ui_control($mic_positions_panel_inside_par_swi_close)
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($mic_positions_panel_inside_par)
+  call f__show_hide_panel
+  $mic_positions_swi_inside_par := 0
+end on
+
+on ui_control($mic_positions_panel_inside_par_sli_delay_send)
+  set_engine_par($ENGINE_PAR_SENDLEVEL_0,$mic_positions_panel_inside_par_sli_delay_send,-1,7,$NI_BUS_OFFSET)
+  %p[$sp-6] := 18
+  %p[$sp-5] := 18
+  %p[$sp-4] := $ENGINE_PAR_SENDLEVEL_0
+  %p[$sp-3] := -1
+  %p[$sp-2] := 7
+  %p[$sp-1] := $NI_BUS_OFFSET
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_inside_par_sli_reverb_send)
+  set_engine_par($ENGINE_PAR_SENDLEVEL_1,$mic_positions_panel_inside_par_sli_reverb_send,-1,7,$NI_BUS_OFFSET)
+  %p[$sp-6] := 23
+  %p[$sp-5] := 23
+  %p[$sp-4] := $ENGINE_PAR_SENDLEVEL_1
+  %p[$sp-3] := -1
+  %p[$sp-2] := 7
+  %p[$sp-1] := $NI_BUS_OFFSET
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_inside_par_sli_stereo_width)
+end on
+
+on ui_control($mic_positions_panel_inside_par_sli_pan)
+  set_engine_par($ENGINE_PAR_PAN,$mic_positions_panel_inside_par_sli_pan,-1,-1,$NI_BUS_OFFSET)
+  %p[$sp-6] := 44
+  %p[$sp-5] := 44
+  %p[$sp-4] := $ENGINE_PAR_PAN
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_BUS_OFFSET
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_inside_par_mnu_channel_output)
+  set_engine_par($ENGINE_PAR_OUTPUT_CHANNEL,$mic_positions_panel_inside_par_mnu_channel_output,-1,-1,$NI_BUS_OFFSET)
+  set_control_par_str(%ui_output_labels[0],$CONTROL_PAR_TEXT,get_menu_item_str(%ui_output_menus[0],get_control_par(%ui_output_menus[0],$CONTROL_PAR_VALUE)))
+end on
+
+on ui_control($mic_positions_swi_superclose_par)
+  %p[$sp-2] := $mic_positions_swi_superclose_par
+  %p[$sp-1] := get_ui_id($mic_positions_panel_superclose_par)
+  call f__show_hide_panel
+  $i := 0
+  while ($i<num_elements(%ui_swi_mic_par))
+    if (get_control_par(%ui_swi_mic_par[$i],$CONTROL_PAR_VALUE)=1 and ($i # 1))
+      %p[$sp-2] := 0
+      %p[$sp-1] := %ui_channel_panels[$i]
+      call f__show_hide_panel
+      set_control_par(%ui_swi_mic_par[$i],$CONTROL_PAR_VALUE,0)
+    end if
+    inc($i)
+  end while
+end on
+
+on ui_control($mic_positions_panel_superclose_par_swi_close)
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($mic_positions_panel_superclose_par)
+  call f__show_hide_panel
+  $mic_positions_swi_superclose_par := 0
+end on
+
+on ui_control($mic_positions_panel_superclose_par_sli_delay_send)
+  set_engine_par($ENGINE_PAR_SENDLEVEL_0,$mic_positions_panel_superclose_par_sli_delay_send,-1,7,$NI_BUS_OFFSET+1)
+  %p[$sp-6] := 19
+  %p[$sp-5] := 19
+  %p[$sp-4] := $ENGINE_PAR_SENDLEVEL_0
+  %p[$sp-3] := -1
+  %p[$sp-2] := 7
+  %p[$sp-1] := $NI_BUS_OFFSET+1
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_superclose_par_sli_reverb_send)
+  set_engine_par($ENGINE_PAR_SENDLEVEL_1,$mic_positions_panel_superclose_par_sli_reverb_send,-1,7,$NI_BUS_OFFSET+1)
+  %p[$sp-6] := 24
+  %p[$sp-5] := 24
+  %p[$sp-4] := $ENGINE_PAR_SENDLEVEL_1
+  %p[$sp-3] := -1
+  %p[$sp-2] := 7
+  %p[$sp-1] := $NI_BUS_OFFSET+1
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_superclose_par_sli_stereo_width)
+  set_engine_par($ENGINE_PAR_STEREO,$mic_positions_panel_superclose_par_sli_stereo_width,-1,0,$NI_BUS_OFFSET+1)
+  %p[$sp-6] := 13
+  %p[$sp-5] := 13
+  %p[$sp-4] := $ENGINE_PAR_STEREO
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_BUS_OFFSET+1
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_superclose_par_sli_pan)
+  set_engine_par($ENGINE_PAR_STEREO_PAN,$mic_positions_panel_superclose_par_sli_pan,-1,0,$NI_BUS_OFFSET+1)
+  %p[$sp-6] := 45
+  %p[$sp-5] := 45
+  %p[$sp-4] := $ENGINE_PAR_STEREO_PAN
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_BUS_OFFSET+1
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_superclose_par_mnu_channel_output)
+  set_engine_par($ENGINE_PAR_OUTPUT_CHANNEL,$mic_positions_panel_superclose_par_mnu_channel_output,-1,-1,$NI_BUS_OFFSET+1)
+  set_control_par_str(%ui_output_labels[1],$CONTROL_PAR_TEXT,get_menu_item_str(%ui_output_menus[1],get_control_par(%ui_output_menus[1],$CONTROL_PAR_VALUE)))
+end on
+
+on ui_control($mic_positions_swi_close_par)
+  %p[$sp-2] := $mic_positions_swi_close_par
+  %p[$sp-1] := get_ui_id($mic_positions_panel_close_par)
+  call f__show_hide_panel
+  $i := 0
+  while ($i<num_elements(%ui_swi_mic_par))
+    if (get_control_par(%ui_swi_mic_par[$i],$CONTROL_PAR_VALUE)=1 and ($i # 2))
+      %p[$sp-2] := 0
+      %p[$sp-1] := %ui_channel_panels[$i]
+      call f__show_hide_panel
+      set_control_par(%ui_swi_mic_par[$i],$CONTROL_PAR_VALUE,0)
+    end if
+    inc($i)
+  end while
+end on
+
+on ui_control($mic_positions_panel_close_par_swi_close)
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($mic_positions_panel_close_par)
+  call f__show_hide_panel
+  $mic_positions_swi_close_par := 0
+end on
+
+on ui_control($mic_positions_panel_close_par_sli_delay_send)
+  set_engine_par($ENGINE_PAR_SENDLEVEL_0,$mic_positions_panel_close_par_sli_delay_send,-1,7,$NI_BUS_OFFSET+2)
+  %p[$sp-6] := 20
+  %p[$sp-5] := 20
+  %p[$sp-4] := $ENGINE_PAR_SENDLEVEL_0
+  %p[$sp-3] := -1
+  %p[$sp-2] := 7
+  %p[$sp-1] := $NI_BUS_OFFSET+2
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_close_par_sli_reverb_send)
+  set_engine_par($ENGINE_PAR_SENDLEVEL_1,$mic_positions_panel_close_par_sli_reverb_send,-1,7,$NI_BUS_OFFSET+2)
+  %p[$sp-6] := 25
+  %p[$sp-5] := 25
+  %p[$sp-4] := $ENGINE_PAR_SENDLEVEL_1
+  %p[$sp-3] := -1
+  %p[$sp-2] := 7
+  %p[$sp-1] := $NI_BUS_OFFSET+2
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_close_par_sli_stereo_width)
+  set_engine_par($ENGINE_PAR_STEREO,$mic_positions_panel_close_par_sli_stereo_width,-1,0,$NI_BUS_OFFSET+2)
+  %p[$sp-6] := 14
+  %p[$sp-5] := 14
+  %p[$sp-4] := $ENGINE_PAR_STEREO
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_BUS_OFFSET+2
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_close_par_sli_pan)
+  set_engine_par($ENGINE_PAR_STEREO_PAN,$mic_positions_panel_close_par_sli_pan,-1,0,$NI_BUS_OFFSET+2)
+  %p[$sp-6] := 46
+  %p[$sp-5] := 46
+  %p[$sp-4] := $ENGINE_PAR_STEREO_PAN
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_BUS_OFFSET+2
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_close_par_mnu_channel_output)
+  set_engine_par($ENGINE_PAR_OUTPUT_CHANNEL,$mic_positions_panel_close_par_mnu_channel_output,-1,-1,$NI_BUS_OFFSET+2)
+  set_control_par_str(%ui_output_labels[2],$CONTROL_PAR_TEXT,get_menu_item_str(%ui_output_menus[2],get_control_par(%ui_output_menus[2],$CONTROL_PAR_VALUE)))
+end on
+
+on ui_control($mic_positions_swi_mid_par)
+  %p[$sp-2] := $mic_positions_swi_mid_par
+  %p[$sp-1] := get_ui_id($mic_positions_panel_mid_par)
+  call f__show_hide_panel
+  $i := 0
+  while ($i<num_elements(%ui_swi_mic_par))
+    if (get_control_par(%ui_swi_mic_par[$i],$CONTROL_PAR_VALUE)=1 and ($i # 3))
+      %p[$sp-2] := 0
+      %p[$sp-1] := %ui_channel_panels[$i]
+      call f__show_hide_panel
+      set_control_par(%ui_swi_mic_par[$i],$CONTROL_PAR_VALUE,0)
+    end if
+    inc($i)
+  end while
+end on
+
+on ui_control($mic_positions_panel_mid_par_swi_close)
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($mic_positions_panel_mid_par)
+  call f__show_hide_panel
+  $mic_positions_swi_mid_par := 0
+end on
+
+on ui_control($mic_positions_panel_mid_par_sli_delay_send)
+  set_engine_par($ENGINE_PAR_SENDLEVEL_0,$mic_positions_panel_mid_par_sli_delay_send,-1,7,$NI_BUS_OFFSET+3)
+  %p[$sp-6] := 21
+  %p[$sp-5] := 21
+  %p[$sp-4] := $ENGINE_PAR_SENDLEVEL_0
+  %p[$sp-3] := -1
+  %p[$sp-2] := 7
+  %p[$sp-1] := $NI_BUS_OFFSET+3
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_mid_par_sli_reverb_send)
+  set_engine_par($ENGINE_PAR_SENDLEVEL_1,$mic_positions_panel_mid_par_sli_reverb_send,-1,7,$NI_BUS_OFFSET+3)
+  %p[$sp-6] := 26
+  %p[$sp-5] := 26
+  %p[$sp-4] := $ENGINE_PAR_SENDLEVEL_1
+  %p[$sp-3] := -1
+  %p[$sp-2] := 7
+  %p[$sp-1] := $NI_BUS_OFFSET+3
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_mid_par_sli_stereo_width)
+  set_engine_par($ENGINE_PAR_STEREO,$mic_positions_panel_mid_par_sli_stereo_width,-1,0,$NI_BUS_OFFSET+3)
+  %p[$sp-6] := 15
+  %p[$sp-5] := 15
+  %p[$sp-4] := $ENGINE_PAR_STEREO
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_BUS_OFFSET+3
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_mid_par_sli_pan)
+  set_engine_par($ENGINE_PAR_STEREO_PAN,$mic_positions_panel_mid_par_sli_pan,-1,0,$NI_BUS_OFFSET+3)
+  %p[$sp-6] := 47
+  %p[$sp-5] := 47
+  %p[$sp-4] := $ENGINE_PAR_STEREO_PAN
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_BUS_OFFSET+3
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_mid_par_mnu_channel_output)
+  set_engine_par($ENGINE_PAR_OUTPUT_CHANNEL,$mic_positions_panel_mid_par_mnu_channel_output,-1,-1,$NI_BUS_OFFSET+3)
+  set_control_par_str(%ui_output_labels[3],$CONTROL_PAR_TEXT,get_menu_item_str(%ui_output_menus[3],get_control_par(%ui_output_menus[3],$CONTROL_PAR_VALUE)))
+end on
+
+on ui_control($mic_positions_swi_far_par)
+  %p[$sp-2] := $mic_positions_swi_far_par
+  %p[$sp-1] := get_ui_id($mic_positions_panel_far_par)
+  call f__show_hide_panel
+  $i := 0
+  while ($i<num_elements(%ui_swi_mic_par))
+    if (get_control_par(%ui_swi_mic_par[$i],$CONTROL_PAR_VALUE)=1 and ($i # 4))
+      %p[$sp-2] := 0
+      %p[$sp-1] := %ui_channel_panels[$i]
+      call f__show_hide_panel
+      set_control_par(%ui_swi_mic_par[$i],$CONTROL_PAR_VALUE,0)
+    end if
+    inc($i)
+  end while
+end on
+
+on ui_control($mic_positions_panel_far_par_swi_close)
+  %p[$sp-2] := 0
+  %p[$sp-1] := get_ui_id($mic_positions_panel_far_par)
+  call f__show_hide_panel
+  $mic_positions_swi_far_par := 0
+end on
+
+on ui_control($mic_positions_panel_far_par_sli_delay_send)
+  set_engine_par($ENGINE_PAR_SENDLEVEL_0,$mic_positions_panel_far_par_sli_delay_send,-1,7,$NI_BUS_OFFSET+4)
+  %p[$sp-6] := 22
+  %p[$sp-5] := 22
+  %p[$sp-4] := $ENGINE_PAR_SENDLEVEL_0
+  %p[$sp-3] := -1
+  %p[$sp-2] := 7
+  %p[$sp-1] := $NI_BUS_OFFSET+4
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_far_par_sli_reverb_send)
+  set_engine_par($ENGINE_PAR_SENDLEVEL_1,$mic_positions_panel_far_par_sli_reverb_send,-1,7,$NI_BUS_OFFSET+4)
+  %p[$sp-6] := 27
+  %p[$sp-5] := 27
+  %p[$sp-4] := $ENGINE_PAR_SENDLEVEL_1
+  %p[$sp-3] := -1
+  %p[$sp-2] := 7
+  %p[$sp-1] := $NI_BUS_OFFSET+4
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_far_par_sli_stereo_width)
+  set_engine_par($ENGINE_PAR_STEREO,$mic_positions_panel_far_par_sli_stereo_width,-1,0,$NI_BUS_OFFSET+4)
+  %p[$sp-6] := 16
+  %p[$sp-5] := 16
+  %p[$sp-4] := $ENGINE_PAR_STEREO
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_BUS_OFFSET+4
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_far_par_sli_pan)
+  set_engine_par($ENGINE_PAR_STEREO_PAN,$mic_positions_panel_far_par_sli_pan,-1,0,$NI_BUS_OFFSET+4)
+  %p[$sp-6] := 48
+  %p[$sp-5] := 48
+  %p[$sp-4] := $ENGINE_PAR_STEREO_PAN
+  %p[$sp-3] := -1
+  %p[$sp-2] := 0
+  %p[$sp-1] := $NI_BUS_OFFSET+4
+  call f__update_label
+end on
+
+on ui_control($mic_positions_panel_far_par_mnu_channel_output)
+  set_engine_par($ENGINE_PAR_OUTPUT_CHANNEL,$mic_positions_panel_far_par_mnu_channel_output,-1,-1,$NI_BUS_OFFSET+4)
+  set_control_par_str(%ui_output_labels[4],$CONTROL_PAR_TEXT,get_menu_item_str(%ui_output_menus[4],get_control_par(%ui_output_menus[4],$CONTROL_PAR_VALUE)))
+end on
+
