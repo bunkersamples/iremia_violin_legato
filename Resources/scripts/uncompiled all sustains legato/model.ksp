@@ -264,7 +264,7 @@ end taskfunc
    pattern: show the live value immediately, wait LBL_WAIT_TIME, then revert to the static caption
    UNLESS this label has been touched again in the meantime (cb_state re-entrancy check). *}
 taskfunc f.lgt_update_label(label_num, control_num)
-	declare local cb_state[6]
+	declare local cb_state[8]
 
 	cb_state[label_num] := NI_CALLBACK_ID
 
@@ -284,6 +284,10 @@ taskfunc f.lgt_update_label(label_num, control_num)
 			lgt_ui_labels[label_num] -> text := $SETTINGS_sli_legato_portamento_time/1000 & " ms"
 		case 5 //Portamento Amount
 			lgt_ui_labels[label_num] -> text := $SETTINGS_sli_legato_portamento_amount/1000 & " cents"
+		case 6 //Node Vol
+			lgt_ui_labels[label_num] -> text := $SETTINGS_sli_legato_node_vol & " %"
+		case 7 //Octave X - stored in tenths, shown as x1.0 style using the project's integer div+mod idiom
+			lgt_ui_labels[label_num] -> text := "x" & $SETTINGS_sli_legato_octave_x/10 & "." & $SETTINGS_sli_legato_octave_x mod 10
 	end select
 
 	tcm.wait(LBL_WAIT_TIME)
@@ -460,8 +464,16 @@ function f.lgt_setup_xfade()  { Compute how many "ticks" (LGT_TICK-sized steps) 
 	lgt.fade_in_ticks := lgt.fade_out_ticks*$SETTINGS_sli_legato_attack/100  { The FIRST (faster) segment of the fade-in, sized as a % of the total — Atk1% controls the shape of the attack curve, not just raw speed }
 	if $SETTINGS_sli_legato_attack = 100
 		lgt.seg2_ticks := 0   { No second segment needed — the whole fade-in is "segment 1" }
+		lgt.atk1_time := $SETTINGS_sli_legato_time   { NodeVol is deliberately ignored at AtkFade=100 — one plain linear fade-in over the full crossfade, per the SIPS manual 4.5 (6) }
 	else
 		lgt.seg2_ticks := lgt.fade_out_ticks - lgt.fade_in_ticks  { Remainder becomes the second, slower fade-in segment, started later by f.lgt_xfade()'s loop }
+		{ Changed 2026-11-25. Was: fade_in() over sli_legato_time*sli_legato_attack/100, which is
+		  this same expression with NodeVol pinned at 100 — segment 1 therefore reached FULL volume
+		  at the node, so segment 2 had nothing left to raise and was inaudible. Dividing by the
+		  NODE VOL knob instead asks for a longer ramp that is only NodeVol% of the way up when the
+		  tick counter (fade_in_ticks, still AtkFade% of the total) runs out, which is what makes
+		  the two-slope contour real. }
+		lgt.atk1_time := $SETTINGS_sli_legato_time*$SETTINGS_sli_legato_attack/$SETTINGS_sli_legato_node_vol
 	end if
 	if $SETTINGS_swi_legato_bend_enable = 1
 		interval := abs(lgt.note[lgt.new_idx] - lgt.note[1 - lgt.new_idx])  { Semitone gap between Old and New notes — no gap means no bend needed at all }
@@ -472,7 +484,16 @@ function f.lgt_setup_xfade()  { Compute how many "ticks" (LGT_TICK-sized steps) 
 		lgt.bend_ticks := 0
 	else
 		lgt.bend_ticks := $SETTINGS_sli_legato_portamento_time/LGT_TICK         { How many ticks the bend glide takes }
-		lgt.bend_amount := $SETTINGS_sli_legato_portamento_amount*interval  { Bigger melodic leaps get proportionally more pitch bend }
+		{ Changed 2026-11-25. Was: sli_legato_portamento_amount*interval — the bend scaled with the
+		  raw semitone count, so an octave leap got 12x the bend of a semitone (180 cents at the
+		  default 15). SIPS does NOT do that: its base bend is flat, the same for every interval,
+		  and the 'Octave X' slope is what lets wide intervals get more. OCT X = 10 is SIPS's
+		  neutral, i.e. interval-independent. Formula is SIPS SetupXFade verbatim, with Slope
+		  expressed in tenths; the +55 before /110 is its round-to-nearest. }
+		lgt.bend_amount := $SETTINGS_sli_legato_portamento_amount
+		if $SETTINGS_sli_legato_octave_x # 10 and interval # 1
+			lgt.bend_amount := lgt.bend_amount + (($SETTINGS_sli_legato_octave_x - 10)*(interval - 1)*lgt.bend_amount + 55)/110
+		end if
 		if lgt.note[lgt.new_idx] < lgt.note[1 - lgt.new_idx]
 			lgt.bend_amount := -lgt.bend_amount      { Descending interval: bend the other direction }
 		end if
@@ -508,7 +529,7 @@ function f.lgt_xfade()  { The actual crossfade: fade Old out, fade New in (in tw
 		f.lgt_end_old()   { Crossfade time is zero — just cut over instantly instead of running a pointless zero-length fade }
 	else
 		fade_out(lgt.child[1 - lgt.new_idx], $SETTINGS_sli_legato_time, 0)              { Kontakt's native fade-out over the full crossfade time }
-		fade_in(lgt.child[lgt.new_idx], $SETTINGS_sli_legato_time*$SETTINGS_sli_legato_attack/100)     { Start the New note's fade-in at just the "segment 1" portion of the total time }
+		fade_in(lgt.child[lgt.new_idx], lgt.atk1_time)     { Start the New note's fade-in segment 1 — duration computed in f.lgt_setup_xfade(), see NODE VOL }
 		lgt.active := true   { Marks that a crossfade is now running, read by f.lgt_stop_fade() if this gets interrupted }
 		while lgt.fade_out_ticks > 0 or lgt.fade_in_ticks > 0 or lgt.bend_ticks > 0  { Keep looping until ALL THREE activities have finished }
 			dec(lgt.fade_out_ticks)

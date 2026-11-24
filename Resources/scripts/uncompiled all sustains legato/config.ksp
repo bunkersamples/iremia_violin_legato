@@ -362,6 +362,25 @@ declare %sync_units[15]
 
 
 
+	{* Two SIPS crossfade/bend parameters added 2026-11-25, missing from the original port. Both
+	   are real Creator Tools controls on the SETTINGS panel - $SETTINGS_sli_legato_node_vol and
+	   $SETTINGS_sli_legato_octave_x - so there is nothing to declare here; this note is just the
+	   explanation of what they do, since neither is obvious from its name.
+
+	   NODE VOL (SIPS 'NodeVol'), 10-100, the volume as a percent of full that fade-in segment 1
+	   rises to before segment 2 takes over. The mechanism is not obvious: KSP's fade_in() always
+	   ramps linearly to FULL volume, so to stop at NodeVol% you ask for a deliberately TOO LONG
+	   fade - XTime*AtkFade/NodeVol - and interrupt it at AtkFade% of XTime, by which point the
+	   ramp has reached exactly NodeVol%. Setting it to 100 reproduces the pre-2026-11-25
+	   behaviour: segment 1 reaches full volume, so segment 2 is inaudible and the LEG ATTACK knob
+	   only shortens the fade instead of shaping it.
+
+	   OCT X (SIPS 'Octave X'), in tenths, the factor the bend amount is multiplied by at a
+	   one-octave interval. 10 means x1.0 - an octave leap gets the SAME bend as a semitone, which
+	   is SIPS's neutral setting. 120 reduces algebraically to the old code, which multiplied the
+	   bend by the raw semitone count (x12 at an octave, i.e. 180 cents of glide at the default
+	   15). A semitone is unaffected at any setting. *}
+
 	declare const LGT_PHASE_GROUP_OFFSET := NUM_MICS*NUM_ARTICULATIONS  { group-index offset to the phase-aligned duplicate group set, added when $ADSR_swi_phase indicates phase-align is ON }
 	declare lgt_phase_grp_ofs  { 0 or LGT_PHASE_GROUP_OFFSET, computed once per on note, added to every allow_group() group index }
 	declare lgt_note_lo        { lowest in-range note across ALL selected articulations - set by f.update_art_selection_flags() }
@@ -386,6 +405,7 @@ declare %sync_units[15]
 		declare fade_out_ticks
 		declare fade_in_ticks
 		declare seg2_ticks
+		declare atk1_time    { fade-in segment 1 duration in usec, computed by f.lgt_setup_xfade() - see NODE VOL. Held here rather than recomputed in f.lgt_xfade() so the AtkFade=100 special case lives in one place }
 		declare bend_ticks
 		declare bend_amount
 		declare bend_step

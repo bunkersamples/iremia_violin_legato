@@ -214,15 +214,17 @@ declare ui_art_switches[NUM_ARTICULATIONS]
 //The nckp already carried every one of these controls - both performance views were cut from
 //the same skin - so this is wiring only, no Creator Tools work.
 
-	declare lgt_ui_labels[6] //index is lgt label num, see f.lgt_update_label's control_num select block
+	declare lgt_ui_labels[8] //index is lgt label num, see f.lgt_update_label's control_num select block
 		lgt_ui_labels[0] := get_ui_id($SETTINGS_lbl_legato_time)
 		lgt_ui_labels[1] := get_ui_id($SETTINGS_lbl_legato_attack)
 		lgt_ui_labels[2] := get_ui_id($SETTINGS_lbl_legato_offset_min)
 		lgt_ui_labels[3] := get_ui_id($SETTINGS_lbl_legato_offset_max)
 		lgt_ui_labels[4] := get_ui_id($SETTINGS_lbl_legato_portamento_time)
 		lgt_ui_labels[5] := get_ui_id($SETTINGS_lbl_legato_portamento_amount)
+		lgt_ui_labels[6] := get_ui_id($SETTINGS_lbl_legato_node_vol)
+		lgt_ui_labels[7] := get_ui_id($SETTINGS_lbl_legato_octave_x)
 
-	declare !lgt_lbl_text[6] := ("LEG TIME", "LEG ATTACK", "OFFSET MIN", "OFFSET MAX", "TIME", "AMOUNT")
+	declare !lgt_lbl_text[8] := ("LEG TIME", "LEG ATTACK", "OFFSET MIN", "OFFSET MAX", "TIME", "AMOUNT", "VOLUME", "OCT X")
 
 	//make_persistent() needs each control named directly - it's a compile-time directive, not
 	//something that can be done through a runtime array lookup - but this array is still useful
@@ -233,11 +235,13 @@ declare ui_art_switches[NUM_ARTICULATIONS]
 	make_persistent($SETTINGS_sli_legato_offset_max)
 	make_persistent($SETTINGS_sli_legato_portamento_time)
 	make_persistent($SETTINGS_sli_legato_portamento_amount)
+	make_persistent($SETTINGS_sli_legato_node_vol)
+	make_persistent($SETTINGS_sli_legato_octave_x)
 	make_persistent($SETTINGS_swi_legato_bend_enable)
 	make_persistent($swi_legato_poly)
 	make_persistent($lbl_legato_poly)
 
-	declare lgt_ui_controls[7] //the 7 real legato knobs/switch, for any later bulk reposition pass
+	declare lgt_ui_controls[9] //the 9 real legato knobs/switch, for any later bulk reposition pass
 		lgt_ui_controls[0] := get_ui_id($SETTINGS_sli_legato_time)
 		lgt_ui_controls[1] := get_ui_id($SETTINGS_sli_legato_attack)
 		lgt_ui_controls[2] := get_ui_id($SETTINGS_sli_legato_offset_min)
@@ -245,19 +249,19 @@ declare ui_art_switches[NUM_ARTICULATIONS]
 		lgt_ui_controls[4] := get_ui_id($SETTINGS_sli_legato_portamento_time)
 		lgt_ui_controls[5] := get_ui_id($SETTINGS_sli_legato_portamento_amount)
 		lgt_ui_controls[6] := get_ui_id($SETTINGS_swi_legato_bend_enable)
+		lgt_ui_controls[7] := get_ui_id($SETTINGS_sli_legato_node_vol)
+		lgt_ui_controls[8] := get_ui_id($SETTINGS_sli_legato_octave_x)
 
-	//Nudge every legato control (and its label, to keep them aligned) 5px left, 10px up.
-	for i := 0 to num_elements(lgt_ui_controls)-1
-		set_control_par(lgt_ui_controls[i], CONTROL_PAR_POS_X, get_control_par(lgt_ui_controls[i], CONTROL_PAR_POS_X) - 5)
-		set_control_par(lgt_ui_controls[i], CONTROL_PAR_POS_Y, get_control_par(lgt_ui_controls[i], CONTROL_PAR_POS_Y) - 10)
-	end for
-	for i := 0 to num_elements(lgt_ui_labels)-1
-		set_control_par(lgt_ui_labels[i], CONTROL_PAR_POS_X, get_control_par(lgt_ui_labels[i], CONTROL_PAR_POS_X) - 3)
-		set_control_par(lgt_ui_labels[i], CONTROL_PAR_POS_Y, get_control_par(lgt_ui_labels[i], CONTROL_PAR_POS_Y) - 10)
-	end for
-
-	//Bend-enable switch: fixed absolute position, overriding the uniform shift above.
-	move_control_px($SETTINGS_swi_legato_bend_enable, 338, 190)
+	{* Legato control POSITIONS now live entirely in the .nckp, baked in 2026-11-25.
+	   What used to be here: a loop nudging every lgt_ui_controls[] entry 5px left and 10px up, a
+	   second loop nudging every lgt_ui_labels[] entry 3px left and 10px up, and a move_control_px()
+	   call pinning the bend-enable switch (which overrode the loop for it). Each control's final
+	   on-screen position has been written into its .nckp entry instead, so Creator Tools is now the
+	   single source of truth for this panel's layout and what you see in the editor is what Kontakt
+	   shows. Nothing script-side may set a legato control's position again - load_performance_view()
+	   runs before this file, so any such call silently wins over Creator Tools and the view stops
+	   matching the editor. lgt_ui_controls[] is deliberately kept: it still indexes the same
+	   controls and is useful for any future bulk pass. *}
 
 
 //ADSR

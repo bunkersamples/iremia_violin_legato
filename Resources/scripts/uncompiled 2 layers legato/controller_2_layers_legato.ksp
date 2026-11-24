@@ -551,6 +551,14 @@ on ui_control($SETTINGS_sli_legato_portamento_amount)
 	f.lgt_update_label(5, 5)
 end on
 
+on ui_control($SETTINGS_sli_legato_node_vol)
+	f.lgt_update_label(6, 6)
+end on
+
+on ui_control($SETTINGS_sli_legato_octave_x)
+	f.lgt_update_label(7, 7)
+end on
+
 //DELAY CONTROLS //DELAY CONTROLS //DELAY CONTROLS //DELAY CONTROLS //DELAY CONTROLS //DELAY CONTROLS //DELAY CONTROLS //DELAY CONTROLS //DELAY CONTROLS 
 
 on ui_control($SEND_FX_swi_delay_on)

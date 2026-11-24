@@ -314,11 +314,47 @@
                                         "show": false
                                     },
                                     "common": {
+                                        "id": "lbl_legato_node_vol",
+                                        "infoPaneText": "",
+                                        "position": {
+                                            "x": 561,
+                                            "y": 161
+                                        },
+                                        "show": true,
+                                        "size": {
+                                            "height": 18,
+                                            "width": 120
+                                        },
+                                        "zLayer": 2
+                                    },
+                                    "enableDragAndDrop": false,
+                                    "midiExportAreaIndex": 0,
+                                    "multiLine": false,
+                                    "text": {
+                                        "font": {
+                                            "custom": "",
+                                            "type": 2
+                                        },
+                                        "horizontalAlignment": 1,
+                                        "positionY": 0,
+                                        "string": "VOLUME"
+                                    }
+                                }
+                            },
+                            {
+                                "index": 4,
+                                "value": {
+                                    "background": {
+                                        "frameIndex": 0,
+                                        "image": "",
+                                        "show": false
+                                    },
+                                    "common": {
                                         "id": "lbl_legato_offset_max",
                                         "infoPaneText": "",
                                         "position": {
-                                            "x": 484,
-                                            "y": 171
+                                            "x": 481,
+                                            "y": 161
                                         },
                                         "show": true,
                                         "size": {
@@ -350,11 +386,47 @@
                                         "show": false
                                     },
                                     "common": {
+                                        "id": "lbl_legato_octave_x",
+                                        "infoPaneText": "",
+                                        "position": {
+                                            "x": 481,
+                                            "y": 212
+                                        },
+                                        "show": true,
+                                        "size": {
+                                            "height": 18,
+                                            "width": 120
+                                        },
+                                        "zLayer": 2
+                                    },
+                                    "enableDragAndDrop": false,
+                                    "midiExportAreaIndex": 0,
+                                    "multiLine": false,
+                                    "text": {
+                                        "font": {
+                                            "custom": "",
+                                            "type": 2
+                                        },
+                                        "horizontalAlignment": 1,
+                                        "positionY": 0,
+                                        "string": "OCT X"
+                                    }
+                                }
+                            },
+                            {
+                                "index": 4,
+                                "value": {
+                                    "background": {
+                                        "frameIndex": 0,
+                                        "image": "",
+                                        "show": false
+                                    },
+                                    "common": {
                                         "id": "lbl_legato_portamento_amount",
                                         "infoPaneText": "",
                                         "position": {
-                                            "x": 484,
-                                            "y": 222
+                                            "x": 401,
+                                            "y": 212
                                         },
                                         "show": true,
                                         "size": {
@@ -389,8 +461,8 @@
                                         "id": "lbl_legato_portamento_time",
                                         "infoPaneText": "",
                                         "position": {
-                                            "x": 404,
-                                            "y": 222
+                                            "x": 321,
+                                            "y": 212
                                         },
                                         "show": true,
                                         "size": {
@@ -425,8 +497,8 @@
                                         "id": "lbl_legato_offset_min",
                                         "infoPaneText": "",
                                         "position": {
-                                            "x": 404,
-                                            "y": 171
+                                            "x": 401,
+                                            "y": 161
                                         },
                                         "show": true,
                                         "size": {
@@ -461,8 +533,8 @@
                                         "id": "lbl_legato_attack",
                                         "infoPaneText": "",
                                         "position": {
-                                            "x": 324,
-                                            "y": 171
+                                            "x": 321,
+                                            "y": 161
                                         },
                                         "show": true,
                                         "size": {
@@ -497,8 +569,8 @@
                                         "id": "lbl_legato_time",
                                         "infoPaneText": "",
                                         "position": {
-                                            "x": 244,
-                                            "y": 171
+                                            "x": 241,
+                                            "y": 161
                                         },
                                         "show": true,
                                         "size": {
@@ -533,11 +605,48 @@
                                         "name": ""
                                     },
                                     "common": {
+                                        "id": "sli_legato_node_vol",
+                                        "infoPaneText": "",
+                                        "position": {
+                                            "x": 605,
+                                            "y": 124
+                                        },
+                                        "show": true,
+                                        "size": {
+                                            "height": 0,
+                                            "width": 0
+                                        },
+                                        "zLayer": 1
+                                    },
+                                    "image": "sli_knob_gray",
+                                    "mouse": {
+                                        "orientation": 0,
+                                        "scale": 1500
+                                    },
+                                    "value": {
+                                        "default": 70,
+                                        "max": 100,
+                                        "min": 10
+                                    }
+                                }
+                            },
+                            {
+                                "index": 7,
+                                "value": {
+                                    "automation": {
+                                        "disableUserAssign": false,
+                                        "hostAutomation": {
+                                            "id": 0,
+                                            "on": false
+                                        },
+                                        "name": ""
+                                    },
+                                    "common": {
                                         "id": "sli_legato_offset_max",
                                         "infoPaneText": "",
                                         "position": {
-                                            "x": 530,
-                                            "y": 134
+                                            "x": 525,
+                                            "y": 124
                                         },
                                         "show": true,
                                         "size": {
@@ -570,11 +679,48 @@
                                         "name": ""
                                     },
                                     "common": {
+                                        "id": "sli_legato_octave_x",
+                                        "infoPaneText": "",
+                                        "position": {
+                                            "x": 525,
+                                            "y": 178
+                                        },
+                                        "show": true,
+                                        "size": {
+                                            "height": 0,
+                                            "width": 0
+                                        },
+                                        "zLayer": 1
+                                    },
+                                    "image": "sli_knob_gray",
+                                    "mouse": {
+                                        "orientation": 0,
+                                        "scale": 1500
+                                    },
+                                    "value": {
+                                        "default": 10,
+                                        "max": 120,
+                                        "min": 10
+                                    }
+                                }
+                            },
+                            {
+                                "index": 7,
+                                "value": {
+                                    "automation": {
+                                        "disableUserAssign": false,
+                                        "hostAutomation": {
+                                            "id": 0,
+                                            "on": false
+                                        },
+                                        "name": ""
+                                    },
+                                    "common": {
                                         "id": "sli_legato_portamento_amount",
                                         "infoPaneText": "",
                                         "position": {
-                                            "x": 530,
-                                            "y": 188
+                                            "x": 445,
+                                            "y": 178
                                         },
                                         "show": true,
                                         "size": {
@@ -610,8 +756,8 @@
                                         "id": "sli_legato_portamento_time",
                                         "infoPaneText": "",
                                         "position": {
-                                            "x": 450,
-                                            "y": 188
+                                            "x": 365,
+                                            "y": 178
                                         },
                                         "show": true,
                                         "size": {
@@ -647,8 +793,8 @@
                                         "id": "sli_legato_offset_min",
                                         "infoPaneText": "",
                                         "position": {
-                                            "x": 450,
-                                            "y": 134
+                                            "x": 445,
+                                            "y": 124
                                         },
                                         "show": true,
                                         "size": {
@@ -684,8 +830,8 @@
                                         "id": "sli_legato_attack",
                                         "infoPaneText": "",
                                         "position": {
-                                            "x": 370,
-                                            "y": 134
+                                            "x": 365,
+                                            "y": 124
                                         },
                                         "show": true,
                                         "size": {
@@ -721,8 +867,8 @@
                                         "id": "sli_legato_time",
                                         "infoPaneText": "",
                                         "position": {
-                                            "x": 290,
-                                            "y": 134
+                                            "x": 285,
+                                            "y": 124
                                         },
                                         "show": true,
                                         "size": {
@@ -830,7 +976,7 @@
                                         "id": "swi_legato_bend_enable",
                                         "infoPaneText": "",
                                         "position": {
-                                            "x": 338,
+                                            "x": 275,
                                             "y": 190
                                         },
                                         "show": true,
@@ -947,7 +1093,7 @@
                                         "id": "lbl_legato_bend_enable",
                                         "infoPaneText": "",
                                         "position": {
-                                            "x": 348,
+                                            "x": 284,
                                             "y": 190
                                         },
                                         "show": true,
@@ -967,7 +1113,7 @@
                                         },
                                         "horizontalAlignment": 0,
                                         "positionY": 0,
-                                        "string": "PORTAMENTO"
+                                        "string": "SMEAR"
                                     }
                                 }
                             },
@@ -1145,7 +1291,7 @@
                                 "value": {
                                     "background": {
                                         "frameIndex": 0,
-                                        "image": "lbl_settings_bg",
+                                        "image": "lbl_settings_bg_wider",
                                         "show": true
                                     },
                                     "common": {

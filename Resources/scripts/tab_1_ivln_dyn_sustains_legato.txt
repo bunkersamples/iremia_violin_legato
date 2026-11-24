@@ -1,4 +1,4 @@
-{ Compiled on Mon Nov 23 23:40:37 2026 }
+{ Compiled on Wed Nov 25 03:11:59 2026 }
 on init
   declare %p[32768]
   declare $sp
@@ -293,6 +293,7 @@ on init
   declare $lgt__fade_out_ticks
   declare $lgt__fade_in_ticks
   declare $lgt__seg2_ticks
+  declare $lgt__atk1_time
   declare $lgt__bend_ticks
   declare $lgt__bend_amount
   declare $lgt__bend_step
@@ -462,30 +463,36 @@ on init
   !lbl_text[46] := "PAN"
   !lbl_text[47] := "PAN"
   !lbl_text[48] := "PAN"
-  declare %lgt_ui_labels[6]
+  declare %lgt_ui_labels[8]
   %lgt_ui_labels[0] := get_ui_id($SETTINGS_lbl_legato_time)
   %lgt_ui_labels[1] := get_ui_id($SETTINGS_lbl_legato_attack)
   %lgt_ui_labels[2] := get_ui_id($SETTINGS_lbl_legato_offset_min)
   %lgt_ui_labels[3] := get_ui_id($SETTINGS_lbl_legato_offset_max)
   %lgt_ui_labels[4] := get_ui_id($SETTINGS_lbl_legato_portamento_time)
   %lgt_ui_labels[5] := get_ui_id($SETTINGS_lbl_legato_portamento_amount)
-  declare !lgt_lbl_text[6]
+  %lgt_ui_labels[6] := get_ui_id($SETTINGS_lbl_legato_node_vol)
+  %lgt_ui_labels[7] := get_ui_id($SETTINGS_lbl_legato_octave_x)
+  declare !lgt_lbl_text[8]
   !lgt_lbl_text[0] := "LEG TIME"
   !lgt_lbl_text[1] := "LEG ATTACK"
   !lgt_lbl_text[2] := "OFFSET MIN"
   !lgt_lbl_text[3] := "OFFSET MAX"
   !lgt_lbl_text[4] := "TIME"
   !lgt_lbl_text[5] := "AMOUNT"
+  !lgt_lbl_text[6] := "VOLUME"
+  !lgt_lbl_text[7] := "OCT X"
   make_persistent($SETTINGS_sli_legato_time)
   make_persistent($SETTINGS_sli_legato_attack)
   make_persistent($SETTINGS_sli_legato_offset_min)
   make_persistent($SETTINGS_sli_legato_offset_max)
   make_persistent($SETTINGS_sli_legato_portamento_time)
   make_persistent($SETTINGS_sli_legato_portamento_amount)
+  make_persistent($SETTINGS_sli_legato_node_vol)
+  make_persistent($SETTINGS_sli_legato_octave_x)
   make_persistent($SETTINGS_swi_legato_bend_enable)
   make_persistent($swi_legato_poly)
   make_persistent($lbl_legato_poly)
-  declare %lgt_ui_controls[7]
+  declare %lgt_ui_controls[9]
   %lgt_ui_controls[0] := get_ui_id($SETTINGS_sli_legato_time)
   %lgt_ui_controls[1] := get_ui_id($SETTINGS_sli_legato_attack)
   %lgt_ui_controls[2] := get_ui_id($SETTINGS_sli_legato_offset_min)
@@ -493,19 +500,8 @@ on init
   %lgt_ui_controls[4] := get_ui_id($SETTINGS_sli_legato_portamento_time)
   %lgt_ui_controls[5] := get_ui_id($SETTINGS_sli_legato_portamento_amount)
   %lgt_ui_controls[6] := get_ui_id($SETTINGS_swi_legato_bend_enable)
-  $i := 0
-  while ($i<num_elements(%lgt_ui_controls))
-    set_control_par(%lgt_ui_controls[$i],$CONTROL_PAR_POS_X,get_control_par(%lgt_ui_controls[$i],$CONTROL_PAR_POS_X)-5)
-    set_control_par(%lgt_ui_controls[$i],$CONTROL_PAR_POS_Y,get_control_par(%lgt_ui_controls[$i],$CONTROL_PAR_POS_Y)-10)
-    inc($i)
-  end while
-  $i := 0
-  while ($i<num_elements(%lgt_ui_labels))
-    set_control_par(%lgt_ui_labels[$i],$CONTROL_PAR_POS_X,get_control_par(%lgt_ui_labels[$i],$CONTROL_PAR_POS_X)-3)
-    set_control_par(%lgt_ui_labels[$i],$CONTROL_PAR_POS_Y,get_control_par(%lgt_ui_labels[$i],$CONTROL_PAR_POS_Y)-10)
-    inc($i)
-  end while
-  move_control_px($SETTINGS_swi_legato_bend_enable,338,190)
+  %lgt_ui_controls[7] := get_ui_id($SETTINGS_sli_legato_node_vol)
+  %lgt_ui_controls[8] := get_ui_id($SETTINGS_sli_legato_octave_x)
   declare %ui_adsr_controls[8]
   %ui_adsr_controls[0] := get_ui_id($ADSR_A)
   %ui_adsr_controls[1] := get_ui_id($ADSR_D)
@@ -736,7 +732,7 @@ on init
   declare $_old_tune
   declare $_new_tune
   declare $_elapsed
-  declare %_cb_state3[6]
+  declare %_cb_state3[8]
   declare %_cb_state2[49]
   declare %_cb_state[49]
   declare $_i2
@@ -926,6 +922,10 @@ function f__lgt_update_label
       set_control_par_str(%lgt_ui_labels[%p[$fp+1]],$CONTROL_PAR_TEXT,$SETTINGS_sli_legato_portamento_time/1000 & " ms")
     case 5
       set_control_par_str(%lgt_ui_labels[%p[$fp+1]],$CONTROL_PAR_TEXT,$SETTINGS_sli_legato_portamento_amount/1000 & " cents")
+    case 6
+      set_control_par_str(%lgt_ui_labels[%p[$fp+1]],$CONTROL_PAR_TEXT,$SETTINGS_sli_legato_node_vol & " %")
+    case 7
+      set_control_par_str(%lgt_ui_labels[%p[$fp+1]],$CONTROL_PAR_TEXT,"x" & ($SETTINGS_sli_legato_octave_x/10) & "." & ($SETTINGS_sli_legato_octave_x mod 10))
   end select
   %p[$sp-1] := 2000000
   call _twait
@@ -1211,8 +1211,10 @@ on note
       $lgt__fade_in_ticks := $lgt__fade_out_ticks*$SETTINGS_sli_legato_attack/100
       if ($SETTINGS_sli_legato_attack=100)
         $lgt__seg2_ticks := 0
+        $lgt__atk1_time := $SETTINGS_sli_legato_time
       else
         $lgt__seg2_ticks := $lgt__fade_out_ticks-$lgt__fade_in_ticks
+        $lgt__atk1_time := $SETTINGS_sli_legato_time*$SETTINGS_sli_legato_attack/$SETTINGS_sli_legato_node_vol
       end if
       if ($SETTINGS_swi_legato_bend_enable=1)
         $_interval := abs(%lgt__note[$lgt__new_idx]-%lgt__note[1-$lgt__new_idx])
@@ -1223,7 +1225,10 @@ on note
         $lgt__bend_ticks := 0
       else
         $lgt__bend_ticks := $SETTINGS_sli_legato_portamento_time/100
-        $lgt__bend_amount := $SETTINGS_sli_legato_portamento_amount*$_interval
+        $lgt__bend_amount := $SETTINGS_sli_legato_portamento_amount
+        if ($SETTINGS_sli_legato_octave_x # 10 and ($_interval # 1))
+          $lgt__bend_amount := $lgt__bend_amount+((($SETTINGS_sli_legato_octave_x-10)*($_interval-1)*$lgt__bend_amount+55)/110)
+        end if
         if (%lgt__note[$lgt__new_idx]<%lgt__note[1-$lgt__new_idx])
           $lgt__bend_amount := -$lgt__bend_amount
         end if
@@ -1237,7 +1242,7 @@ on note
         $lgt__fade_out_ticks := 0
       else
         fade_out(%lgt__child[1-$lgt__new_idx],$SETTINGS_sli_legato_time,0)
-        fade_in(%lgt__child[$lgt__new_idx],$SETTINGS_sli_legato_time*$SETTINGS_sli_legato_attack/100)
+        fade_in(%lgt__child[$lgt__new_idx],$lgt__atk1_time)
         $lgt__active := 1
         while ($lgt__fade_out_ticks>0 or ($lgt__fade_in_ticks>0) or ($lgt__bend_ticks>0))
           dec($lgt__fade_out_ticks)
@@ -1791,6 +1796,18 @@ end on
 on ui_control($SETTINGS_sli_legato_portamento_amount)
   %p[$sp-2] := 5
   %p[$sp-1] := 5
+  call f__lgt_update_label
+end on
+
+on ui_control($SETTINGS_sli_legato_node_vol)
+  %p[$sp-2] := 6
+  %p[$sp-1] := 6
+  call f__lgt_update_label
+end on
+
+on ui_control($SETTINGS_sli_legato_octave_x)
+  %p[$sp-2] := 7
+  %p[$sp-1] := 7
   call f__lgt_update_label
 end on
 
