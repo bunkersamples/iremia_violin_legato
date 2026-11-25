@@ -1,4 +1,4 @@
-{ Compiled on Mon Nov 23 23:40:16 2026 }
+{ Compiled on Wed Nov 25 15:52:33 2026 }
 on init
   declare %p[32768]
   declare $sp
@@ -78,8 +78,9 @@ on init
   declare ~XY_TRIM_RANGE_DB := 24.0
   declare @xy_trim_text
   declare ui_slider $XY_pwr_blend(0,1000)
-  move_control_px($XY_pwr_blend,93,353)
-  set_control_par(get_ui_id($XY_pwr_blend),$CONTROL_PAR_DEFAULT_VALUE,616)
+  set_control_par(get_ui_id($XY_pwr_blend),$CONTROL_PAR_PARENT_PANEL,get_ui_id($xy_pad))
+  move_control_px($XY_pwr_blend,660,460)
+  set_control_par(get_ui_id($XY_pwr_blend),$CONTROL_PAR_DEFAULT_VALUE,665)
   set_control_par(get_ui_id($XY_pwr_blend),$CONTROL_PAR_HIDE,$HIDE_WHOLE_CONTROL)
   make_persistent($XY_pwr_blend)
   add_menu_item($xy_pad_mnu_cc_x,"OFF",-1)
@@ -1204,7 +1205,7 @@ on ui_control(?xy_pad_xypad)
   ~_half_pi := 1.5707963
   ~_x := ?xy_pad_xypad[0]
   ~_y := ?xy_pad_xypad[1]
-  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ~_blend := 0.665
   ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
   ?_w_lin[1] := (1.0-~_x)*~_y
   ?_w_lin[2] := ~_x*~_y
@@ -1278,7 +1279,7 @@ on controller
       ~_half_pi := 1.5707963
       ~_x := ?xy_pad_xypad[0]
       ~_y := ?xy_pad_xypad[1]
-      ~_blend := int_to_real($XY_pwr_blend)/1000.0
+      ~_blend := 0.665
       ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
       ?_w_lin[1] := (1.0-~_x)*~_y
       ?_w_lin[2] := ~_x*~_y
@@ -1346,7 +1347,7 @@ on ui_control($XY_pwr_blend)
   ~_half_pi := 1.5707963
   ~_x := ?xy_pad_xypad[0]
   ~_y := ?xy_pad_xypad[1]
-  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ~_blend := 0.665
   ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
   ?_w_lin[1] := (1.0-~_x)*~_y
   ?_w_lin[2] := ~_x*~_y
@@ -1386,13 +1387,14 @@ on ui_control($XY_pwr_blend)
     set_controller(104+$c,$_cc_val)
     inc($c)
   end while
+  message("PWR BLEND: " & $XY_pwr_blend & "   (0 = linear, centre dips   1000 = equal-power, centre flat)")
 end on
 
 on ui_control($xy_pad_sli_trim_1)
   ~_half_pi := 1.5707963
   ~_x := ?xy_pad_xypad[0]
   ~_y := ?xy_pad_xypad[1]
-  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ~_blend := 0.665
   ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
   ?_w_lin[1] := (1.0-~_x)*~_y
   ?_w_lin[2] := ~_x*~_y
@@ -1440,7 +1442,7 @@ on ui_control($xy_pad_sli_trim_2)
   ~_half_pi := 1.5707963
   ~_x := ?xy_pad_xypad[0]
   ~_y := ?xy_pad_xypad[1]
-  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ~_blend := 0.665
   ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
   ?_w_lin[1] := (1.0-~_x)*~_y
   ?_w_lin[2] := ~_x*~_y
@@ -1488,7 +1490,7 @@ on ui_control($xy_pad_sli_trim_3)
   ~_half_pi := 1.5707963
   ~_x := ?xy_pad_xypad[0]
   ~_y := ?xy_pad_xypad[1]
-  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ~_blend := 0.665
   ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
   ?_w_lin[1] := (1.0-~_x)*~_y
   ?_w_lin[2] := ~_x*~_y
@@ -1536,7 +1538,7 @@ on ui_control($xy_pad_sli_trim_4)
   ~_half_pi := 1.5707963
   ~_x := ?xy_pad_xypad[0]
   ~_y := ?xy_pad_xypad[1]
-  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ~_blend := 0.665
   ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
   ?_w_lin[1] := (1.0-~_x)*~_y
   ?_w_lin[2] := ~_x*~_y
@@ -1585,7 +1587,7 @@ on pgs_changed
   ~_half_pi := 1.5707963
   ~_x := ?xy_pad_xypad[0]
   ~_y := ?xy_pad_xypad[1]
-  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ~_blend := 0.665
   ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
   ?_w_lin[1] := (1.0-~_x)*~_y
   ?_w_lin[2] := ~_x*~_y
@@ -1743,7 +1745,7 @@ on persistence_changed
   ~_half_pi := 1.5707963
   ~_x := ?xy_pad_xypad[0]
   ~_y := ?xy_pad_xypad[1]
-  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ~_blend := 0.665
   ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
   ?_w_lin[1] := (1.0-~_x)*~_y
   ?_w_lin[2] := ~_x*~_y
@@ -2526,7 +2528,7 @@ on ui_control($articulations_swi_sus_norm_ppp)
   ~_half_pi := 1.5707963
   ~_x := ?xy_pad_xypad[0]
   ~_y := ?xy_pad_xypad[1]
-  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ~_blend := 0.665
   ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
   ?_w_lin[1] := (1.0-~_x)*~_y
   ?_w_lin[2] := ~_x*~_y
@@ -2650,7 +2652,7 @@ on ui_control($articulations_swi_sus_norm_pp)
   ~_half_pi := 1.5707963
   ~_x := ?xy_pad_xypad[0]
   ~_y := ?xy_pad_xypad[1]
-  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ~_blend := 0.665
   ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
   ?_w_lin[1] := (1.0-~_x)*~_y
   ?_w_lin[2] := ~_x*~_y
@@ -2774,7 +2776,7 @@ on ui_control($articulations_swi_sus_norm_p)
   ~_half_pi := 1.5707963
   ~_x := ?xy_pad_xypad[0]
   ~_y := ?xy_pad_xypad[1]
-  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ~_blend := 0.665
   ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
   ?_w_lin[1] := (1.0-~_x)*~_y
   ?_w_lin[2] := ~_x*~_y
@@ -2898,7 +2900,7 @@ on ui_control($articulations_swi_sus_cs_ppp)
   ~_half_pi := 1.5707963
   ~_x := ?xy_pad_xypad[0]
   ~_y := ?xy_pad_xypad[1]
-  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ~_blend := 0.665
   ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
   ?_w_lin[1] := (1.0-~_x)*~_y
   ?_w_lin[2] := ~_x*~_y
@@ -3022,7 +3024,7 @@ on ui_control($articulations_swi_sus_cs_pp)
   ~_half_pi := 1.5707963
   ~_x := ?xy_pad_xypad[0]
   ~_y := ?xy_pad_xypad[1]
-  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ~_blend := 0.665
   ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
   ?_w_lin[1] := (1.0-~_x)*~_y
   ?_w_lin[2] := ~_x*~_y
@@ -3146,7 +3148,7 @@ on ui_control($articulations_swi_sus_cs_p)
   ~_half_pi := 1.5707963
   ~_x := ?xy_pad_xypad[0]
   ~_y := ?xy_pad_xypad[1]
-  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ~_blend := 0.665
   ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
   ?_w_lin[1] := (1.0-~_x)*~_y
   ?_w_lin[2] := ~_x*~_y
@@ -3270,7 +3272,7 @@ on ui_control($articulations_swi_sus_supercs_ppp)
   ~_half_pi := 1.5707963
   ~_x := ?xy_pad_xypad[0]
   ~_y := ?xy_pad_xypad[1]
-  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ~_blend := 0.665
   ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
   ?_w_lin[1] := (1.0-~_x)*~_y
   ?_w_lin[2] := ~_x*~_y
@@ -3394,7 +3396,7 @@ on ui_control($articulations_swi_sus_supercs_pp)
   ~_half_pi := 1.5707963
   ~_x := ?xy_pad_xypad[0]
   ~_y := ?xy_pad_xypad[1]
-  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ~_blend := 0.665
   ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
   ?_w_lin[1] := (1.0-~_x)*~_y
   ?_w_lin[2] := ~_x*~_y
@@ -3518,7 +3520,7 @@ on ui_control($articulations_swi_sus_supercs_p)
   ~_half_pi := 1.5707963
   ~_x := ?xy_pad_xypad[0]
   ~_y := ?xy_pad_xypad[1]
-  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ~_blend := 0.665
   ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
   ?_w_lin[1] := (1.0-~_x)*~_y
   ?_w_lin[2] := ~_x*~_y
@@ -3642,7 +3644,7 @@ on ui_control($articulations_swi_portato_cs)
   ~_half_pi := 1.5707963
   ~_x := ?xy_pad_xypad[0]
   ~_y := ?xy_pad_xypad[1]
-  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ~_blend := 0.665
   ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
   ?_w_lin[1] := (1.0-~_x)*~_y
   ?_w_lin[2] := ~_x*~_y
@@ -3766,7 +3768,7 @@ on ui_control($articulations_swi_portato_norm)
   ~_half_pi := 1.5707963
   ~_x := ?xy_pad_xypad[0]
   ~_y := ?xy_pad_xypad[1]
-  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ~_blend := 0.665
   ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
   ?_w_lin[1] := (1.0-~_x)*~_y
   ?_w_lin[2] := ~_x*~_y
@@ -3890,7 +3892,7 @@ on ui_control($articulations_swi_vib_pulses_cs)
   ~_half_pi := 1.5707963
   ~_x := ?xy_pad_xypad[0]
   ~_y := ?xy_pad_xypad[1]
-  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ~_blend := 0.665
   ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
   ?_w_lin[1] := (1.0-~_x)*~_y
   ?_w_lin[2] := ~_x*~_y
@@ -4014,7 +4016,7 @@ on ui_control($articulations_swi_vib_pulses_norm)
   ~_half_pi := 1.5707963
   ~_x := ?xy_pad_xypad[0]
   ~_y := ?xy_pad_xypad[1]
-  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ~_blend := 0.665
   ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
   ?_w_lin[1] := (1.0-~_x)*~_y
   ?_w_lin[2] := ~_x*~_y
@@ -4138,7 +4140,7 @@ on ui_control($articulations_swi_rebow_cs)
   ~_half_pi := 1.5707963
   ~_x := ?xy_pad_xypad[0]
   ~_y := ?xy_pad_xypad[1]
-  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ~_blend := 0.665
   ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
   ?_w_lin[1] := (1.0-~_x)*~_y
   ?_w_lin[2] := ~_x*~_y
@@ -4262,7 +4264,7 @@ on ui_control($articulations_swi_rebow_norm)
   ~_half_pi := 1.5707963
   ~_x := ?xy_pad_xypad[0]
   ~_y := ?xy_pad_xypad[1]
-  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ~_blend := 0.665
   ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
   ?_w_lin[1] := (1.0-~_x)*~_y
   ?_w_lin[2] := ~_x*~_y
@@ -4386,7 +4388,7 @@ on ui_control($articulations_swi_trem_bursts_cs)
   ~_half_pi := 1.5707963
   ~_x := ?xy_pad_xypad[0]
   ~_y := ?xy_pad_xypad[1]
-  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ~_blend := 0.665
   ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
   ?_w_lin[1] := (1.0-~_x)*~_y
   ?_w_lin[2] := ~_x*~_y
@@ -4510,7 +4512,7 @@ on ui_control($articulations_swi_trem_bursts_norm)
   ~_half_pi := 1.5707963
   ~_x := ?xy_pad_xypad[0]
   ~_y := ?xy_pad_xypad[1]
-  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ~_blend := 0.665
   ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
   ?_w_lin[1] := (1.0-~_x)*~_y
   ?_w_lin[2] := ~_x*~_y
@@ -4634,7 +4636,7 @@ on ui_control($articulations_swi_fluctuating_trem_cs)
   ~_half_pi := 1.5707963
   ~_x := ?xy_pad_xypad[0]
   ~_y := ?xy_pad_xypad[1]
-  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ~_blend := 0.665
   ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
   ?_w_lin[1] := (1.0-~_x)*~_y
   ?_w_lin[2] := ~_x*~_y
@@ -4758,7 +4760,7 @@ on ui_control($articulations_swi_fluctuating_trem_norm)
   ~_half_pi := 1.5707963
   ~_x := ?xy_pad_xypad[0]
   ~_y := ?xy_pad_xypad[1]
-  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ~_blend := 0.665
   ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
   ?_w_lin[1] := (1.0-~_x)*~_y
   ?_w_lin[2] := ~_x*~_y
@@ -4882,7 +4884,7 @@ on ui_control($articulations_swi_harmonics_cs)
   ~_half_pi := 1.5707963
   ~_x := ?xy_pad_xypad[0]
   ~_y := ?xy_pad_xypad[1]
-  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ~_blend := 0.665
   ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
   ?_w_lin[1] := (1.0-~_x)*~_y
   ?_w_lin[2] := ~_x*~_y
@@ -5006,7 +5008,7 @@ on ui_control($articulations_swi_harmonics_norm)
   ~_half_pi := 1.5707963
   ~_x := ?xy_pad_xypad[0]
   ~_y := ?xy_pad_xypad[1]
-  ~_blend := int_to_real($XY_pwr_blend)/1000.0
+  ~_blend := 0.665
   ?_w_lin[0] := (1.0-~_x)*(1.0-~_y)
   ?_w_lin[1] := (1.0-~_x)*~_y
   ?_w_lin[2] := ~_x*~_y

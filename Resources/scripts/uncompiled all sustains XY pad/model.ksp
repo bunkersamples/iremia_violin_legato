@@ -40,7 +40,7 @@ function f.update_xy_crossfade() //push each corner's current weight (blend of l
 	declare ~x
 	declare ~y
 	declare ~half_pi := 1.5707963
-	declare ~blend //0.0-1.0 version of $XY_pwr_blend
+	declare ~blend //0.0-1.0 version of XY_BLEND_FIXED
 	declare ?w_lin[NUM_XY_CORNERS]
 	declare ?w_pow[NUM_XY_CORNERS]
 	declare ?w[NUM_XY_CORNERS]
@@ -54,7 +54,7 @@ function f.update_xy_crossfade() //push each corner's current weight (blend of l
 
 	~x := ?xy_pad_xypad[0] //ui_xy's native range is 0.0-1.0, no scaling needed
 	~y := ?xy_pad_xypad[1]
-	~blend := int_to_real($XY_pwr_blend) / 1000.0
+	~blend := int_to_real(XY_BLEND_FIXED) / 1000.0  //hard-coded in config.ksp 2026-11-26; was $XY_pwr_blend, the dev slider, which is now hidden and no longer drives anything
 
 	//linear weights sum to exactly 1.0 everywhere (equal-gain, correct for correlated corner content); per-axis sin/cos weights multiplied together sum-of-squares to exactly 1.0 everywhere (equal-power, correct for decorrelated content). Real corner recordings sit somewhere between the two depending on how similar each corner pair sounds, so blend between them by ear via $XY_pwr_blend (TEMP dev knob, see config.ksp) rather than committing to one fixed law.
 	?w_lin[0] := (1.0-~x) * (1.0-~y) //corner 1: bottom-left

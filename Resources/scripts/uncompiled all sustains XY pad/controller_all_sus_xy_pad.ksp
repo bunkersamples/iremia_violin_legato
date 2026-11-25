@@ -53,6 +53,7 @@ end on
 
 on ui_control(?xy_pad_xypad)
 	f.update_xy_crossfade()
+	
 end on
 
 on controller
@@ -103,6 +104,7 @@ end on
 
 on ui_control($XY_pwr_blend) //TEMP dev knob - live-refresh the weights at the pad's current position so the blend amount can be heard without moving the pad
 	f.update_xy_crossfade()
+	message("PWR BLEND: " & $XY_pwr_blend & "   (0 = linear, centre dips   1000 = equal-power, centre flat)") //so the exact value can be read off the status line while tuning - remove with the dev slider
 end on
 
 on ui_control($xy_pad_sli_trim_1) //live-refresh at the pad's current position so each corner's trim can be balanced against the others without moving the cursor

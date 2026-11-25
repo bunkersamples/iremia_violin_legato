@@ -80,10 +80,43 @@ macro config.init(title, perf_view)
 	declare ~XY_TRIM_RANGE_DB := 24.0 //per-corner trim knobs ($xy_pad_sli_trim_1..4) are 0-1000000, remapped to this many dB of CUT ONLY (0=-24dB, 1000000=0dB/neutral) - boost isn't achievable on this signal path (CC saturates at 127, and the Group Volume modulator's own Intensity param is hard-capped at 100% at the engine level, confirmed by testing), so the full knob travel is used for attenuation instead of wasting half of it on a dead boost range. NOT declared const - const reals seem to break downstream real arithmetic in this compiler (every failed line involved this constant); a plain real var with an initializer, like ~half_pi elsewhere, works fine.
 	declare @xy_trim_text //scratch string for f.update_xy_trim_label()'s formatted dB readout - global because a taskfunc body can't declare a string var ("Expected expression of integer type, got string type instead"). Safe to share across the 4 corners' concurrent taskfunc instances: it's assigned and consumed before the tcm.wait(), which is the only yield point.
 	declare const XY_TRIM_RANGE_DB_X10 := 240 //same range as ~XY_TRIM_RANGE_DB above, in tenths of a dB - KEEP THE TWO IN SYNC. Integer twin exists so f.update_xy_trim_label() can compute its dB display without any real arithmetic (which would not compile in that taskfunc); deliberately not derived from the real one, since changing that declare's initializer is the exact shape that triggered the type-error chain.
+	{* The blend the engine actually uses, hard-coded 2026-11-26. Found by ear on THIS instrument:
+	   he bracketed 630-700 as good and settled on the 665 midpoint.
+	   Values across the family: viola 668, violin 665, cello 700 - each measured by ear on its own
+	   corner recordings, not derived from each other and NOT following any pattern by instrument
+	   size (the viola and violin land within 3 of each other while the cello sits well above both). Hard-coded rather than read from the
+	   dev slider below because that slider is make_persistent'd, which means a shipped .nki would
+	   carry whatever position it happened to be saved at rather than this value.
+	   How it was found: at blend 0 four IDENTICAL articulations are dead flat centre-to-corner
+	   (correlated content sums by amplitude, and linear weights sum to 1.0 everywhere) while four
+	   DIFFERENT ones dip about 6dB in the centre (decorrelated content sums by power, so four 0.25
+	   weights give 0.5 amplitude against 1.0 in a corner). Full equal-power weights fix the
+	   decorrelated case but would bump the correlated one by the same 6dB - hence a blend.
+	   TO RETUNE: un-comment the HIDE line's opposite below to show the slider again, AND point
+	   model.ksp's `~blend :=` line back at $XY_pwr_blend instead of this constant. Both halves are
+	   needed - showing the slider alone does nothing now, since the engine no longer reads it. *}
+	declare const XY_BLEND_FIXED := 665
+
 	declare ui_slider $XY_pwr_blend(0, 1000) //TEMP dev-only knob: 0 = linear/equal-gain weights, 1000 = full equal-power weights, for tuning the corner-correlation bump/dip by ear without recompiling. Same idea as Post_human.ksp's $shape control. Replace with a real performance-view control (or remove) once the blend amount is settled.
-	move_control_px($XY_pwr_blend, 93, 353)
-	set_control_par(get_ui_id($XY_pwr_blend), CONTROL_PAR_DEFAULT_VALUE, 616) //found by ear: 616/1000 = 61.6% toward equal-power, the rest linear
-	set_control_par(get_ui_id($XY_pwr_blend), CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL) //hidden for now - kept (not removed) in case the blend needs finetuning again later
+	{* UN-HIDDEN 2026-11-26 so the violin's own centre level can be tuned by ear. The 616 default
+	   below was found on the VIOLA - the blend compensates for how correlated that instrument's four
+	   corner recordings are, so it is a per-instrument value like the mic offsets, not a constant.
+	   Re-hide by restoring the HIDE_WHOLE_CONTROL line commented out below.
+	   Parented to $xy_pad and moved to the pad page's empty bottom-right: at the old 93,353 it sat
+	   on top of sli_trim_3 and its label, and when the articulation picker opens its buttons cover
+	   the whole lower half of the view - Button outranks Slider in Kontakt's type order, so an
+	   overlapped slider takes no clicks at all. Panel origin is 0,10, so 660,460 here is absolute
+	   660,470. *}
+	set_control_par(get_ui_id($XY_pwr_blend), CONTROL_PAR_PARENT_PANEL, get_ui_id($xy_pad))
+	move_control_px($XY_pwr_blend, 660, 460)
+	{* No set_text() here: it is NOT valid for a ui_slider (the manual lists knobs, buttons,
+	   switches, value edits, menus and labels). SublimeKSP whitelists the function so it compiles,
+	   but Kontakt faults on it at runtime, and since this runs in on init the fault takes the WHOLE
+	   script down - which presents as "none of my changes are showing", not as an error about this
+	   line. The slider identifies itself through the status-line message in its on ui_control
+	   handler instead. Added and removed 2026-11-26. *}
+	set_control_par(get_ui_id($XY_pwr_blend), CONTROL_PAR_DEFAULT_VALUE, 665) //found by ear ON THIS INSTRUMENT 2026-11-26: he bracketed 630-700 as good, 665 is the midpoint. For reference the viola sits at 616, so the violin's corner content is slightly MORE decorrelated. Diagnostic that got here: at blend 0 four IDENTICAL articulations were dead flat centre-to-corner (correlated content sums by amplitude, and linear weights sum to 1.0 everywhere) while four DIFFERENT ones dipped ~6dB in the centre (decorrelated content sums by power, so four 0.25 weights give 0.5 amplitude against 1.0 at a corner). Equal-power weights fix the decorrelated case and would bump the correlated one by the same 6dB, hence a blend rather than either extreme.
+	set_control_par(get_ui_id($XY_pwr_blend), CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL) //hidden again 2026-11-26 now that 665 is hard-coded above - kept, not removed, so it can be shown again for retuning
 	make_persistent($XY_pwr_blend)
 
 	//MIDI CC control of the pad, one menu per axis. These exist because an XY pad is NOT one of Kontakt's "automatable controls" (sliders/switches/knobs), so right-click MIDI learn is unavailable on it - the manual says cursors are reachable only via set_control_par_arr(). Letting the customer pick the CC per axis keeps the familiar freedom of MIDI learn without committing the library to a fixed documented mapping.
